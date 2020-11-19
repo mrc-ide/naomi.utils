@@ -1,20 +1,31 @@
 Package: naomi.utils
 Title: Utility Functions For Naomi Datasets
-Version: 0.0.0.9000
+Version: 0.0.1
 Authors@R: 
     person(given = "Jeffrey",
            family = "Eaton",
            role = c("aut", "cre"),
            email = "jeffrey.eaton@imperial.ac.uk",
            comment = c(ORCID = "0000-0001-7728-728X"))
-Description: This package contains utility functions for creating and manipulating
-  datasets for the Naomi model and related projects.
+Description: This package contains utility functions for
+    creating and manipulating datasets for the Naomi model and related
+    projects.
 License: MIT + file LICENSE
+URL: https://github.com/mrc-ide/naomi.utils
+BugReports: https://github.com/mrc-ide/naomi.utils/issues
+Imports: 
+    dplyr,
+    forcats,
+    ggplot2,
+    haven,
+    magrittr,
+    rdhs (>= 0.7.1),
+    sf,
+    survey,
+    tidyr
 Suggests: 
     testthat
 Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.1.1
-URL: https://github.com/mrc-ide/naomi.utils
-BugReports: https://github.com/mrc-ide/naomi.utils/issues
