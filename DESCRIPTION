@@ -1,0 +1,18 @@
+Package: naomi.utils
+Title: Utility Functions For Naomi Datasets
+Version: 0.0.0.9000
+Authors@R: 
+    person(given = "Jeffrey",
+           family = "Eaton",
+           role = c("aut", "cre"),
+           email = "jeffrey.eaton@imperial.ac.uk",
+           comment = c(ORCID = "0000-0001-7728-728X"))
+Description: This package contains utility functions for creating and manipulating
+  datasets for the Naomi model and related projects.
+License: MIT + file LICENSE
+Suggests: 
+    testthat
+Encoding: UTF-8
+LazyData: true
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.1.1
