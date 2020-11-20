@@ -756,14 +756,28 @@ validate_survey_region_areas <- function(survey_region_areas, warn = FALSE) {
 
 #' Summary plot of survey cluster coordinates outside boundaries
 #'
-#' @param survey_clusters Survey clusteres dataset
+#' @param survey_clusters Survey clusteres dataset.
+#' @param survey_region_boundaries Survey region boundaries dataset.
 #'
 #' @return A list of grobs, one for each survey.
+#'
+#' @details
+#' The `survey_region_boundaries` dataset is used to define the scope of what
+#' is plotted. A subset of regions can be plotted by subsetting that dataset
+#' to the desired range.
 #'
 #' @export
 plot_survey_coordinate_check <- function(survey_clusters,
                                          survey_region_boundaries,
                                          survey_region_areas) {
+
+  survey_clusters <- dplyr::semi_join(survey_clusters,
+                                      survey_region_boundaries,
+                                      by = c("survey_id", "survey_region_id"))
+
+  survey_region_areas <- dplyr::semi_join(survey_region_areas,
+                                          survey_region_boundaries,
+                                          by = c("survey_id", "survey_region_id"))
   
   clust_spl <- split(survey_clusters, survey_clusters$survey_id)
   region_spl <- split(survey_region_boundaries, survey_region_boundaries$survey_id)

@@ -11,11 +11,18 @@ plot_survey_coordinate_check(
 )
 }
 \arguments{
-\item{survey_clusters}{Survey clusteres dataset}
+\item{survey_clusters}{Survey clusteres dataset.}
+
+\item{survey_region_boundaries}{Survey region boundaries dataset.}
 }
 \value{
 A list of grobs, one for each survey.
 }
 \description{
 Summary plot of survey cluster coordinates outside boundaries
+}
+\details{
+The \code{survey_region_boundaries} dataset is used to define the scope of what
+is plotted. A subset of regions can be plotted by subsetting that dataset
+to the desired range.
 }
