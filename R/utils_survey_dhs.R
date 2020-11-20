@@ -329,7 +329,7 @@ hr_extract_clusters <- function(path, survey_id, REGVAR){
                   hr,
                   survey_id,
                   cluster_id = hv001,
-                  survey_region_id = .data[[REGVAR]],
+                  survey_region_id = haven::zap_labels(.data[[REGVAR]]),
                   res_type = factor(haven::zap_labels(hv025), 1:2, c("urban", "rural"))
                 )
   val <- dplyr::distinct(val)
