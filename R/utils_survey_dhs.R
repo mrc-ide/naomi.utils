@@ -200,7 +200,7 @@ allocate_areas_survey_regions <- function(areas_wide, survey_region_boundaries) 
 
   area_id_wide <- dplyr::select(areas_wide, dplyr::starts_with("area_id"))
 
-  area_regions <- lapply(regions_spl, sf::st_make_valid, x = area_id_wide, largest = TRUE)
+  area_regions <- lapply(regions_spl, sf::st_join, x = area_id_wide, largest = TRUE)
   area_regions <- do.call(rbind, area_regions)
 
   survey_region_areas <- sf::st_drop_geometry(survey_region_boundaries) %>%
