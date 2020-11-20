@@ -200,7 +200,7 @@ allocate_areas_survey_regions <- function(areas_wide, survey_region_boundaries) 
 
   area_id_wide <- dplyr::select(areas_wide, dplyr::starts_with("area_id"))
 
-  area_regions <- lapply(regions_spl, sf::st_join, x = area_id_wide, largest = TRUE)
+  area_regions <- lapply(regions_spl %>% sf::st_make_valid, sf::st_join, x = area_id_wide, largest = TRUE)
   area_regions <- do.call(rbind, area_regions)
 
   survey_region_areas <- sf::st_drop_geometry(survey_region_boundaries) %>%
@@ -529,7 +529,7 @@ extract_individual_hiv_dhs <- function(SurveyId, ird_path, mrd_path, ard_path){
                      dob_cmc = v011,
                      indweight = NA,
                      artself)
-  
+
   ## Male recode
   if (!is.null(mrd_path)) {
 
@@ -554,17 +554,17 @@ extract_individual_hiv_dhs <- function(SurveyId, ird_path, mrd_path, ard_path){
                                 indweight = NA,
                                 artself)
              )
-    
+
   }
-  
+
   if (!is.null(ard_path)) {
-    
+
     ar <- readRDS(ard_path)
-    
+
     if (SurveyId == "CI2005AIS") {
       ar$hivnumb <- 100L*ar$hivstruct + ar$hivnumb
     }
-    
+
     if (SurveyId == "ZM2013DHS") {
       ar$hiv03 <- ar$shiv51
     }
@@ -778,13 +778,13 @@ plot_survey_coordinate_check <- function(survey_clusters,
   survey_region_areas <- dplyr::semi_join(survey_region_areas,
                                           survey_region_boundaries,
                                           by = c("survey_id", "survey_region_id"))
-  
+
   clust_spl <- split(survey_clusters, survey_clusters$survey_id)
   region_spl <- split(survey_region_boundaries, survey_region_boundaries$survey_id)
   area_spl <- split(survey_region_areas, survey_region_areas$survey_id)
-  
+
   plot_one <- function(clust, regions, areas) {
-    
+
     subtitle <- sprintf("Total survey clusters: %d\nClusters missing coordinates: %d\nClusters outside region boundaries: %d",
                         nrow(clust),
                         sum(is.na(clust$geoloc_area_id)),
@@ -792,7 +792,7 @@ plot_survey_coordinate_check <- function(survey_clusters,
 
     regions <- dplyr::arrange(regions, survey_id, survey_region_id)
     regions$survey_region_name <- forcats::as_factor(regions$survey_region_name)
-    
+
     clust <- dplyr::left_join(
                       clust,
                       sf::st_drop_geometry(regions),
