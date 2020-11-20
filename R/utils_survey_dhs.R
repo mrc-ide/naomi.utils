@@ -531,7 +531,7 @@ extract_individual_hiv_dhs <- function(SurveyId, ird_path, mrd_path, ard_path){
                      artself)
   
   ## Male recode
-  if (!is.na(mrd_path)) {
+  if (!is.null(mrd_path)) {
 
     mr <- readRDS(mrd_path)
     mr$aidsex <- haven::labelled(1, c("men" = 1, "women" = 2), "Sex")
@@ -557,7 +557,7 @@ extract_individual_hiv_dhs <- function(SurveyId, ird_path, mrd_path, ard_path){
     
   }
   
-  if (!is.na(ard_path)) {
+  if (!is.null(ard_path)) {
     
     ar <- readRDS(ard_path)
     
