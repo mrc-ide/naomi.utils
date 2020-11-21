@@ -4,11 +4,18 @@
 \alias{validate_survey_region_areas}
 \title{Validation of mapping to survey region areas}
 \usage{
-validate_survey_region_areas(survey_region_areas, warn = FALSE)
+validate_survey_region_areas(
+  survey_region_areas,
+  survey_region_boundaries,
+  warn = FALSE
+)
 }
 \arguments{
 \item{survey_region_areas}{Allocation of areas to survey regions, returned by
 \code{\link[=allocate_areas_survey_regions]{allocate_areas_survey_regions()}}.}
+
+\item{survey_region_boundaries}{survey_region_boundaries dataset created by
+\code{create_survey_boundaries_dhs()}.}
 
 \item{warn}{Raise a warning instead of an error (default \code{FALSE})}
 }

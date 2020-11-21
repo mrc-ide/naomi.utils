@@ -290,13 +290,12 @@ allocate_areas_survey_regions <- function(areas_wide, survey_region_boundaries) 
     )
   }
 
-  area_regions <- lapply(regions_spl, st_join_quiet, x = area_id_wide, largest = TRUE)
-  area_regions <- do.call(rbind, area_regions)
-
+  survey_region_areas <- lapply(regions_spl, st_join_quiet, x = area_id_wide, largest = TRUE)
+  survey_region_areas <- do.call(rbind, survey_region_areas)
   survey_region_areas <- sf::st_drop_geometry(survey_region_boundaries) %>%
-    dplyr::full_join(area_regions, by = c("survey_id", "survey_region_id")) %>%
+    dplyr::right_join(survey_region_areas, by = c("survey_id", "survey_region_id")) %>%
     sf::st_as_sf()
-
+  
   survey_region_areas
 }
 
@@ -307,13 +306,15 @@ allocate_areas_survey_regions <- function(areas_wide, survey_region_boundaries) 
 #'
 #' @param survey_region_areas Area allocation to survey regions, created by
 #'   [`allocate_areas_survey_regions()`]
-#'
+#' 
 #' @return Survey regions dataset conforming to schema.
 #'
+#' 
 #' @export
 create_survey_regions_dhs <- function(survey_region_areas) {
 
-  val <- dplyr::select(survey_region_areas,
+  val <- sf::st_drop_geometry(survey_region_areas)
+  val <- dplyr::select(val,,
                        survey_id, survey_region_id, survey_region_name,
                        dplyr::matches("area_id[0-9]+"))
 
@@ -804,7 +805,7 @@ create_survey_biomarker_dhs <- function(dat) {
 #' @param survey_region_areas Allocation of areas to survey regions, returned by
 #'   [`allocate_areas_survey_regions()`].
 #' @param warn Raise a warning instead of an error (default `FALSE`)
-#'
+#' 
 #' @return invisibly TRUE or raises an error.
 #'
 #' @details
@@ -817,8 +818,10 @@ create_survey_biomarker_dhs <- function(dat) {
 #' Passing these checks does not confirm the mapping is accurate, but these checks
 #' will flag inconsistencies that need cleaning.
 #'
+#' @inheritParams allocate_areas_survey_regions
 #' @export
-validate_survey_region_areas <- function(survey_region_areas, warn = FALSE) {
+validate_survey_region_areas <- function(survey_region_areas, survey_region_boundaries,
+                                         warn = FALSE) {
 
   errfun <- if(warn) warning else stop
 
@@ -832,13 +835,14 @@ validate_survey_region_areas <- function(survey_region_areas, warn = FALSE) {
            paste0(capture.output(missing_survey_reg), collapse = "\n"))
   }
 
-  if (any(is.na(survey_region_areas$area_id))) {
-    no_mapped_areas <- survey_region_areas %>%
-      sf::st_drop_geometry() %>%
-      dplyr::filter(is.na(area_id)) %>%
-      dplyr::select(survey_id, survey_region_id, survey_region_name)
+  no_mapped_areas <- sf::st_drop_geometry(survey_region_boundaries) %>%
+    dplyr::anti_join(survey_region_areas,
+                     by = c("survey_id", "survey_region_id")) %>%
+    dplyr::select(survey_id, survey_region_id, survey_region_name)
+  
+  if (nrow(no_mapped_areas)) {
     errfun("Survey regions contained no areas:\n",
-           paste0(capture.output(no_mapped_areas), collapse = "\n"))
+           paste0(capture.output(print(no_mapped_areas, row.names = FALSE)), collapse = "\n"))
   }
 
   invisible(TRUE)
@@ -866,8 +870,9 @@ plot_survey_coordinate_check <- function(survey_clusters,
                                       survey_region_boundaries,
                                       by = c("survey_id", "survey_region_id"))
 
+  
   survey_region_areas <- dplyr::semi_join(survey_region_areas,
-                                          survey_region_boundaries,
+                                          sf::st_drop_geometry(survey_region_boundaries),
                                           by = c("survey_id", "survey_region_id"))
 
   clust_spl <- split(survey_clusters, survey_clusters$survey_id)
