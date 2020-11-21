@@ -200,7 +200,17 @@ allocate_areas_survey_regions <- function(areas_wide, survey_region_boundaries) 
 
   area_id_wide <- dplyr::select(areas_wide, dplyr::starts_with("area_id"))
 
-  area_regions <- lapply(regions_spl, sf::st_join, x = area_id_wide, largest = TRUE)
+  ## Wrapper function for sf::st_join to muffle specific message and warning.
+  st_join_quiet <- function(x, y, join, ...) {
+    suppress_one_warning(
+      suppress_one_message(
+        sf::st_join(x, y, join, ...),
+        "although coordinates are longitude/latitude, st_intersection assumes that they are planar"),
+      "attribute variables are assumed to be spatially constant throughout all geometries"
+    )
+  }
+
+  area_regions <- lapply(regions_spl, st_join_quiet, x = area_id_wide, largest = TRUE)
   area_regions <- do.call(rbind, area_regions)
 
   survey_region_areas <- sf::st_drop_geometry(survey_region_boundaries) %>%
