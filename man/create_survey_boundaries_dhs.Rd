@@ -4,10 +4,21 @@
 \alias{create_survey_boundaries_dhs}
 \title{Create survey region boundaries dataset from DHS spatial data repository}
 \usage{
-create_survey_boundaries_dhs(surveys)
+create_survey_boundaries_dhs(
+  surveys,
+  levelrnk_select = NULL,
+  verbose_download = FALSE
+)
 }
 \arguments{
 \item{surveys}{data.frame of surveys, returned by \code{create_surveys_dhs()}.}
+
+\item{levelrnk_select}{A named vector specifying which LEVELRNK to select for a
+given survey if multiple level ranks are available. Defaults to NULL in
+which the level with the largest number of regions is selecteed. See details.}
+
+\item{verbose_download}{Whether to print messages from \code{\link[rdhs:download_boundaries]{rdhs::download_boundaries()}}.
+Default is \code{FALSE}.}
 }
 \value{
 A simple features data frame containing DHS region code, region name,
@@ -20,7 +31,18 @@ Create survey region boundaries dataset from DHS spatial data repository
 For some surveys, the DHS spatial data repository and the survey clusters
 datasets boundaries at multiple levels (e.g. admin 1 and admin 2). In these
 cases, the admin level with the largest number or regions is selected by
-default.
+default. The options for multiple level surveys will be printed as messages.
+To selected a different level supply a named vector with \code{survey_id} / \code{LEVELRNK}
+pairs, for example \code{levelrnk_select = c("MWI2015DHS" = 1)}. See examples.
+}
+\examples{
+surveys <- create_surveys_dhs("MWI")
 
-TODO: Support a workflow for selecting alternative levels.
+region_boundaries <- create_survey_boundaries_dhs(surveys)
+
+## Select three regions
+levelrnk_select = c("MWI2015DHS" = 1)
+region_boundaries <- create_survey_boundaries_dhs(surveys, levelrnk_select)
+
+
 }

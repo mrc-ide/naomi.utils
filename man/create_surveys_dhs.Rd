@@ -13,9 +13,9 @@ create_surveys_dhs(
 \arguments{
 \item{iso3}{Three letter ISO3 country code.}
 
-\item{survey_characteristics}{DHS survey characteristic IDs to filter on See \code{?rdhs::dhs_survey_characteristics}.}
+\item{survey_type}{DHS survey types to access. See \code{?rdhs::dhs_surveys}.}
 
-\item{survey_types}{DHS survey types to access. See \code{?rdhs::dhs_surveys}.}
+\item{survey_characteristics}{DHS survey characteristic IDs to filter on See \code{?rdhs::dhs_survey_characteristics}.}
 }
 \value{
 A data frame containing the response from the \emph{dhs_surveys} API endpoint

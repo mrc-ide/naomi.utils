@@ -12,7 +12,7 @@ assert_iso3 <- function(iso3) {
 #' `survey_id` and `survey_mid_calendar_quarter`.
 #'
 #' @param iso3 Three letter ISO3 country code.
-#' @param survey_types DHS survey types to access. See `?rdhs::dhs_surveys`.
+#' @param survey_type DHS survey types to access. See `?rdhs::dhs_surveys`.
 #' @param survey_characteristics DHS survey characteristic IDs to filter on See `?rdhs::dhs_survey_characteristics`.
 #'
 #' @return A data frame containing the response from the _dhs_surveys_ API endpoint
@@ -51,6 +51,11 @@ create_surveys_dhs <- function(iso3,
 #' Create survey region boundaries dataset from DHS spatial data repository
 #'
 #' @param surveys data.frame of surveys, returned by `create_surveys_dhs()`.
+#' @param levelrnk_select A named vector specifying which LEVELRNK to select for a
+#'   given survey if multiple level ranks are available. Defaults to NULL in
+#'   which the level with the largest number of regions is selecteed. See details.
+#' @param verbose_download Whether to print messages from [`rdhs::download_boundaries()`].
+#'    Default is `FALSE`.
 #'
 #' @return A simple features data frame containing DHS region code, region name,
 #'    and region boundaries for each survey.
@@ -60,14 +65,41 @@ create_surveys_dhs <- function(iso3,
 #' For some surveys, the DHS spatial data repository and the survey clusters
 #' datasets boundaries at multiple levels (e.g. admin 1 and admin 2). In these
 #' cases, the admin level with the largest number or regions is selected by
-#' default.
+#' default. The options for multiple level surveys will be printed as messages.
+#' To selected a different level supply a named vector with `survey_id` / `LEVELRNK`
+#' pairs, for example `levelrnk_select = c("MWI2015DHS" = 1)`. See examples.
 #'
-#' TODO: Support a workflow for selecting alternative levels.
+#' @examples
+#' surveys <- create_surveys_dhs("MWI")
 #'
+#' region_boundaries <- create_survey_boundaries_dhs(surveys)
+#'
+#' ## Select three regions
+#' levelrnk_select = c("MWI2015DHS" = 1)
+#' region_boundaries <- create_survey_boundaries_dhs(surveys, levelrnk_select)
+#' 
+#' 
 #' @export
-create_survey_boundaries_dhs <- function(surveys) {
+create_survey_boundaries_dhs <- function(surveys, levelrnk_select = NULL, verbose_download = FALSE) {
 
-  geom_raw <- Map(rdhs::download_boundaries, surveyId = surveys$SurveyId, method = "sf")
+  ## validate arguments
+  stopifnot(is.logical(verbose_download))
+
+  if (!is.null(levelrnk_select)) {
+
+    if (is.null(names(levelrnk_select)) |
+        any(!names(levelrnk_select) %in% surveys$survey_id)) {
+      stop("levelrnk_select must be a named vector with names corresponding to survey_id\n")
+    }
+  }
+  
+  
+  download_boundaries_message <- function(SurveyId, verbose_download) {
+    message("Downloading DHS region boundaries: ", SurveyId)
+    rdhs::download_boundaries(surveyId = SurveyId, quiet_download = !verbose_download, method = "sf")
+  }
+    
+  geom_raw <- Map(download_boundaries_message, surveys$SurveyId, verbose_download)
   geom_raw <- unlist(geom_raw, recursive = FALSE)
 
   geom_cols <- c("DHSCC", "SVYID", "REG_ID", "MULTLEVEL", "LEVELRNK", "REGVAR",
@@ -80,41 +112,89 @@ create_survey_boundaries_dhs <- function(surveys) {
   geom <- dplyr::mutate_at(geom, dplyr::vars(-geometry),
                            function(x) replace(x, x == "NULL", NA))
 
-  geom <- dplyr::left_join(geom, surveys[c("SurveyId", "SurveyNum")],
+  geom <- dplyr::left_join(geom, surveys[c("SurveyId", "SurveyNum", "survey_id")],
                            by = c("SVYID" = "SurveyNum"))
 
-  ## Surveys with multiple boundary levels: choose level with larger number of
-  ## areas unless reason not to.
-  ##
-  ## !! TODO: Develop workflow for a survey that doesn't choose the default
-  ##          of level with larger number of areas.
-
-
-  geom_levels <- dplyr::count(sf::st_drop_geometry(geom),
-                              SurveyId, MULTLEVEL, LEVELRNK,
-                              name = "n_regions")
-
-  multi_levelId <- unique(geom_levels$SurveyId[duplicated(geom_levels$SurveyId)])
-
-  if (length(multi_levelId)) {
-
-    message("SurveyId = ", multi_levelId, " contains multiple boundary levels.")
-
-    ## !! TODO: Output message indicating which was chosen
-
-    geom_levels <- geom_levels %>%
-      dplyr::group_by(SurveyId) %>%
-      dplyr::filter(n_regions == max(n_regions))
-
-    geom <- dplyr::semi_join(geom, geom_levels,
-                             by = c("SurveyId", "MULTLEVEL", "LEVELRNK"))
+  missing_survey_id <- setdiff(surveys$survey_id, geom$survey_id)
+  if (length(missing_survey_id)) {
+    warning("DHS survey region boundaries not found for survey_id: ",
+            paste0(missing_survey_id, collapse = ", "), ".\n",
+            "Manually add regions for these surveys or exclude from further steps.")
   }
 
-  survey_region_boundaries <- dplyr::left_join(geom, surveys[c("SurveyId", "survey_id")],
-                                               by = "SurveyId")
+  ## Surveys with multiple boundary levels: default choose level with larger number
+  ## of areas unless reason not to.
+
+  geom_levels <- dplyr::count(sf::st_drop_geometry(geom),
+                              survey_id, SurveyId, MULTLEVEL, LEVELRNK,
+                              name = "n_regions")
+
+  if (!is.null(levelrnk_select)) {
+    levelrnk_df <- data.frame(survey_id = names(levelrnk_select),
+                              LEVELRNK = as.integer(levelrnk_select),
+                              selected = TRUE,
+                              stringsAsFactors = FALSE)
+
+    levelrnk_check <- dplyr::anti_join(levelrnk_df, geom_levels,
+                                       by = c("survey_id", "LEVELRNK"))
+    if (nrow(levelrnk_check)) {
+      levelrnk_check <- as.data.frame(levelrnk_check)
+      levelrnk_options <- as.data.frame(geom_levels[geom_levels$survey_id %in% levelrnk_check$survey_id, ])
+      stop("\nThe following LEVELRNK was not found in DHS boundaries datasets:\n",
+           paste0(capture.output(print(levelrnk_check, row.names = FALSE)), "\n"),
+           "\nHere are the available LEVELRNK:\n",
+         paste0(capture.output(print(levelrnk_options, row.names = FALSE)), "\n"))
+    }
+    
+  } else { ## levelrnk_select = NULL
+    levelrnk_df <- data.frame(survey_id = character(0),
+                              LEVELRNK = integer(0),
+                              selected = logical(0),
+                              stringsAsFactors = FALSE)
+  }
+
+  
+  if (any(duplicated(geom_levels$survey_id))) {
+    
+    geom_levels <- dplyr::left_join(geom_levels, levelrnk_df,
+                                    by = c("survey_id", "LEVELRNK"))
+    geom_levels$selected[is.na(geom_levels$selected)] <- FALSE
+    
+    geom_levels <- dplyr::group_by(geom_levels, survey_id)
+    geom_levels <- dplyr::mutate(
+                            geom_levels,
+                            is_specified = any(selected),
+                            max_reg = n_regions == max(n_regions),
+                            selected = dplyr::if_else(is_specified,
+                                                      selected,
+                                                      max_reg & !duplicated(max_reg))
+                          )
+    
+    multi_level <- dplyr::filter(geom_levels, dplyr::n() > 1)
+    multi_level <- multi_level[c("survey_id", "SurveyId", "MULTLEVEL",
+                                 "LEVELRNK", "n_regions", "selected")]
+    multi_level$selected[!multi_level$selected] <- ""
+    multi_level <- as.data.frame(multi_level)
+
+    multi_level_summary <- capture.output(print(multi_level, row.names = FALSE))
+
+    cl <- match.call()
+    cl[["levelrnk_select"]] <- quote(c("<survey_id>" = level_number))
+    message(
+      "\nDHS boundaries contains multiple region levels for survey_id: ",
+      paste0(unique(multi_level$survey_id), collapse = ", "),
+      "\nThe following were selected:\n",
+      paste0(multi_level_summary,  collapse = "\n"),
+      "\nTo select a different level, rerun this function with argument levelrnk_select=:\n",
+      capture.output(cl), "\n"
+    )
+
+    geom <- dplyr::semi_join(geom, geom_levels[geom_levels$selected, ],
+                             by = c("survey_id", "LEVELRNK"))
+  }
 
   ## Note: REGVAR is retained here for later use in dataset extraction
-  survey_region_boundaries <- dplyr::select(survey_region_boundaries,
+  survey_region_boundaries <- dplyr::select(geom,
                                             survey_id,
                                             survey_region_id = REGCODE,
                                             survey_region_name = REGNAME,
@@ -151,8 +231,8 @@ surveys_add_dhs_regvar <- function(surveys, survey_region_boundaries) {
   regvar <- sf::st_drop_geometry(survey_region_boundaries)
   regvar <- dplyr::distinct(regvar, survey_id, REGVAR)
 
-  if (any(duplicated(regvar$surveyid))) {
-    dup <- unique(regvar$surveyid[duplicated(regvar$surveyid)])
+  if (any(duplicated(regvar$survey_id))) {
+    dup <- unique(regvar$survey_id[duplicated(regvar$survey_id)])
     stop("Survey regions dataset has multiple REGVAR: ", paste(dup, collapse = ", "))
   }
 
