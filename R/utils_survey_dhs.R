@@ -613,12 +613,15 @@ extract_individual_hiv_dhs <- function(SurveyId, ird_path, mrd_path, ard_path){
 
   dat <- ir %>%
     dplyr::transmute(cluster_id = v001,
+                     individual_id = caseid,
                      household = v002,
                      line = v003,
                      interview_cmc = v008,
                      sex = factor(haven::zap_labels(aidsex), 1:2, c("male", "female")),
                      age = v012,
                      dob_cmc = v011,
+                     religion = tolower(as_factor(v130)),
+                     ethnicity = tolower(as_factor(v131)),
                      indweight = NA,
                      artself)
 
@@ -637,16 +640,19 @@ extract_individual_hiv_dhs <- function(SurveyId, ird_path, mrd_path, ard_path){
       dplyr::bind_rows(
                mr %>%
                dplyr::transmute(cluster_id = mv001,
+                                individual_id = mcaseid,
                                 household = mv002,
                                 line = mv003,
                                 interview_cmc = mv008,
                                 sex = factor(haven::zap_labels(aidsex), 1:2, c("male", "female")),
                                 age = mv012,
                                 dob_cmc = mv011,
+                                religion = tolower(as_factor(mv130)),
+                                ethnicity = tolower(as_factor(mv131)),
                                 indweight = NA,
                                 artself)
              )
-
+    
   }
 
   if (!is.null(ard_path)) {
@@ -769,9 +775,12 @@ create_survey_individuals_dhs <- function(dat) {
            dat,
            survey_id,
            cluster_id,
+           individual_id,
            household,
            line,
            interview_cmc,
+           religion,
+           ethnicity,
            sex,
            age,
            dob_cmc,
@@ -788,8 +797,7 @@ create_survey_biomarker_dhs <- function(dat) {
            dat,
            survey_id,
            cluster_id,
-           household,
-           line,
+           individual_id,
            hivweight,
            hivstatus,
            arv,

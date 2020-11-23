@@ -163,7 +163,7 @@ calc_survey_hiv_indicators <- function(survey_meta,
 
   ind <- survey_individuals %>%
     dplyr::inner_join(survey_biomarker,
-                      by = c("survey_id", "cluster_id", "household", "line")) %>%
+                      by = c("survey_id", "cluster_id", "individual_id")) %>%
     dplyr::filter(survey_id %in% survey_meta$survey_id,
                   !is.na(hivstatus)) %>%
     dplyr::select(survey_id, cluster_id, sex, age, hivweight, hivstatus, artself, arv, vls, recent) %>%
