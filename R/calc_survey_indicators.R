@@ -121,7 +121,7 @@ calc_survey_hiv_indicators <- function(survey_meta,
                                        by_res_type = FALSE) {
 
   ## 1. Identify age groups to calculate for each survey_id
-  age_groups <- get_age_groups()
+  age_groups <- naomi::get_age_groups()
 
   if(!is.null(age_group_include))
     age_groups <- dplyr::filter(age_group, age_group %in% !!age_group_include)
