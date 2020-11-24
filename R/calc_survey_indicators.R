@@ -20,6 +20,17 @@ expand_survey_clusters <- function(survey_clusters,
                                    top_level = min(areas$area_level),
                                    bottom_level = max(areas$area_level)) {
 
+  if (!all(survey_clusters$geoloc_area_id %in% areas$area_id |
+           is.na(survey_clusters$geoloc_area_id))) {
+    stop("Survey cluster area id not in area hierarchy: ",
+         paste0(setdiff(survey_clusters$geoloc_area_id, areas$area_id), collapse = ", "))
+  }
+
+  if (!all(survey_regions$survey_region_area_id %in% areas$area_id)) {
+    stop("Survey region area id not in area hierarchy: ",
+         paste0(setdiff(survey_regions$survey_region_area_id, areas$area_id), collapse = ", "))
+  }
+  
   clusters <- survey_clusters %>%
     dplyr::select(survey_id, cluster_id, res_type, survey_region_id, geoloc_area_id) %>%
     dplyr::left_join(
@@ -163,7 +174,7 @@ calc_survey_hiv_indicators <- function(survey_meta,
 
   ind <- survey_individuals %>%
     dplyr::inner_join(survey_biomarker,
-                      by = c("survey_id", "cluster_id", "individual_id")) %>%
+                      by = c("survey_id", "individual_id")) %>%
     dplyr::filter(survey_id %in% survey_meta$survey_id,
                   !is.na(hivstatus)) %>%
     dplyr::select(survey_id, cluster_id, sex, age, hivweight, hivstatus, artself, arv, vls, recent) %>%
@@ -202,7 +213,7 @@ calc_survey_hiv_indicators <- function(survey_meta,
     stop(paste("Invalid artcov_definition value:", artcov_definition[1]))
   }
 
-  ## Rename variables to coutcome indicators
+  ## Rename variables to outcome indicators
   ind <- ind %>%
     dplyr::rename(prevalence = hivstatus,
                   art_coverage = artcov,

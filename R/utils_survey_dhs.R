@@ -649,7 +649,7 @@ extract_individual_hiv_dhs <- function(SurveyId, ird_path, mrd_path, ard_path){
                                 dob_cmc = mv011,
                                 religion = tolower(as_factor(mv130)),
                                 ethnicity = tolower(as_factor(mv131)),
-                                indweight = NA,
+                                indweight = mv005 / 1e6,
                                 artself)
              )
     
@@ -709,6 +709,124 @@ extract_individual_hiv_dhs <- function(SurveyId, ird_path, mrd_path, ard_path){
                            recent)
     dat <- dplyr::left_join(dat, ar, by = c("cluster_id", "household", "line"))
   }
+
+  dat$SurveyId <- SurveyId
+
+  dat
+}
+
+
+#' Create male circumcision outcomes dataset from DHS
+#'
+#' @param surveys data.frame of surveys, returned by `create_surveys_dhs()`.
+#'
+#' @return data.frame consisting of survey ID, individual ID and male circumcision
+#'    outcomes. See details.
+#'
+#' @details
+#'
+#' The following fields are extracted:
+#'
+#'   * survey_id
+#'   * individual_id
+#'   * circ
+#'   * circ_age
+#'   * circ_where
+#'   * circ_who
+#' 
+#' @examples
+#'
+#' surveys <- create_surveys_dhs("MWI")
+#' circ <- create_circumcision_dhs(surveys)
+#'
+#' @export
+create_survey_circumcision_dhs <- function(surveys) {
+
+  mrd <- rdhs::dhs_datasets(surveyIds = surveys$SurveyId, fileType = "MR", fileFormat = "flat")
+  mrd_paths <- setNames(rdhs::get_datasets(mrd), mrd$SurveyId)
+
+  ## TODO: handle case where no MR dataset
+  ## TODO: handle case where circumcision contained in IR (AIS?)
+  
+  dat <- Map(extract_circumcision_dhs,
+             SurveyId = surveys$SurveyId,
+             mrd_path = mrd_paths[surveys$SurveyId])
+
+  dat <- dplyr::bind_rows(dat)
+  dat <- dplyr::left_join(dat,
+                          dplyr::select(surveys, SurveyId, survey_id),
+                          by = "SurveyId")
+  dat <- dplyr::select(dat, survey_id, dplyr::everything(), -SurveyId)
+
+  circ_who_recode <- list("Healthcare worker" = c("health worker/ health professional",
+                                                  "health worker / professional"),
+                          "Traditional practitioner" = c("family/ friend",
+                                                         "traditional practitioner/ ngaliba/ anankungwi",
+                                                         "traditional practitioner / family friend",
+                                                         "religious leader",
+                                                         "other"),
+                          NULL = c("dk", "don't know", "don’t know", "missing"))
+  
+  circ_where_recode <- list("Medical" = c("health facility",
+                                          "home of a health worker / professional",
+                                          "home of a health worker/health professional"),
+                            "Traditional" = c("own home",
+                                              "another home",
+                                              "other home / place",
+                                              "simba",
+                                              "ritual site",
+                                              "circumcision done at home"),
+                            NULL = c("dk", "don't know", "don’t know", "missing"))
+
+  dat <- dat %>%
+    dplyr::mutate(
+             circ = dplyr::na_if(circ, 8),
+             circ = dplyr::na_if(circ, 9),
+             circ_age = dplyr::na_if(circ_age, 98),
+             circ_age = dplyr::na_if(circ_age, 99),
+             circ_who = forcats::fct_collapse(circ_who, !!!circ_who_recode),
+             circ_where = forcats::fct_collapse(circ_where, !!!circ_where_recode),
+             circ_who = as.character(circ_who),
+             circ_where = as.character(circ_where)
+           )
+    
+  dat
+}
+
+extract_circumcision_dhs <- function(SurveyId, mrd_path){
+
+  message("Parsing MR circumcision datasets: ", SurveyId)
+
+  mr <- readRDS(mrd_path)
+
+  ## TODO: Generalize this code...
+  if (SurveyId == "MW2004DHS") {
+    mr <- mr %>%
+      dplyr::mutate(circ = sm737,
+               circ_age =  NA,
+               circ_where = NA,
+               circ_who = NA)
+    } else if (SurveyId == "MW2010DHS") {
+      mr <- mr %>%
+        mutate(circ = mv483,
+               circ_age =  sm805a,
+               circ_where = sm805c,
+               circ_who = sm805b)
+    } else {
+      mr <- mr %>%
+        mutate(circ = mv483,                  
+               circ_age = mv483a,
+               circ_where = mv483c,
+               circ_who = mv483b)
+    }
+
+  dat <- dplyr::transmute(mr,
+                          cluster_id = mv001,
+                          individual_id = mcaseid,
+                          circ,
+                          circ_age,
+                          circ_where = tolower(as_factor(circ_where)),
+                          circ_who = tolower(as_factor(circ_who)))
 
   dat$SurveyId <- SurveyId
 
@@ -796,7 +914,6 @@ create_survey_biomarker_dhs <- function(dat) {
   dplyr::transmute(
            dat,
            survey_id,
-           cluster_id,
            individual_id,
            hivweight,
            hivstatus,
