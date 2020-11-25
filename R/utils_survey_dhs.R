@@ -620,8 +620,8 @@ extract_individual_hiv_dhs <- function(SurveyId, ird_path, mrd_path, ard_path){
                      sex = factor(haven::zap_labels(aidsex), 1:2, c("male", "female")),
                      age = v012,
                      dob_cmc = v011,
-                     religion = tolower(as_factor(v130)),
-                     ethnicity = tolower(as_factor(v131)),
+                     religion = tolower(haven::as_factor(v130)),
+                     ethnicity = tolower(haven::as_factor(v131)),
                      indweight = NA,
                      artself)
 
@@ -647,8 +647,8 @@ extract_individual_hiv_dhs <- function(SurveyId, ird_path, mrd_path, ard_path){
                                 sex = factor(haven::zap_labels(aidsex), 1:2, c("male", "female")),
                                 age = mv012,
                                 dob_cmc = mv011,
-                                religion = tolower(as_factor(mv130)),
-                                ethnicity = tolower(as_factor(mv131)),
+                                religion = tolower(haven::as_factor(mv130)),
+                                ethnicity = tolower(haven::as_factor(mv131)),
                                 indweight = mv005 / 1e6,
                                 artself)
              )
@@ -824,8 +824,8 @@ extract_circumcision_dhs <- function(SurveyId, mrd_path){
                           individual_id = mcaseid,
                           circumcised,
                           circ_age,
-                          circ_where = tolower(as_factor(circ_where)),
-                          circ_who = tolower(as_factor(circ_who)))
+                          circ_where = tolower(haven::as_factor(circ_where)),
+                          circ_who = tolower(haven::as_factor(circ_who)))
 
   dat$SurveyId <- SurveyId
 

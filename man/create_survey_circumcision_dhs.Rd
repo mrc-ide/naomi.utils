@@ -21,7 +21,7 @@ The following fields are extracted:
 \itemize{
 \item survey_id
 \item individual_id
-\item circ
+\item circumcised
 \item circ_age
 \item circ_where
 \item circ_who
