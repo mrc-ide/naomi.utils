@@ -729,7 +729,7 @@ extract_individual_hiv_dhs <- function(SurveyId, ird_path, mrd_path, ard_path){
 #'
 #'   * survey_id
 #'   * individual_id
-#'   * circ
+#'   * circumcised
 #'   * circ_age
 #'   * circ_where
 #'   * circ_who
@@ -780,8 +780,8 @@ create_survey_circumcision_dhs <- function(surveys) {
 
   dat <- dat %>%
     dplyr::mutate(
-             circ = dplyr::na_if(circ, 8),
-             circ = dplyr::na_if(circ, 9),
+             circumcised = dplyr::na_if(circumcised, 8),
+             circumcised = dplyr::na_if(circumcised, 9),
              circ_age = dplyr::na_if(circ_age, 98),
              circ_age = dplyr::na_if(circ_age, 99),
              circ_who = forcats::fct_collapse(circ_who, !!!circ_who_recode),
@@ -802,28 +802,27 @@ extract_circumcision_dhs <- function(SurveyId, mrd_path){
   ## TODO: Generalize this code...
   if (SurveyId == "MW2004DHS") {
     mr <- mr %>%
-      dplyr::mutate(circ = sm737,
+      dplyr::mutate(circumcised = sm737,
                circ_age =  NA,
                circ_where = NA,
                circ_who = NA)
     } else if (SurveyId == "MW2010DHS") {
       mr <- mr %>%
-        mutate(circ = mv483,
+        mutate(circumcised = mv483,
                circ_age =  sm805a,
                circ_where = sm805c,
                circ_who = sm805b)
     } else {
       mr <- mr %>%
-        mutate(circ = mv483,                  
+        mutate(circumcised = mv483,                  
                circ_age = mv483a,
                circ_where = mv483c,
                circ_who = mv483b)
     }
 
   dat <- dplyr::transmute(mr,
-                          cluster_id = mv001,
                           individual_id = mcaseid,
-                          circ,
+                          circumcised,
                           circ_age,
                           circ_where = tolower(as_factor(circ_where)),
                           circ_who = tolower(as_factor(circ_who)))
