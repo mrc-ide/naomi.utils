@@ -37,7 +37,7 @@ recode_naomi1_age_group <- function(x) {
 #'
 #' @export
 recode_naomi1_art <- function(art) {
-  art <- dplyr::reame(art, art_current = current_art, calendar_quarter = year)
+  art <- dplyr::rename(art, art_current = current_art, calendar_quarter = year)
   art$calendar_quarter <- paste0("CY", art$calendar_quarter, "Q4")
   art$age_group <- recode_naomi1_age_group(art$age_group)
   art
