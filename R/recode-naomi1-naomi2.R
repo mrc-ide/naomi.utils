@@ -5,7 +5,7 @@
 #' @return Character vector of age groups in Naomi 2 format
 #'
 #' @examples
-#' recode_age_group(c("15-19", "15+", "00+"))
+#' recode_naomi1_age_group(c("15-19", "15+", "00+"))
 #'
 #' @export
 recode_naomi1_age_group <- function(x) {
@@ -39,15 +39,15 @@ recode_naomi1_age_group <- function(x) {
 recode_naomi1_art <- function(art) {
   art <- dplyr::reame(art, art_current = current_art, calendar_quarter = year)
   art$calendar_quarter <- paste0("CY", art$calendar_quarter, "Q4")
-  art$age_group <- recode_age_group(art$age_group)
+  art$age_group <- recode_naomi1_age_group(art$age_group)
   art
 }
 
 #' @rdname recode_naomi1_art
 #' @export
 recode_naomi1_anc <- function(anc) {
-  anc <- rename_all(anc, function(x) sub("ancrt", "anc", x))
-  anc <- rename(anc, anc_tested_pos = anc_test_pos)
-  anc$age_group <- recode_age_group(anc$age_group)
+  anc <- dplyr::rename_all(anc, function(x) sub("ancrt", "anc", x))
+  anc <- dplyr::rename(anc, anc_tested_pos = anc_test_pos)
+  anc$age_group <- recode_naomi1_age_group(anc$age_group)
   anc
 }
