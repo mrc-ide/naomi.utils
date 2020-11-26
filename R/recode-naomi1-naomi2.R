@@ -21,3 +21,33 @@ recode_naomi1_age_group <- function(x) {
     
   val
 }
+
+#' Update ART and ANC programme data set to Naomi 2.0 specifications
+#'
+#' @param art Data frame of ART data conforming to Naomi 1.0 schema.
+#' @param anc Data frame of ANC testing data conforming to Naomi 1.0 schema.
+#' @return Data frame of ART data conforming to Naomi 2.0 schema.
+#'
+#' @details
+#'
+#' * Rename `current_art` column to `art_current`.
+#' * Recode `year` column to `calendar_quarter` in ART dataset.
+#' * Recode `age_group` column from `15-49` format to `Y015_049`.
+#' * Recode `ancrt_*` columns to `anc_*`. 
+#'
+#' @export
+recode_naomi1_art <- function(art) {
+  art <- dplyr::reame(art, art_current = current_art, calendar_quarter = year)
+  art$calendar_quarter <- paste0("CY", art$calendar_quarter, "Q4")
+  art$age_group <- recode_age_group(art$age_group)
+  art
+}
+
+#' @rdname recode_naomi1_art
+#' @export
+recode_naomi1_anc <- function(anc) {
+  anc <- rename_all(anc, function(x) sub("ancrt", "anc", x))
+  anc <- rename(anc, anc_tested_pos = anc_test_pos)
+  anc$age_group <- recode_age_group(anc$age_group)
+  anc
+}
