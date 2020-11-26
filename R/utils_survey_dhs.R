@@ -765,7 +765,7 @@ create_survey_circumcision_dhs <- function(surveys) {
                                                          "traditional practitioner / family friend",
                                                          "religious leader",
                                                          "other"),
-                          NULL = c("dk", "don't know", "don’t know", "missing"))
+                          NULL = c("dk", "don't know", "missing"))
   
   circ_where_recode <- list("Medical" = c("health facility",
                                           "home of a health worker / professional",
@@ -776,7 +776,7 @@ create_survey_circumcision_dhs <- function(surveys) {
                                               "simba",
                                               "ritual site",
                                               "circumcision done at home"),
-                            NULL = c("dk", "don't know", "don’t know", "missing"))
+                            NULL = c("dk", "don't know", "missing"))
 
   dat <- dat %>%
     dplyr::mutate(
