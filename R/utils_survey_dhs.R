@@ -77,8 +77,8 @@ create_surveys_dhs <- function(iso3,
 #' ## Select three regions
 #' levelrnk_select = c("MWI2015DHS" = 1)
 #' region_boundaries <- create_survey_boundaries_dhs(surveys, levelrnk_select)
-#' 
-#' 
+#'
+#'
 #' @export
 create_survey_boundaries_dhs <- function(surveys, levelrnk_select = NULL, verbose_download = FALSE) {
 
@@ -92,13 +92,13 @@ create_survey_boundaries_dhs <- function(surveys, levelrnk_select = NULL, verbos
       stop("levelrnk_select must be a named vector with names corresponding to survey_id\n")
     }
   }
-  
-  
+
+
   download_boundaries_message <- function(SurveyId, verbose_download) {
     message("Downloading DHS region boundaries: ", SurveyId)
     rdhs::download_boundaries(surveyId = SurveyId, quiet_download = !verbose_download, method = "sf")
   }
-    
+
   geom_raw <- Map(download_boundaries_message, surveys$SurveyId, verbose_download)
   geom_raw <- unlist(geom_raw, recursive = FALSE)
 
@@ -145,7 +145,7 @@ create_survey_boundaries_dhs <- function(surveys, levelrnk_select = NULL, verbos
            "\nHere are the available LEVELRNK:\n",
          paste0(capture.output(print(levelrnk_options, row.names = FALSE)), "\n"))
     }
-    
+
   } else { ## levelrnk_select = NULL
     levelrnk_df <- data.frame(survey_id = character(0),
                               LEVELRNK = integer(0),
@@ -153,13 +153,13 @@ create_survey_boundaries_dhs <- function(surveys, levelrnk_select = NULL, verbos
                               stringsAsFactors = FALSE)
   }
 
-  
+
   if (any(duplicated(geom_levels$survey_id))) {
-    
+
     geom_levels <- dplyr::left_join(geom_levels, levelrnk_df,
                                     by = c("survey_id", "LEVELRNK"))
     geom_levels$selected[is.na(geom_levels$selected)] <- FALSE
-    
+
     geom_levels <- dplyr::group_by(geom_levels, survey_id)
     geom_levels <- dplyr::mutate(
                             geom_levels,
@@ -169,7 +169,7 @@ create_survey_boundaries_dhs <- function(surveys, levelrnk_select = NULL, verbos
                                                       selected,
                                                       max_reg & !duplicated(max_reg))
                           )
-    
+
     multi_level <- dplyr::filter(geom_levels, dplyr::n() > 1)
     multi_level <- multi_level[c("survey_id", "SurveyId", "MULTLEVEL",
                                  "LEVELRNK", "n_regions", "selected")]
@@ -295,7 +295,7 @@ allocate_areas_survey_regions <- function(areas_wide, survey_region_boundaries) 
   survey_region_areas <- sf::st_drop_geometry(survey_region_boundaries) %>%
     dplyr::right_join(survey_region_areas, by = c("survey_id", "survey_region_id")) %>%
     sf::st_as_sf()
-  
+
   survey_region_areas
 }
 
@@ -306,10 +306,10 @@ allocate_areas_survey_regions <- function(areas_wide, survey_region_boundaries) 
 #'
 #' @param survey_region_areas Area allocation to survey regions, created by
 #'   [`allocate_areas_survey_regions()`]
-#' 
+#'
 #' @return Survey regions dataset conforming to schema.
 #'
-#' 
+#'
 #' @export
 create_survey_regions_dhs <- function(survey_region_areas) {
 
@@ -652,7 +652,7 @@ extract_individual_hiv_dhs <- function(SurveyId, ird_path, mrd_path, ard_path){
                                 indweight = mv005 / 1e6,
                                 artself)
              )
-    
+
   }
 
   if (!is.null(ard_path)) {
@@ -733,7 +733,7 @@ extract_individual_hiv_dhs <- function(SurveyId, ird_path, mrd_path, ard_path){
 #'   * circ_age
 #'   * circ_where
 #'   * circ_who
-#' 
+#'
 #' @examples
 #'
 #' surveys <- create_surveys_dhs("MWI")
@@ -747,7 +747,7 @@ create_survey_circumcision_dhs <- function(surveys) {
 
   ## TODO: handle case where no MR dataset
   ## TODO: handle case where circumcision contained in IR (AIS?)
-  
+
   dat <- Map(extract_circumcision_dhs,
              SurveyId = surveys$SurveyId,
              mrd_path = mrd_paths[surveys$SurveyId])
@@ -766,7 +766,7 @@ create_survey_circumcision_dhs <- function(surveys) {
                                                          "religious leader",
                                                          "other"),
                           NULL = c("dk", "don't know", "missing"))
-  
+
   circ_where_recode <- list("Medical" = c("health facility",
                                           "home of a health worker / professional",
                                           "home of a health worker/health professional"),
@@ -789,7 +789,7 @@ create_survey_circumcision_dhs <- function(surveys) {
              circ_who = as.character(circ_who),
              circ_where = as.character(circ_where)
            )
-    
+
   dat
 }
 
@@ -814,7 +814,7 @@ extract_circumcision_dhs <- function(SurveyId, mrd_path){
                circ_who = sm805b)
     } else {
       mr <- mr %>%
-        mutate(circumcised = mv483,                  
+        mutate(circumcised = mv483,
                circ_age = mv483a,
                circ_where = mv483c,
                circ_who = mv483b)
@@ -913,7 +913,10 @@ create_survey_biomarker_dhs <- function(dat) {
   dplyr::transmute(
            dat,
            survey_id,
+           cluster_id,
            individual_id,
+           household,
+           line,
            hivweight,
            hivstatus,
            arv,
@@ -929,7 +932,7 @@ create_survey_biomarker_dhs <- function(dat) {
 #' @param survey_region_areas Allocation of areas to survey regions, returned by
 #'   [`allocate_areas_survey_regions()`].
 #' @param warn Raise a warning instead of an error (default `FALSE`)
-#' 
+#'
 #' @return invisibly TRUE or raises an error.
 #'
 #' @details
@@ -963,7 +966,7 @@ validate_survey_region_areas <- function(survey_region_areas, survey_region_boun
     dplyr::anti_join(survey_region_areas,
                      by = c("survey_id", "survey_region_id")) %>%
     dplyr::select(survey_id, survey_region_id, survey_region_name)
-  
+
   if (nrow(no_mapped_areas)) {
     errfun("Survey regions contained no areas:\n",
            paste0(capture.output(print(no_mapped_areas, row.names = FALSE)), collapse = "\n"))
@@ -994,7 +997,7 @@ plot_survey_coordinate_check <- function(survey_clusters,
                                       survey_region_boundaries,
                                       by = c("survey_id", "survey_region_id"))
 
-  
+
   survey_region_areas <- dplyr::semi_join(survey_region_areas,
                                           sf::st_drop_geometry(survey_region_boundaries),
                                           by = c("survey_id", "survey_region_id"))
