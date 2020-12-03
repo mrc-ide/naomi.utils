@@ -16,6 +16,6 @@ Character vector of age groups in Naomi 2 format
 Recode age group from Naomi 1 to Naomi 2
 }
 \examples{
-recode_age_group(c("15-19", "15+", "00+"))
+recode_naomi1_age_group(c("15-19", "15+", "00+"))
 
 }
