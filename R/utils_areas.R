@@ -63,7 +63,9 @@ compare_boundaries <- function(sh1, sh2 = NULL, aggregate = FALSE) {
     if(!is.null(sh2))
       sh2 <- dplyr::summarise(sh2)
   }
-  p <- ggplot2::ggplot() + naomi::th_map()
+  p <- ggplot2::ggplot() +
+    ggplot2::theme_minimal() +
+    ggplot2::theme(axis.text = ggplot2::element_blank())
 
   p <- p + ggplot2::geom_sf(data = sh1, color = "red")
   if(!is.null(sh2))
@@ -95,7 +97,7 @@ plot_area_hierarchy_summary <- function(areas, nrow = 1) {
     ggplot2::geom_sf() +
     ggplot2::facet_wrap(~label, nrow = nrow) +
     ggplot2::theme_minimal() +
-    ggplot2::theme(axis.text = element_blank())
+    ggplot2::theme(axis.text = ggplot2::element_blank())
 }
 
 #' Save sf object to zipped ESRI .shp file

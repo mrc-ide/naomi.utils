@@ -29,11 +29,11 @@ copy_pjnz_extract <- function(pjnz, out, shiny90 = NULL, force_shiny90 = FALSE) 
   stopifnot(length(out) == 1)
   stopifnot(length(shiny90) <= 1)
 
-  if (tools::file_ext(shiny90) != "shiny90") {
+  if (!is.null(shiny90) && tools::file_ext(shiny90) != "shiny90") {
     stop("File does not have extension .shiny90: ", shiny90)
   }
 
-  if (force_shiny90 & !is.null(shiny90)) {
+  if (force_shiny90 && !is.null(shiny90)) {
     keep_str <- "DP$|PJN$"
   } else {
     keep_str <- "DP$|PJN$|shiny90"
@@ -41,10 +41,10 @@ copy_pjnz_extract <- function(pjnz, out, shiny90 = NULL, force_shiny90 = FALSE) 
 
   file.copy(pjnz, out)
   files_list <- utils::unzip(out, list=TRUE)$Name
-  files_keep <- grep(keep_str, files_list, value = TRUE, invert = TRUE, ignore.case = TRUE)
-  f <- utils::zip(out, files_keep, flags="-d")
+  files_delete <- grep(keep_str, files_list, value = TRUE, invert = TRUE, ignore.case = TRUE)
+  f <- utils::zip(out, files_delete, flags="-d")
 
-  if (!is.null(shiny90) & !check_pjnz_shiny90(out)) {
+  if (!is.null(shiny90) && !check_pjnz_shiny90(out)) {
     zip::zip_append(out, shiny90, mode = "cherry-pick")
   }
 
