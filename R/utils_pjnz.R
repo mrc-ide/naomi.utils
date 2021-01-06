@@ -81,7 +81,7 @@ check_pjnz_shiny90 <- function(pjnz) {
 
 #' Read country from .zip.shiny90 file
 #'
-#' @param shiny90_zip
+#' @param shiny90_zip path to .shiny90 export file
 #' @return Shiny90 country / region name.
 #'
 #' @export

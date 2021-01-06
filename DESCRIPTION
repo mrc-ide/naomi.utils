@@ -1,6 +1,6 @@
 Package: naomi.utils
 Title: Utility Functions For Naomi Datasets
-Version: 0.0.4
+Version: 0.0.5
 Authors@R: 
     person(given = "Jeffrey",
            family = "Eaton",
@@ -15,10 +15,12 @@ URL: https://github.com/mrc-ide/naomi.utils
 BugReports: https://github.com/mrc-ide/naomi.utils/issues
 Imports: 
     dplyr,
+    exactextractr,
     forcats,
     ggplot2,
     haven,
     magrittr,
+    raster,
     rdhs (>= 0.7.1),
     sf,
     survey,
