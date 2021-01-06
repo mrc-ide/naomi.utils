@@ -6,6 +6,9 @@
 \usage{
 read_shiny90_country(shiny90_zip)
 }
+\arguments{
+\item{shiny90_zip}{path to .shiny90 export file}
+}
 \value{
 Shiny90 country / region name.
 }
