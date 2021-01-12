@@ -379,34 +379,39 @@ create_survey_clusters_dhs <- function(surveys) {
 
   ## Add geo-coordinates
 
-  ged <- rdhs::dhs_datasets(surveyIds = surveys$SurveyId,
-                            fileType = "GE",
+  ged <- rdhs::dhs_datasets(fileType = "GE",                            
                             fileFormat = "flat")
-  ged <- dplyr::left_join(ged, surveys[c("SurveyId", "survey_id")],
-                          by = "SurveyId")
-  ged$path <-  unlist(rdhs::get_datasets(ged))
-
-  ge <- lapply(ged$path, readRDS)
-  ge <- lapply(ge, as.data.frame)
-  ge <- Map(f = dplyr::mutate,
-            ge,
-            survey_id = ged$survey_id,
-            SurveyYear = ged$SurveyYear,
-            SurveyType = ged$SurveyType,
-            CountryName = ged$CountryName)
-  ge <- Map(replace, ge, lapply(ge, `==`, "NULL"), NA)
-  ge <- lapply(ge, type.convert)
-  ge <- dplyr::bind_rows(ge)
-  ge <- sf::st_as_sf(ge, coords = c("LONGNUM", "LATNUM"), remove = FALSE)
-
-  ge <- dplyr::filter(ge, LONGNUM != 0)
-  ge <- dplyr::select(ge,
-                      survey_id,
-                      cluster_id = DHSCLUST,
-                      longitude = LONGNUM,
-                      latitude = LATNUM)
-
-  survey_clusters <- dplyr::left_join(hrclust, ge, by = c("survey_id", "cluster_id"))
+  ged <- dplyr::inner_join(ged, surveys[c("SurveyId", "survey_id")],
+                           by = "SurveyId")
+  if(nrow(ged)) {
+    ged$path <-  unlist(rdhs::get_datasets(ged))
+    
+    ge <- lapply(ged$path, readRDS)
+    ge <- lapply(ge, as.data.frame)
+    ge <- Map(f = dplyr::mutate,
+              ge,
+              survey_id = ged$survey_id,
+              SurveyYear = ged$SurveyYear,
+              SurveyType = ged$SurveyType,
+              CountryName = ged$CountryName)
+    ge <- Map(replace, ge, lapply(ge, `==`, "NULL"), NA)
+    ge <- lapply(ge, type.convert)
+    ge <- dplyr::bind_rows(ge)
+    ge <- sf::st_as_sf(ge, coords = c("LONGNUM", "LATNUM"), remove = FALSE)
+    
+    ge <- dplyr::filter(ge, LONGNUM != 0)
+    ge <- dplyr::select(ge,
+                        survey_id,
+                        cluster_id = DHSCLUST,
+                        longitude = LONGNUM,
+                        latitude = LATNUM)
+    
+    survey_clusters <- dplyr::left_join(hrclust, ge, by = c("survey_id", "cluster_id"))
+  } else {
+    survey_clusters <- hrclust
+    survey_clusters$longitude <- NA
+    survey_clusters$latitude <- NA
+  }
 
   survey_clusters
 }

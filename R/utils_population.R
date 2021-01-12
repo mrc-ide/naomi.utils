@@ -13,7 +13,7 @@
 #' @export
 validate_naomi_population <- function(population, areas, area_level) {
 
-  population_cols <- c("area_id", "calendar_quarter", "sex", "age_group", "population", "asfr")
+  population_cols <- c("area_id", "area_name", "calendar_quarter", "sex", "age_group", "population", "asfr")
 
   stopifnot(population_cols %in% names(population))
 
@@ -99,7 +99,13 @@ naomi_extract_worldpop <- function(areas, iso3 = areas$area_id[areas$area_level 
   pop$calendar_quarter <- paste0("CY", pop$year, "Q2")
   pop$source <- "WorldPop"
 
-  pop <- dplyr::count(pop, area_id, source, calendar_quarter, sex, age_group,
+  pop <- pop %>%
+    dplyr::left_join(
+             dplyr::select(sf::st_drop_geometry(areas), area_id, area_name),
+             by = "area_id"
+           )
+
+  pop <- dplyr::count(pop, area_id, area_name, source, calendar_quarter, sex, age_group,
                       wt = population, name = "population")
   pop$asfr <- NA_real_
 
@@ -219,7 +225,13 @@ naomi_extract_gpw <- function(areas, gpw_path = "~/Data/population/GPW 4.11/") {
   pop$calendar_quarter <- paste0("CY", pop$year, "Q2")
   pop$source <- "GPW v4.11"
 
-  pop <- dplyr::count(pop, area_id, source, calendar_quarter, sex, age_group,
+  pop <- pop %>%
+    dplyr::left_join(
+             dplyr::select(sf::st_drop_geometry(areas), area_id, area_name),
+             by = "area_id"
+           )
+
+  pop <- dplyr::count(pop, area_id, area_name, source, calendar_quarter, sex, age_group,
                       wt = population, name = "population")
   pop$asfr <- NA_real_
 
