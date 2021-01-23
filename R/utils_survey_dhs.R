@@ -571,12 +571,21 @@ assign_dhs_cluster_areas <- function(survey_clusters, survey_region_areas) {
 #' @export
 create_individual_hiv_dhs <- function(surveys) {
 
-  ird <- rdhs::dhs_datasets(surveyIds = surveys$SurveyId, fileType = "IR", fileFormat = "flat")
-  mrd <- rdhs::dhs_datasets(surveyIds = surveys$SurveyId, fileType = "MR", fileFormat = "flat")
-  ard <- rdhs::dhs_datasets(surveyIds = surveys$SurveyId, fileType = "AR", fileFormat = "flat")
+  ird <- rdhs::dhs_datasets(fileType = "IR", fileFormat = "flat")
+  mrd <- rdhs::dhs_datasets(fileType = "MR", fileFormat = "flat")
+  ard <- rdhs::dhs_datasets(fileType = "AR", fileFormat = "flat")
+
+  ird <- dplyr::filter(ird, SurveyId %in% surveys$SurveyId) 
+  mrd <- dplyr::filter(mrd, SurveyId %in% surveys$SurveyId)
+  ard <- dplyr::filter(ard, SurveyId %in% surveys$SurveyId)   
 
   ird_paths <- setNames(rdhs::get_datasets(ird), ird$SurveyId)
-  mrd_paths <- setNames(rdhs::get_datasets(mrd), mrd$SurveyId)
+
+  if (nrow(mrd) > 0) {
+    mrd_paths <- setNames(rdhs::get_datasets(mrd), mrd$SurveyId)
+  } else {
+    mrd_paths <- list(NULL)
+  }
   ard_paths <- setNames(rdhs::get_datasets(ard), ard$SurveyId)
 
   individual <- Map(extract_individual_hiv_dhs,

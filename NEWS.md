@@ -1,3 +1,7 @@
+# naomi.utils 0.0.8
+
+* Handle countries where no surveys have MR datasets (e.g. Congo).
+
 # naomi.utils 0.0.7
 
 * Handle countries where no surveys have survey cluster datasets (e.g The Gambia).
