@@ -37,6 +37,7 @@ create_surveys_dhs <- function(iso3,
   surveys <- rdhs::dhs_surveys(countryIds = dhs_cc,
                                surveyType = survey_type,
                                surveyCharacteristicIds = survey_characteristics)
+  
   surveys$survey_id <- paste0(iso3, surveys$SurveyYear, surveys$SurveyType)
   surveys$survey_mid_calendar_quarter <-
     get_mid_calendar_quarter(
@@ -535,7 +536,7 @@ assign_dhs_cluster_areas <- function(survey_clusters, survey_region_areas) {
 
 #' Create individual HIV outcomes dataset from DHS
 #'
-#' Create dataset of indiviaul demographic and HIV outcomes.
+#' Create dataset of individual demographic and HIV outcomes.
 #'
 #' @param surveys data.frame of surveys, returned by `create_surveys_dhs()`.
 #'
@@ -573,18 +574,22 @@ create_individual_hiv_dhs <- function(surveys) {
 
   ird <- rdhs::dhs_datasets(fileType = "IR", fileFormat = "flat")
   mrd <- rdhs::dhs_datasets(fileType = "MR", fileFormat = "flat")
+  prd <- rdhs::dhs_datasets(fileType = "PR", fileFormat = "flat")
   ard <- rdhs::dhs_datasets(fileType = "AR", fileFormat = "flat")
 
   ird <- dplyr::filter(ird, SurveyId %in% surveys$SurveyId) 
   mrd <- dplyr::filter(mrd, SurveyId %in% surveys$SurveyId)
+  prd <- dplyr::filter(prd, SurveyId %in% surveys$SurveyId)
   ard <- dplyr::filter(ard, SurveyId %in% surveys$SurveyId)   
 
   ird_paths <- setNames(rdhs::get_datasets(ird), ird$SurveyId)
 
   if (nrow(mrd) > 0) {
     mrd_paths <- setNames(rdhs::get_datasets(mrd), mrd$SurveyId)
+    prd_paths <- setNames(rdhs::get_datasets(prd), prd$SurveyId)
   } else {
     mrd_paths <- list(NULL)
+    prd_paths <- list(NULL)
   }
   ard_paths <- setNames(rdhs::get_datasets(ard), ard$SurveyId)
 
@@ -592,7 +597,10 @@ create_individual_hiv_dhs <- function(surveys) {
                     SurveyId = surveys$SurveyId,
                     ird_path = ird_paths[surveys$SurveyId],
                     mrd_path = mrd_paths[surveys$SurveyId],
-                    ard_path = ard_paths[surveys$SurveyId])
+                    prd_path = prd_paths[surveys$SurveyId],
+                    ard_path = ard_paths[surveys$SurveyId],
+                    MinAgeMen = surveys$MinAgeMen,
+                    MaxAgeMen = surveys$MaxAgeMen)
 
   individual <- dplyr::bind_rows(individual)
   individual <- dplyr::left_join(individual,
@@ -604,7 +612,8 @@ create_individual_hiv_dhs <- function(surveys) {
 }
 
 
-extract_individual_hiv_dhs <- function(SurveyId, ird_path, mrd_path, ard_path){
+extract_individual_hiv_dhs <- function(SurveyId, ird_path, mrd_path, prd_path, ard_path,
+                                       MinAgeMen, MaxAgeMen){
 
   message("Parsing IR/MR/AR individual datasets: ", SurveyId)
 
@@ -636,12 +645,31 @@ extract_individual_hiv_dhs <- function(SurveyId, ird_path, mrd_path, ard_path){
                      dob_cmc = v011,
                      religion = tolower(haven::as_factor(v130)),
                      ethnicity = tolower(haven::as_factor(v131)),
-                     indweight = NA,
+                     indweight = v005 / 1e6,
                      artself)
 
   ## Male recode
   if (!is.null(mrd_path)) {
 
+    ## Calculate male subsample weight
+    pr <- readRDS(prd_path)
+    minage <- as.integer(MinAgeMen)
+    maxage <- as.integer(MaxAgeMen)
+
+    ## For whatever reasons, the continuous DHS from Sengal don't show
+    ## in the list of survey characteristics
+    if (SurveyId %in% c("SN2014DHS","SN2015DHS","SN2016DHS","SN2017DHS")) {
+      minage <- 15
+      maxage <- 59
+    }
+    
+    pr <- dplyr::filter(pr, hv103 == 1 & # de facto
+                            hv104 == 1 & # male
+                            hv105 >= minage & hv105 <= maxage)
+    pr$hv005 <- pr$hv005/1e6
+    male_factor <- sum(pr$hv005) / sum(pr$hv005 * (pr$hv118 == 1), na.rm=TRUE)
+
+    ## Male recode 
     mr <- readRDS(mrd_path)
     mr$aidsex <- haven::labelled(1, c("men" = 1, "women" = 2), "Sex")
 
@@ -663,7 +691,7 @@ extract_individual_hiv_dhs <- function(SurveyId, ird_path, mrd_path, ard_path){
                                 dob_cmc = mv011,
                                 religion = tolower(haven::as_factor(mv130)),
                                 ethnicity = tolower(haven::as_factor(mv131)),
-                                indweight = mv005 / 1e6,
+                                indweight = male_factor * mv005 / 1e6,
                                 artself)
              )
     
@@ -845,6 +873,7 @@ extract_circumcision_dhs <- function(SurveyId, mrd_path){
 
   dat
 }
+
 
 #' Create DHS survey meta data table
 #'

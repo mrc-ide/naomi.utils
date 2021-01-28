@@ -1,3 +1,12 @@
+# naomi.utils 0.0.9
+
+* Add function `create_hivtesting_dhs()` to extract individual HIV  testing
+   history variables from DHS.
+* Calculate male weighting factor to reweight individual weight to represent
+  adult population. Calculation follows description by Tom Pullum on DHS user
+  forum: https://userforum.dhsprogram.com/index.php?t=msg&th=6387&goto=13190&#msg_13190.
+  
+
 # naomi.utils 0.0.8
 
 * Handle countries where no surveys have MR datasets (e.g. Congo).
