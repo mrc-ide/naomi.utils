@@ -14,7 +14,7 @@ data.frame consisting of survey ID, cluster ID and individual
 demographic and HIV outcomes. See details.
 }
 \description{
-Create dataset of indiviaul demographic and HIV outcomes.
+Create dataset of individual demographic and HIV outcomes.
 }
 \details{
 The following fields are extracted:
