@@ -1,6 +1,6 @@
 Package: naomi.utils
 Title: Utility Functions For Naomi Datasets
-Version: 0.0.8
+Version: 0.0.9
 Authors@R: 
     person(given = "Jeffrey",
            family = "Eaton",

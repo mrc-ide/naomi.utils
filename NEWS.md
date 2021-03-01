@@ -1,5 +1,9 @@
 # naomi.utils 0.0.8
 
+* Use download.file(..., mode = "wb") in WorldPop extraction.
+
+# naomi.utils 0.0.8
+
 * Handle countries where no surveys have MR datasets (e.g. Congo).
 
 # naomi.utils 0.0.7

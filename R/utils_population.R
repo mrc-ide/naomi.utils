@@ -124,7 +124,7 @@ worldpop_extract_one <- function(areas, iso3, year, wp_sex, wp_age) {
   tmpf <- tempfile(fileext = ".tif")
   on.exit(unlink(tmpf, force = TRUE))
 
-  download.file(url, tmpf)
+  download.file(url, tmpf, mode = "wb")
   rast <- raster::raster(tmpf)
   population <- exactextractr::exact_extract(rast, areas, "sum")
 
