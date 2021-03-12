@@ -636,7 +636,7 @@ extract_individual_hiv_dhs <- function(SurveyId, ird_path, mrd_path, ard_path){
                      dob_cmc = v011,
                      religion = tolower(haven::as_factor(v130)),
                      ethnicity = tolower(haven::as_factor(v131)),
-                     indweight = NA,
+                     indweight = v005/1e6,
                      artself)
 
   ## Male recode
