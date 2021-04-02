@@ -1,3 +1,7 @@
+# naomi.utils 0.1.0
+
+* Extract sexual behaviour variables from DHS
+
 # naomi.utils 0.0.8
 
 * Use download.file(..., mode = "wb") in WorldPop extraction.

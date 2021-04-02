@@ -3,6 +3,12 @@
 #' This function recursively expands the list of clusters to produce a list
 #' of survey clusters within areas at each level.
 #'
+#' @param survey_clusters survey clusters dataset
+#' @param survey_regions survey regions dataset
+#' @param areas area hierarchy dataset
+#' @param top_level top level of the area hierarchy to expand (integer)
+#' @param bottom_level bottom level of area hierarchy to expand (integer)
+#'
 #' TODO: These should be examples - where is areas_long.rds now?
 #' areas_long <- readRDS(here::here("data/areas/areas_long.rds"))
 #' survey_clusters <- readRDS(here::here("data/survey/survey_clusters.rds"))
@@ -13,7 +19,8 @@
 #' Get clusters at level 1 areas only
 #' expand_survey_clusters(survey_clusters, areas_long, top_level = 1, bottom_level = 1)
 #'
-#' @keywords internal
+#' @noRd
+#' 
 expand_survey_clusters <- function(survey_clusters,
                                    survey_regions,
                                    areas,
@@ -521,7 +528,8 @@ calc_all_outcomes <- function(ind,
 #' @param age_group_include Vector of age agroups to include
 #'
 #' @return data frame with the unique sex/age-group combinations to be outputted
-
+#'
+#' @noRd
 id_sex_age_groups <- function(survey_meta,
                               sex,
                               age_groups) {
@@ -561,7 +569,7 @@ id_sex_age_groups <- function(survey_meta,
 #' @return grouped data frame with the survey clusters and each area_id/are_level
 #' corresponding to the cluster
 #'
-
+#' @noRd
 id_clust_area <- function(survey_meta,
                           survey_regions,
                           survey_clusters,
