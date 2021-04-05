@@ -12,11 +12,17 @@ expand_survey_clusters(
   bottom_level = max(areas$area_level)
 )
 }
-\description{
-This function recursively expands the list of clusters to produce a list
-of survey clusters within areas at each level.
-}
-\details{
+\arguments{
+\item{survey_clusters}{survey clusters dataset}
+
+\item{survey_regions}{survey regions dataset}
+
+\item{areas}{area hierarchy dataset}
+
+\item{top_level}{top level of the area hierarchy to expand (integer)}
+
+\item{bottom_level}{bottom level of area hierarchy to expand (integer)
+
 TODO: These should be examples - where is areas_long.rds now?
 areas_long <- readRDS(here::here("data/areas/areas_long.rds"))
 survey_clusters <- readRDS(here::here("data/survey/survey_clusters.rds"))
@@ -25,7 +31,9 @@ survey_regions <- readRDS(here::here("data/survey/survey_regions.rds"))
 expand_survey_clusters(survey_clusters, areas_long)
 
 Get clusters at level 1 areas only
-expand_survey_clusters(survey_clusters, areas_long, top_level = 1, bottom_level = 1)
+expand_survey_clusters(survey_clusters, areas_long, top_level = 1, bottom_level = 1)}
 }
-\keyword{Recursion}
-\keyword{internal}
+\description{
+This function recursively expands the list of clusters to produce a list
+of survey clusters within areas at each level.
+}
