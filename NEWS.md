@@ -1,3 +1,7 @@
+# naomi.utils 0.1.1
+
+* Update extracted DHS sexual behaviour variables
+
 # naomi.utils 0.1.0
 
 * Extract sexual behaviour variables from DHS
