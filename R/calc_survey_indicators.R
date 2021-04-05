@@ -236,7 +236,8 @@ calc_survey_indicators <- function(survey_meta,
   extra_vars <- NULL
 
   val <- calc_all_outcomes(ind, group_by_vars, split_vars,
-                           formula = formula , extra_vars, age_groups)
+                           formula = formula , extra_vars,
+                           survey_meta, areas, age_groups)
 
   val
 }
@@ -413,7 +414,8 @@ calc_survey_hiv_indicators <- function(survey_meta,
 
   val <- calc_all_outcomes(ind, group_by_vars, split_vars,
                            formula = ~ indicator + survey_id + area_id + res_type + sex + age_group +
-                             sex12m + eversex + sexcohab + sexnonreg + sexpaid12m + sti12m , extra_vars, age_groups)
+                             sex12m + eversex + sexcohab + sexnonreg + sexpaid12m + sti12m ,
+                           extra_vars, survey_meta, areas, age_groups)
 
   val
 }
@@ -425,6 +427,8 @@ calc_all_outcomes <- function(ind,
                               split_vars,
                               formula,
                               extra_vars,
+                              survey_meta,
+                              areas,
                               age_groups) {
   dat <- ind %>%
     dplyr::filter(!is.na(weights), weights > 0)
