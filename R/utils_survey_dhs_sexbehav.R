@@ -131,6 +131,7 @@ extract_sexbehav_dhs <- function(SurveyId, ird_path, mrd_path){
                                                        (!dat$v767b %in% cas_cats) &
                                                        (!dat$v767c %in% cas_cats)) ~ TRUE,
                                    dat$v766b == 99 ~ NA,
+                                   is.na(dat$sex12m) ~ NA,
                                    TRUE ~ FALSE)
 
   # sexnonreg = whether the person reports having non-regular sexual partner(s)
@@ -141,6 +142,7 @@ extract_sexbehav_dhs <- function(SurveyId, ird_path, mrd_path){
                                       (dat$v767a %in% cas_cats | dat$v767b %in% cas_cats |
                                          dat$v767c %in% cas_cats) ~ TRUE,
                                     dat$v766b == 99 ~ NA,
+                                    is.na(dat$sex12m) ~ NA,
                                     TRUE ~ FALSE)
 
   # sexpaid12m = whether the person reports having received gifts/cash/anything
