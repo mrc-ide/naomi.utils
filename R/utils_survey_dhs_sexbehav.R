@@ -18,6 +18,7 @@
 #'   * sexcohab
 #'   * sexnonreg
 #'   * sexpaid12mo
+#'   * giftsvar
 #'   * sti12mo
 #'
 #' Variable `eversex` is the outcome ever reporting sexual activity.
@@ -29,7 +30,9 @@
 #' `sexpaid12m` for females is whether respondent reports having had sex in return
 #' for cash, gifts, or anything else in the past 12 months (only asked of 15-24
 #' y/o women in DHS7) and for males is whether respondent reports having paid
-#' for sex in the past 12 months. Variable `sti12m` is whether a respondent
+#' for sex in the past 12 months. Variable `giftsvar` is an indicator of whether
+#' the survey includes the question among AGYW in DHS7 on cash/gifts/etc in
+#' exchange for sex. Variable `sti12m` is whether a respondent
 #' reports having any STD, genital sore/ulcer, or genital discharge in the last
 #' 12 months.
 #'
@@ -167,6 +170,9 @@ extract_sexbehav_dhs <- function(SurveyId, ird_path, mrd_path){
                                        TRUE ~ FALSE)
   }
 
+  # giftsvar = indicator for whether the survey includes any non-missing observations
+  # on question v791a (i.e. whether it was in the questionnaire)
+  dat <- dplyr::mutate(dat, giftsvar = ifelse(sum(!is.na(v791a))>0,1,0))
 
   # sti12m = whether the person reports having had an STI, genital sore/ulcer, or
   # genital discharge in the past 12 months (recode v763a-c)
@@ -186,6 +192,7 @@ extract_sexbehav_dhs <- function(SurveyId, ird_path, mrd_path){
   dat$sexnonreg <- as.integer(dat$sexnonreg)
   dat$sexpaid12m <- as.integer(dat$sexpaid12m)
   dat$sti12m <- as.integer(dat$sti12m)
+  dat$giftsvar <- as.integer(dat$giftsvar)
 
-  dplyr::select(dat, SurveyId, individual_id, eversex, sex12m, sexcohab, sexnonreg, sexpaid12m, sti12m)
+  dplyr::select(dat, SurveyId, individual_id, eversex, sex12m, sexcohab, sexnonreg, sexpaid12m, sti12m, giftsvar)
 }
