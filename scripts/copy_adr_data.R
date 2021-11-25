@@ -122,6 +122,22 @@ for (package in packages_copy) {
                     resource, package[["geo-location"]]))
     if (!dry_run) {
       tryCatch({
+        ## We want to add new columns "vl_tested_12mos" and
+        ## "vl_suppressed_12mos" to ART data so it passes validation
+        ## and remove year column as we no longer use this
+        if (resource == "inputs-unaids-art") {
+          x <- read.csv(path)
+          if (!("vl_tested_12mos" %in% colnames(x))) {
+            x$vl_tested_12mos <- NA_integer_
+          }
+          if (!("vl_suppressed_12mos" %in% colnames(x))) {
+            x$vl_suppressed_12mos <- NA_integer_
+          }
+          x$year <- NULL
+          path <- file.path(country_dir, paste0("updated", basename(path)))
+          write.csv(x, path, quote = FALSE, row.names = FALSE,
+                    na = "")
+        }
         new_resource <- ckanr::resource_create(
           new_package[["id"]],
           name = details[["name"]],
