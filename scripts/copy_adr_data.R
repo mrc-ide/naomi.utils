@@ -39,15 +39,24 @@ resources <- c("inputs-unaids-geographic", "inputs-unaids-anc",
 
 packages_src <- ckanr::package_search(q = sprintf("type:%s", src),
                                        rows = 1000)
-countries_src <- vapply(packages_src$results, "[[", character(1),
-                        "geo-location")
-
 packages_dest <- ckanr::package_search(q = sprintf("type:%s", dest),
                                        rows = 1000)
-countries_dest <- vapply(packages_dest$results, "[[", character(1),
-                         "geo-location")
+
+## Don't migrate data for Fjeltopp, Naomi development team, Imperial, unaids
+## or avenir orgs as these are usually duplicates of country data
+orgs_to_ignore <- c("fjelltopp", "avenir-health", "imperial-college-london",
+                    "naomi-development-team", "unaids")
+orgs <- vapply(packages_src$results,
+               function(result) {
+                 result[["organization"]][["name"]]
+               }, character(1))
+packages_src$results <- packages_src$results[!(orgs %in% orgs_to_ignore)]
 
 ## Only create new packages for countries which don't already exist
+countries_src <- vapply(packages_src$results, "[[", character(1),
+                        "geo-location")
+countries_dest <- vapply(packages_dest$results, "[[", character(1),
+                         "geo-location")
 countries_keep <- !(countries_src %in% countries_dest)
 countries_src <- countries_src[countries_keep]
 
@@ -57,7 +66,8 @@ for (country in multiple) {
   message(sprintf("%s has more than 1 %s dataset, don't know how to migrate",
                   country, src))
 }
-countries_to_copy <- countries_src[!(countries_src %in% c(multiple, "Albania"))]
+countries_to_copy <- countries_src[!(countries_src %in% multiple)]
+countries_to_copy <- c("Cameroon", "Mali")
 
 packages_keep <- vapply(packages_src$results, function(package) {
   package[["geo-location"]] %in% countries_to_copy
@@ -122,11 +132,14 @@ for (package in packages_copy) {
                     resource, package[["geo-location"]]))
     if (!dry_run) {
       tryCatch({
-        ## We want to add new columns "vl_tested_12mos" and
+        ## We want to add new columns "art_new", "vl_tested_12mos" and
         ## "vl_suppressed_12mos" to ART data so it passes validation
         ## and remove year column as we no longer use this
         if (resource == "inputs-unaids-art") {
           x <- read.csv(path)
+          if (!("art_new" %in% colnames(x))) {
+            x$art_new <- NA_integer_
+          }
           if (!("vl_tested_12mos" %in% colnames(x))) {
             x$vl_tested_12mos <- NA_integer_
           }
