@@ -27,6 +27,7 @@ if (site == "prod") {
 } else {
   stop("Site must be prod or dev")
 }
+message("Running migration on site ", url)
 
 ckanr::ckanr_setup(url = url, key = key)
 src <- "inputs-unaids-estimates"
@@ -36,6 +37,24 @@ dest_name <- "HIV Estimates 2022"
 resources <- c("inputs-unaids-geographic", "inputs-unaids-anc",
                "inputs-unaids-art", "inputs-unaids-survey",
                "inputs-unaids-population", "inputs-unaids-spectrum-file")
+
+## No built in way to send custom commands to CKAN so do a gross hack
+ckan_create_release <- function(id) {
+  res <- ckanr:::ckan_POST(url = ckanr::get_default_url(),
+                    method = "dataset_version_create",
+                    body = jsonlite::toJSON(list(
+                      dataset_id = id,
+                      name = "2021 data transfer",
+                      notes = paste0("Data automatically transferred from ",
+                                     "2021 dataset. Added blank columns to ART",
+                                     " data for new indicators and shiny90 ",
+                                     "input data extracted from Spectrum file.")
+                    ), auto_unbox = TRUE),
+                    key = ckanr::get_default_key(),
+                    encode = "json",
+                    headers = ckanr:::ctj())
+  ckanr:::jsl(res)
+}
 
 packages_src <- ckanr::package_search(q = sprintf("type:%s", src),
                                        rows = 1000)
@@ -108,6 +127,7 @@ for (package in packages_copy) {
     }
     type
   }, character(1))
+  create_release <- TRUE
   for (resource in intersect(resources, resource_types)) {
     details <- package$resources[resource_types == resource]
     if (length(details) > 1) {
@@ -163,8 +183,19 @@ for (package in packages_copy) {
       error = function(e) {
         message(sprintf("Failed to upload file %s for country %s - skipping",
                         resource, package[["geo-location"]]))
+        create_release <<- FALSE
       })
     }
+  }
+  if (!dry_run && create_release) {
+    message(sprintf("Creating release for %s", package[["geo-location"]]))
+    tryCatch({
+      ckan_create_release(new_package[["id"]])
+    },
+    error = function(e) {
+      message(sprintf("Failed to create release for country %s",
+                      package[["geo-location"]]))
+    })
   }
   if (dry_run) {
     package_url <- "dry run - not created"
