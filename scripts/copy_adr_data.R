@@ -47,8 +47,7 @@ ckan_create_release <- function(id) {
                       name = "2021 data transfer",
                       notes = paste0("Data automatically transferred from ",
                                      "2021 dataset. Added blank columns to ART",
-                                     " data for new indicators and shiny90 ",
-                                     "input data extracted from Spectrum file.")
+                                     " data for new indicators.")
                     ), auto_unbox = TRUE),
                     key = ckanr::get_default_key(),
                     encode = "json",
