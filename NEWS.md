@@ -1,3 +1,7 @@
+# naomi.utils 0.0.9
+
+* Patch `create_surveys_dhs()` to ensure that numeric is always returned for `MinAgeMen`, `MaxAgeMen`, `MinAgeWomen`, `MaxAgeWomen` (issue #13, @athowes).
+
 # naomi.utils 0.0.8
 
 * Use download.file(..., mode = "wb") in WorldPop extraction.
