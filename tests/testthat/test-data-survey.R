@@ -15,3 +15,14 @@ test_that("get_mid_calendar_quarter() returns error if arguments not Date", {
   expect_error(get_mid_calendar_quarter("2016-01-01", "2015-12-01"),
                "start_date <= end_date is not TRUE")
 })
+
+
+test_that("create_survey_dhs() returns numeric for min/max age", {
+
+  surveys <- create_surveys_dhs("ZWE", survey_characteristics = NULL)
+
+  expect_true(is.numeric(surveys$MinAgeMen))
+  expect_true(is.numeric(surveys$MaxAgeMen))
+  expect_true(is.numeric(surveys$MinAgeWomen))
+  expect_true(is.numeric(surveys$MaxAgeWomen))
+})
