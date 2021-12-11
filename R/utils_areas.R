@@ -154,6 +154,7 @@ write_sf_shp_zip <- function(obj, zipfile, overwrite = FALSE) {
 #'  with a map of mismatching IDs. If unique age groups area present,
 #'  an error will be generated.
 #'
+#' @export
 assert_pop_data_check <- function(pop_data, boundaries) {
 
   x <- pop_data["area_id"]
@@ -186,6 +187,7 @@ assert_pop_data_check <- function(pop_data, boundaries) {
 #'  two datasets, an error will be generated along
 #'  with a map of mismatching IDs
 #'
+#' @export
 assert_area_id_check <- function(df1, df2, key) {
   x <- df1[key]
   y <- df2[key]

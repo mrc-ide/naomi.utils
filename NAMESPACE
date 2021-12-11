@@ -2,7 +2,9 @@
 
 export("%>%")
 export(allocate_areas_survey_regions)
+export(assert_area_id_check)
 export(assert_pop_age_group)
+export(assert_pop_data_check)
 export(assign_dhs_cluster_areas)
 export(calc_survey_hiv_indicators)
 export(check_boundaries)
