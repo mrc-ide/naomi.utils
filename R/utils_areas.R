@@ -160,21 +160,26 @@ assert_pop_data_check <- function(pop_data, boundaries) {
   x <- pop_data["area_id"]
   y <- boundaries["area_id"]
 
-  if (nrow(setdiff(x, y)) != 0 || nrow(setdiff(y, x)) != 0 ) {
-    x1 <- setdiff(x, y)
+  if (nrow(dplyr::setdiff(x, y)) > 0 ||
+      nrow(dplyr::setdiff(y, x)) > 0 ) {
+    x1 <- dplyr::setdiff(x, y)
     x1$source <- "pop_data"
-    y1 <- setdiff(y, x)
+    y1 <- dplyr::setdiff(y, x)
     y1$source <- "boundaries"
 
     var_map <- rbind(x1, y1)
     print(var_map, n=nrow(var_map))
   }
 
-  if(nrow(setdiff(x,y))!=0 || nrow(setdiff(y, x)) != 0) stop("Area hierarchy IDs do not match population data")
+  if (nrow(dplyr::setdiff(x,y)) > 0 || nrow(dplyr::setdiff(y, x)) > 0) {
+    stop("Area hierarchy IDs do not match population data")
+  }
 
-  if(!all(pop_data$age_group %in% naomi::get_five_year_age_groups())) stop("All age groups not present in population data")
-
-
+  if (!all(pop_data$age_group %in% naomi::get_five_year_age_groups())) {
+    stop("All age groups not present in population data")
+  }
+  
+  invisible(TRUE)
 }
 
 #' Checks for consistent area IDs between two datasets
@@ -192,17 +197,21 @@ assert_area_id_check <- function(df1, df2, key) {
   x <- df1[key]
   y <- df2[key]
 
-  if (nrow(setdiff(x, y)) != 0) {
-    x1 <- setdiff(x, y)
+  if (nrow(dplyr::setdiff(x, y)) > 0) {
+    x1 <- dplyr::setdiff(x, y)
     x1$source <- paste(substitute(df1), collapse = " ")
-    y1 <- setdiff(y, x)
+    y1 <- dplyr::setdiff(y, x)
     y1$source <- paste(substitute(df2), collapse = " ")
 
     var_map <- rbind(x1, y1)
     print(var_map, n=nrow(var_map))
   }
 
-  if(nrow(setdiff(x,y))!=0) stop("Area hierarchy mismatch")
+  if (nrow(dplyr::setdiff(x,y)) > 0) {
+    stop("Area hierarchy mismatch")
+  }
+
+  invisible(TRUE)
 }
 
 #' Generate single Naomi area id
