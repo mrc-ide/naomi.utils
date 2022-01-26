@@ -145,6 +145,7 @@ calc_survey_indicators <- function(survey_meta,
                                    area_bottom_level = max(areas$area_level),
                                    by_res_type = FALSE,
                                    by_hiv = FALSE,
+                                   indicators = NULL,
                                    formula = ~ indicator + survey_id + area_id + res_type + hiv_type + sex + age_group) {
 
   ## 1. Identify age groups to calculate for each survey_id
@@ -162,16 +163,20 @@ calc_survey_indicators <- function(survey_meta,
   ## 3. Expand individuals dataset to repeat for all individiuals within each
   ##    age/sex group for a given survey
 
-  ## First concatenate list of all "other" survey data
-  survey_other <- survey_other %>%
-    Reduce(function(x,y) dplyr::inner_join(x, y, by= c("survey_id", "individual_id")), .)
+  ind <- dplyr::filter(survey_individuals, survey_id %in% survey_meta$survey_id)
 
-  ind <- survey_individuals %>%
-    dplyr::inner_join(survey_biomarker,
-                      by = c("survey_id", "individual_id")) %>%
-    dplyr::inner_join(survey_other,
-                      by = c("survey_id", "individual_id")) %>%
-    dplyr::filter(survey_id %in% survey_meta$survey_id)
+  if (!is.null(survey_other)) {
+
+    ## First concatenate list of all "other" survey data
+    survey_other <- survey_other %>%
+      Reduce(function(x,y) dplyr::full_join(x, y, by= c("survey_id", "individual_id")), .)
+
+    ind <- dplyr::left_join(ind, survey_other, by = c("survey_id", "individual_id"))
+  }
+
+  if (!is.null(survey_biomarker)) {
+    ind <- dplyr::left_join(ind, survey_biomarker, by = c("survey_id", "individual_id"))
+  }
 
   ## Data prep for non-biomarker outcomes
   ## for non-HIV outcomes, we're looking for all the variables from survey_other
@@ -220,9 +225,16 @@ calc_survey_indicators <- function(survey_meta,
   }
 
   ## 5. Pivot to long format
+
+  if (is.null(indicators)) {
+    indicators  <- setdiff(names(survey_other),c("survey_id","individual_id"))
+  }
+
+  stopifnot(indicators %in% names(ind))
+
   ind <- ind %>%
     tidyr::pivot_longer(
-      cols = setdiff(names(survey_other),c("survey_id","individual_id")),
+      cols = indicators,
       names_to = "indicator",
       values_to = "estimate"
     ) %>%
@@ -440,13 +452,9 @@ calc_all_outcomes <- function(ind,
                      n_eff_kish = sum(weights)^2 / sum(weights^2),
                      .groups = "drop")
 
-  dat$spl <- apply(dplyr::select(dat,all_of(split_vars)),1,paste,collapse=" ")
+  dat$spl <- do.call(paste, as.list(dplyr::select(dat, all_of(split_vars))))
 
-  ## Find better way to drop the NA's for the variable without dropping all NA's prior
-  ## to inputting
-  dat <- dat %>% filter(!grepl(" NA",substr(spl,15,1000)))
-
-  datspl <- dat %>% split(.$spl)
+  datspl <- split(dat, dat$spl)
 
   do_svymean <- function(df,
                          formula = ~ indicator + survey_id + area_id + res_type + sex + age_group) {
