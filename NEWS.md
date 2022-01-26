@@ -6,6 +6,14 @@
 
 * Extract sexual behaviour variables from DHS
 
+# naomi.utils 0.0.10
+
+* Patch `assert_pop_data_check()` and `assert_area_id_check()` to specify `dplyr::setdiff()` (instead of base `generics::setdiff()`.
+
+# naomi.utils 0.0.9
+
+* Patch `create_surveys_dhs()` to ensure that numeric is always returned for `MinAgeMen`, `MaxAgeMen`, `MinAgeWomen`, `MaxAgeWomen` (issue #13, @athowes).
+
 # naomi.utils 0.0.8
 
 * Use download.file(..., mode = "wb") in WorldPop extraction.
