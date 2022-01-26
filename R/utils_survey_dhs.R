@@ -44,6 +44,11 @@ create_surveys_dhs <- function(iso3,
       as.Date(surveys$FieldworkEnd)+15
     )
 
+  surveys$MinAgeMen <- as.integer(surveys$MinAgeMen)
+  surveys$MaxAgeMen <- as.integer(surveys$MaxAgeMen)
+  surveys$MinAgeWomen <- as.integer(surveys$MinAgeWomen)
+  surveys$MaxAgeWomen <- as.integer(surveys$MaxAgeWomen)
+
   surveys
 }
 

@@ -18,6 +18,7 @@
 #'   * sexcohab
 #'   * sexnonreg
 #'   * sexpaid12mo
+#'   * giftsvar
 #'   * sti12mo
 #'
 #' Variable `eversex` is the outcome ever reporting sexual activity.
@@ -29,7 +30,9 @@
 #' `sexpaid12m` for females is whether respondent reports having had sex in return
 #' for cash, gifts, or anything else in the past 12 months (only asked of 15-24
 #' y/o women in DHS7) and for males is whether respondent reports having paid
-#' for sex in the past 12 months. Variable `sti12m` is whether a respondent
+#' for sex in the past 12 months. Variable `giftsvar` is an indicator of whether
+#' the survey includes the question among AGYW in DHS7 on cash/gifts/etc in
+#' exchange for sex. Variable `sti12m` is whether a respondent
 #' reports having any STD, genital sore/ulcer, or genital discharge in the last
 #' 12 months.
 #'
@@ -116,25 +119,33 @@ extract_sexbehav_dhs <- function(SurveyId, ird_path, mrd_path){
 
   # sexcohab = whether reports sex with only one cohabiting partner in the past
   # 12 mo.  Recode v766b (# partners in past 12 mo) and v767a-c (relationship
-  # w/partners, 1/2 is cohabiting)
+  # w/partners)
   # Currently if your partner type is missing or inconsistent and
   # you had only one partner in the past year you are classified as a "yes"
   # for having sex with only one cohabiting partner
+
+  # v767a-c coding does not match DHS questionnaire and isn't labelled - correct is:
+  # 1 = spouse, 2 = boyfriend not living with respondent, 3 = other friend
+  # 4 = casual acquaintance, 5 = relative, 6 = commercial sex worker,
+  # 7 = live-in partner, 96 = other
+  cas_cats <- c(2, 3, 4, 5, 6, 96)
   dat$sexcohab <- dplyr::case_when(dat$sex12m == FALSE ~ FALSE,
-                                   dat$v766b == 1 & ((!dat$v767a %in% 3:6) &
-                                                       (!dat$v767b %in% 3:6) &
-                                                       (!dat$v767c %in% 3:6)) ~ TRUE,
+                                   dat$v766b == 1 & ((!dat$v767a %in% cas_cats) &
+                                                       (!dat$v767b %in% cas_cats) &
+                                                       (!dat$v767c %in% cas_cats)) ~ TRUE,
                                    dat$v766b == 99 ~ NA,
+                                   is.na(dat$sex12m) ~ NA,
                                    TRUE ~ FALSE)
 
   # sexnonreg = whether the person reports having non-regular sexual partner(s)
   # or multiple partners in the past year. Recode v766b (# partners in past 12 mo)
-  # and v767a-c (relationship w/partners, 1/2 is cohabiting)
+  # and v767a-c (relationship w/partners)
   dat$sexnonreg <- dplyr::case_when(dat$sex12m == FALSE ~ FALSE,
                                     (dat$v766b > 1 & dat$v766b != 99) |
-                                      (dat$v767a %in% 3:6 | dat$v767b %in% 3:6 |
-                                         dat$v767c %in% 3:6) ~ TRUE,
+                                      (dat$v767a %in% cas_cats | dat$v767b %in% cas_cats |
+                                         dat$v767c %in% cas_cats) ~ TRUE,
                                     dat$v766b == 99 ~ NA,
+                                    is.na(dat$sex12m) ~ NA,
                                     TRUE ~ FALSE)
 
   # sexpaid12m = whether the person reports having received gifts/cash/anything
@@ -144,21 +155,24 @@ extract_sexbehav_dhs <- function(SurveyId, ird_path, mrd_path){
   # make this var NA if woman is over 25 or if v501 (marital status) is missing
   if(!is.null(mrd_path)) {
     dat$sexpaid12m <- dplyr::case_when(dat$v791a == 1 |
-                                         (dat$v767a == 5 | dat$v767b == 5 |
-                                            dat$v767c == 5) | dat$v793 == 1 ~ TRUE,
+                                         (dat$v767a == 6 | dat$v767b == 6 |
+                                            dat$v767c == 6) | dat$v793 == 1 ~ TRUE,
                                        (is.na(dat$v791a) & is.na(dat$v767a) & is.na(dat$v767b) &
                                           is.na(dat$v767c)) | (is.na(dat$v793) &
                                                                  is.na(dat$v767a) & is.na(dat$v767b) & is.na(dat$v767c)) ~ NA,
                                        TRUE ~ FALSE)
   } else {
     dat$sexpaid12m <- dplyr::case_when(dat$v791a == 1 |
-                                         (dat$v767a == 5 | dat$v767b == 5 |
-                                            dat$v767c == 5) ~ TRUE,
+                                         (dat$v767a == 6 | dat$v767b == 6 |
+                                            dat$v767c == 6) ~ TRUE,
                                        (is.na(dat$v791a) & is.na(dat$v767a) & is.na(dat$v767b) &
                                           is.na(dat$v767c)) ~ NA,
                                        TRUE ~ FALSE)
   }
 
+  # giftsvar = indicator for whether the survey includes any non-missing observations
+  # on question v791a (i.e. whether it was in the questionnaire)
+  dat <- dplyr::mutate(dat, giftsvar = ifelse(sum(!is.na(v791a))>0,1,0))
 
   # sti12m = whether the person reports having had an STI, genital sore/ulcer, or
   # genital discharge in the past 12 months (recode v763a-c)
@@ -178,6 +192,7 @@ extract_sexbehav_dhs <- function(SurveyId, ird_path, mrd_path){
   dat$sexnonreg <- as.integer(dat$sexnonreg)
   dat$sexpaid12m <- as.integer(dat$sexpaid12m)
   dat$sti12m <- as.integer(dat$sti12m)
+  dat$giftsvar <- as.integer(dat$giftsvar)
 
-  dplyr::select(dat, SurveyId, individual_id, eversex, sex12m, sexcohab, sexnonreg, sexpaid12m, sti12m)
+  dplyr::select(dat, SurveyId, individual_id, eversex, sex12m, sexcohab, sexnonreg, sexpaid12m, sti12m, giftsvar)
 }
