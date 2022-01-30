@@ -146,7 +146,7 @@ calc_survey_indicators <- function(survey_meta,
                                    by_res_type = FALSE,
                                    by_hiv = FALSE,
                                    indicators = NULL,
-                                   formula = ~ indicator + survey_id + area_id + res_type + hiv_type + sex + age_group) {
+                                   stratification = ~survey_id + area_id + res_type + hiv_type + sex + age_group) {
 
   ## 1. Identify age groups to calculate for each survey_id
   age_groups <- naomi::get_age_groups()
@@ -243,8 +243,11 @@ calc_survey_indicators <- function(survey_meta,
 
   ## 6. Calculate outcomes
   ## Note: using survey region as strata right now. Most DHS use region + res_type
-  group_by_vars <- c("indicator", "survey_id", "area_id", "res_type","hiv_type", "sex", "age_group")
-  split_vars <- c("indicator", "survey_id", "area_level", "res_type","hiv_type", "sex", "age_group")
+
+  formula <- update(stratification, ~indicator + .)
+  group_by_vars <- labels(terms(formula))
+  split_vars <- c(setdiff(group_by_vars, "area_id"), "area_level")
+  
   extra_vars <- NULL
 
   val <- calc_all_outcomes(ind, group_by_vars, split_vars,
@@ -502,7 +505,7 @@ calc_all_outcomes <- function(ind,
       area_level,
       area_sort_order,
       area_id,
-      factor(res_type, c("all", "urban", "rural")),
+      # factor(res_type, c("all", "urban", "rural")),
       # factor(hiv_type, c("all", "positive", "negative")),
       factor(sex, c("both", "male", "female")),
       age_group_sort_order
@@ -513,7 +516,7 @@ calc_all_outcomes <- function(ind,
       survey_mid_calendar_quarter,
       area_id,
       area_name,
-      res_type,
+      any_of("res_type"),
       all_of(extra_vars),
       sex,
       age_group,
