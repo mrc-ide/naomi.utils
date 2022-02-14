@@ -30,14 +30,18 @@ create_surveys_dhs <- function(iso3,
   assert_iso3(iso3)
 
   countries <- rdhs::dhs_countries()
-  dhs_cc <- countries$DHS_CountryCode[countries$ISO3_CountryCode == iso3]
+  dhs_cc <- countries$DHS_CountryCode[countries$ISO3_CountryCode %in% iso3]
 
   stopifnot(grepl("[A-Z]{2}", dhs_cc))
 
   surveys <- rdhs::dhs_surveys(countryIds = dhs_cc,
                                surveyType = survey_type,
                                surveyCharacteristicIds = survey_characteristics)
-  surveys$survey_id <- paste0(iso3, surveys$SurveyYear, surveys$SurveyType)
+
+  surveys <- dplyr::left_join(surveys, countries[c("DHS_CountryCode", "ISO3_CountryCode")],
+                              by = "DHS_CountryCode")
+
+  surveys$survey_id <- paste0(surveys$ISO3_CountryCode, surveys$SurveyYear, surveys$SurveyType)
   surveys$survey_mid_calendar_quarter <-
     get_mid_calendar_quarter(
       as.Date(surveys$FieldworkStart)+15,
@@ -576,14 +580,17 @@ assign_dhs_cluster_areas <- function(survey_clusters, survey_region_areas) {
 #' @export
 create_individual_hiv_dhs <- function(surveys) {
 
+  prd <- rdhs::dhs_datasets(fileType = "PR", fileFormat = "flat")
   ird <- rdhs::dhs_datasets(fileType = "IR", fileFormat = "flat")
   mrd <- rdhs::dhs_datasets(fileType = "MR", fileFormat = "flat")
   ard <- rdhs::dhs_datasets(fileType = "AR", fileFormat = "flat")
 
+  prd <- dplyr::filter(prd, SurveyId %in% surveys$SurveyId) 
   ird <- dplyr::filter(ird, SurveyId %in% surveys$SurveyId) 
   mrd <- dplyr::filter(mrd, SurveyId %in% surveys$SurveyId)
   ard <- dplyr::filter(ard, SurveyId %in% surveys$SurveyId)   
 
+  prd_paths <- setNames(rdhs::get_datasets(prd), prd$SurveyId)
   ird_paths <- setNames(rdhs::get_datasets(ird), ird$SurveyId)
 
   if (nrow(mrd) > 0) {
@@ -591,13 +598,20 @@ create_individual_hiv_dhs <- function(surveys) {
   } else {
     mrd_paths <- list(NULL)
   }
-  ard_paths <- setNames(rdhs::get_datasets(ard), ard$SurveyId)
+  if (nrow(ard) > 0) {
+    ard_paths <- setNames(rdhs::get_datasets(ard), ard$SurveyId)
+  } else {
+    ard_paths <- list(NULL)
+  }
 
   individual <- Map(extract_individual_hiv_dhs,
                     SurveyId = surveys$SurveyId,
+                    prd_path = prd_paths[surveys$SurveyId],
                     ird_path = ird_paths[surveys$SurveyId],
                     mrd_path = mrd_paths[surveys$SurveyId],
-                    ard_path = ard_paths[surveys$SurveyId])
+                    ard_path = ard_paths[surveys$SurveyId],
+                    MinAgeMen = surveys$MinAgeMen,
+                    MaxAgeMen = surveys$MaxAgeMen)
 
   individual <- dplyr::bind_rows(individual)
   individual <- dplyr::left_join(individual,
@@ -609,7 +623,8 @@ create_individual_hiv_dhs <- function(surveys) {
 }
 
 
-extract_individual_hiv_dhs <- function(SurveyId, ird_path, mrd_path, ard_path){
+extract_individual_hiv_dhs <- function(SurveyId, prd_path, ird_path, mrd_path, ard_path,
+                                       MinAgeMen, MaxAgeMen){
 
   message("Parsing IR/MR/AR individual datasets: ", SurveyId)
 
@@ -630,6 +645,13 @@ extract_individual_hiv_dhs <- function(SurveyId, ird_path, mrd_path, ard_path){
   else
     ir$artself <- NA
 
+  if (is.null(ir$v130)) {
+    ir$v130 <- NA
+  }
+  if (is.null(ir$v131)) {
+    ir$v131 <- NA
+  }
+  
   dat <- ir %>%
     dplyr::transmute(cluster_id = v001,
                      individual_id = caseid,
@@ -641,19 +663,41 @@ extract_individual_hiv_dhs <- function(SurveyId, ird_path, mrd_path, ard_path){
                      dob_cmc = v011,
                      religion = tolower(haven::as_factor(v130)),
                      ethnicity = tolower(haven::as_factor(v131)),
-                     indweight = NA,
+                     indweight = v005 / 1e6,
                      artself)
 
   ## Male recode
   if (!is.null(mrd_path)) {
 
+    ## Calculate male subsample weight
+    ## https://userforum.dhsprogram.com/index.php?t=msg&th=6387&goto=13190&#msg_13190
+    ## Note: Tom Pullum comments "It would be slightly better to calculate separate
+    ##       factors within each stratum." This is not implemented yet.
+    pr <- readRDS(prd_path)
+    minage <- as.integer(MinAgeMen)
+    maxage <- as.integer(MaxAgeMen)
+    ## For whatever reasons, the continuous DHS from Sengal don't show in the
+    ## list of survey characteristics
+    if (SurveyId %in% c("SN2014DHS","SN2015DHS","SN2016DHS","SN2017DHS")) {
+      minage <- 15
+      maxage <- 59
+    }
+    pr <- pr %>%
+      dplyr::filter(hv103 == 1, # de facto
+                    hv104 == 1, # male
+                    hv105 >= minage,
+                    hv105 <= maxage)
+    male_factor <- sum(pr$hv005) / sum(pr$hv005 * (pr$hv118 == 1), na.rm=TRUE)
+
+    ## Extract male recode data
     mr <- readRDS(mrd_path)
     mr$aidsex <- haven::labelled(1, c("men" = 1, "women" = 2), "Sex")
 
-    if(SurveyId == "MZ2015AIS")
+    if(SurveyId == "MZ2015AIS") {
       mr$artself <- if_else(mr$sm519 == 1, 1L, NA_integer_)
-    else
+    } else {
       mr$artself <- NA
+    }
 
     dat <- dat %>%
       dplyr::bind_rows(
@@ -668,7 +712,7 @@ extract_individual_hiv_dhs <- function(SurveyId, ird_path, mrd_path, ard_path){
                                 dob_cmc = mv011,
                                 religion = tolower(haven::as_factor(mv130)),
                                 ethnicity = tolower(haven::as_factor(mv131)),
-                                indweight = mv005 / 1e6,
+                                indweight = male_factor * mv005 / 1e6,
                                 artself)
              )
     
