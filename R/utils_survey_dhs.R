@@ -571,10 +571,12 @@ assign_dhs_cluster_areas <- function(survey_clusters, survey_region_areas) {
 #' @export
 create_individual_hiv_dhs <- function(surveys, clear_rdhs_cache = FALSE) {
 
+  prd <- rdhs::dhs_datasets(fileType = "PR", fileFormat = "flat")
   ird <- rdhs::dhs_datasets(fileType = "IR", fileFormat = "flat")
   mrd <- rdhs::dhs_datasets(fileType = "MR", fileFormat = "flat")
   ard <- rdhs::dhs_datasets(fileType = "AR", fileFormat = "flat")
 
+  prd <- dplyr::filter(prd, SurveyId %in% surveys$SurveyId)
   ird <- dplyr::filter(ird, SurveyId %in% surveys$SurveyId)
   mrd <- dplyr::filter(mrd, SurveyId %in% surveys$SurveyId)
   ard <- dplyr::filter(ard, SurveyId %in% surveys$SurveyId)
@@ -586,7 +588,14 @@ create_individual_hiv_dhs <- function(surveys, clear_rdhs_cache = FALSE) {
   } else {
     mrd_paths <- list(NULL)
   }
+
   ard_paths <- setNames(rdhs::get_datasets(ard, clear_cache = clear_rdhs_cache), ard$SurveyId)
+
+  if (nrow(ard) > 0) {
+    ard_paths <- setNames(rdhs::get_datasets(ard, clear_cache = clear_rdhs_cache), ard$SurveyId)
+  } else {
+    ard_paths <- list(NULL)
+  }
 
   individual <- Map(extract_individual_hiv_dhs,
                     SurveyId = surveys$SurveyId,
