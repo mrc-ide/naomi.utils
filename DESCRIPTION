@@ -1,6 +1,6 @@
 Package: naomi.utils
 Title: Utility Functions For Naomi Datasets
-Version: 0.0.9
+Version: 0.0.11
 Authors@R: 
     person(given = "Jeffrey",
            family = "Eaton",
@@ -30,4 +30,4 @@ Suggests:
 Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.1.1
+RoxygenNote: 7.1.2
