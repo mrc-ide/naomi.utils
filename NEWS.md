@@ -1,3 +1,7 @@
+# naomi.utils 0.0.12
+
+* Add `clear_rdhs_cache` argument to `rdhs::download_dataset()` call
+
 # naomi.utils 0.0.11
 
 * Extract individual survey weights for all respondents and adjust male survey weights
