@@ -3,7 +3,7 @@
 #'
 #' Copy a PJNZ file to a new location an delete everything except for the
 #' .DP and .PJN files.
-#' 
+#'
 #' @param pjnz file path to source PJNZ
 #' @param out file path to save output
 #' @param shiny90 file path to external .shiny90 zip (optional)
@@ -11,12 +11,12 @@
 #'   of a .shiny90 file already in the PJNZ with the provided path.
 #'   The default behaviour is not to replace the .shiny90 file
 #'   if it already exists in the PJNZ.
-#' 
+#'
 #' @details
 #'
 #' Both pjnz and out must be length 1. To apply to multiple files, use
 #' `Map` function, e.g. `Map(copy_pjnz_extract, pjnz_list, out_list)`.
-#' 
+#'
 #' The file must be renamed (pjnz cannot equal out) to avoid inadvertently
 #' deleting components from an archived PJNZ file.
 #'
@@ -57,7 +57,7 @@ copy_pjnz_extract <- function(pjnz, out, shiny90 = NULL, force_shiny90 = FALSE) 
 #'
 #' @export
 read_pjnz_region_code <- function(pjnz) {
-  pjnfile <- grep(".PJN$", unzip(pjnz, list = TRUE)$Name, value = TRUE)
+  pjnfile <- grep(".PJN$", utils::unzip(pjnz, list = TRUE)$Name, value = TRUE)
   pjn <- read.csv(unz(pjnz, pjnfile), as.is = TRUE)
   region_code <- pjn[which(pjn[, 1] == "<Projection Parameters - Subnational Region Name2>") + 3, 4]
   as.integer(region_code)
