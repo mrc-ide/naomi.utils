@@ -30,7 +30,7 @@ expand_survey_clusters <- function(survey_clusters,
     stop("Survey region area id not in area hierarchy: ",
          paste0(setdiff(survey_regions$survey_region_area_id, areas$area_id), collapse = ", "))
   }
-  
+
   clusters <- survey_clusters %>%
     dplyr::select(survey_id, cluster_id, res_type, survey_region_id, geoloc_area_id) %>%
     dplyr::left_join(
@@ -169,12 +169,12 @@ calc_survey_hiv_indicators <- function(survey_meta,
     dplyr::group_by(survey_id, cluster_id, area_id) %>%
     dplyr::filter(dplyr::row_number() == 1)
 
-  ## 3. Expand individuals dataset to repeat for all individiuals within each
+  ## 3. Expand individuals dataset to repeat for all individuals within each
   ##    age/sex group for a given survey
 
   ind <- survey_individuals %>%
     dplyr::inner_join(survey_biomarker,
-                      by = c("survey_id", "individual_id")) %>%
+                      by = c("survey_id", "cluster_id", "individual_id")) %>%
     dplyr::filter(survey_id %in% survey_meta$survey_id,
                   !is.na(hivstatus)) %>%
     dplyr::select(survey_id, cluster_id, sex, age, hivweight, hivstatus, artself, arv, vls, recent) %>%
@@ -330,7 +330,7 @@ calc_logit_confint <- function(estimate, std_error, tail, conf.level = 0.95) {
   crit <- qnorm(1 - (1 - conf.level) / 2) * switch(tail, "lower" = -1, "upper" = 1)
   lest <- stats::qlogis(estimate)
   lest_se <- std_error / (estimate * (1 - estimate))
-    
+
   ifelse(estimate < 1 & estimate > 0, stats::plogis(lest + crit * lest_se), NA_real_)
 }
 
