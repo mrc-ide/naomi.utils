@@ -1,3 +1,8 @@
+# naomi.utils 0.1.11
+
+* Allow optional specification of cores for parallel computation, which may 
+help with memory problems when too many cores are used. 
+
 # naomi.utils 0.1.1
 
 * Update extracted DHS sexual behaviour variables
