@@ -119,8 +119,6 @@ expand_survey_clusters <- function(survey_clusters,
 #' @param by_res_type Whether to stratify estimates by urban/rural res_type; logical.
 #' @param hiv_outcomes Whether to output only biomarker outcomes; logical.
 #' @param by_hiv Whether to stratify non-HIV outcomes by HIV status; logical.
-#' @param mc.cores Optional specification of number of cores used for parallel
-#' computation. Leaving NULL uses all available cores, Default: NULL
 #'
 #'
 #' @details
@@ -148,8 +146,7 @@ calc_survey_indicators <- function(survey_meta,
                                    by_res_type = FALSE,
                                    by_hiv = FALSE,
                                    indicators = NULL,
-                                   stratification = ~survey_id + area_id + res_type + hiv_type + sex + age_group,
-                                   mc.cores = NULL) {
+                                   stratification = ~survey_id + area_id + res_type + hiv_type + sex + age_group) {
 
   ## 1. Identify age groups to calculate for each survey_id
   age_groups <- naomi::get_age_groups()
@@ -255,8 +252,7 @@ calc_survey_indicators <- function(survey_meta,
 
   val <- calc_all_outcomes(ind, group_by_vars, split_vars,
                            formula = formula , extra_vars,
-                           survey_meta, areas, age_groups, 
-                           mc.cores)
+                           survey_meta, areas, age_groups)
 
   val
 }
@@ -449,9 +445,7 @@ calc_all_outcomes <- function(ind,
                               extra_vars,
                               survey_meta,
                               areas,
-                              age_groups,
-                              mc.cores = NULL
-                              ) {
+                              age_groups) {
   dat <- ind %>%
     dplyr::filter(!is.na(weights), weights > 0)
 
@@ -482,11 +476,9 @@ calc_all_outcomes <- function(ind,
     val
   }
 
-  options(survey.lonely.psu = "adjust")
-  if (is.null(mc.cores)) {
-    mc.cores <- if(.Platform$OS.type == "windows") 1 else parallel::detectCores()
-  }
-  est_spl <- parallel::mclapply(datspl, do_svymean, formula = formula, mc.cores = mc.cores)
+  options(survey.lonely.psu="adjust")
+  mc.cores <- if(.Platform$OS.type == "windows") 1 else parallel::detectCores()
+  est_spl <- parallel::mclapply(datspl, do_svymean, formula=formula, mc.cores = mc.cores)
 
   val <- cnt %>%
     dplyr::full_join(
