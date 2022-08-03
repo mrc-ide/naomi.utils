@@ -19,7 +19,9 @@ assert_iso3 <- function(iso3) {
 #'   and the `survey_id` and `survey_mid_calendar_quarter`.
 #'
 #' @examples
+#' \dontrun{
 #' create_surveys_dhs("MWI")
+#' }
 #'
 #' @export
 #'
@@ -79,6 +81,7 @@ create_surveys_dhs <- function(iso3,
 #' pairs, for example `levelrnk_select = c("MWI2015DHS" = 1)`. See examples.
 #'
 #' @examples
+#' \dontrun{
 #' surveys <- create_surveys_dhs("MWI")
 #'
 #' region_boundaries <- create_survey_boundaries_dhs(surveys)
@@ -86,7 +89,7 @@ create_surveys_dhs <- function(iso3,
 #' ## Select three regions
 #' levelrnk_select = c("MWI2015DHS" = 1)
 #' region_boundaries <- create_survey_boundaries_dhs(surveys, levelrnk_select)
-#'
+#' }
 #'
 #' @export
 create_survey_boundaries_dhs <- function(surveys, levelrnk_select = NULL, verbose_download = FALSE) {
@@ -365,11 +368,13 @@ create_survey_regions_dhs <- function(survey_region_areas) {
 #'   cluster geographic coordinates if available.
 #'
 #' @examples
+#' \dontrun{
 #' surveys <- create_surveys_dhs("MWI")
 #' survey_regions <- create_survey_boundaries_dhs(surveys)
 #' surveys <- surveys_add_dhs_regvar(surveys, survey_regions)
 #'
 #' survey_clusters <- create_survey_clusters_dhs(surveys)
+#' }
 #'
 #' @export
 create_survey_clusters_dhs <- function(surveys, clear_rdhs_cache = FALSE) {
@@ -573,9 +578,10 @@ assign_dhs_cluster_areas <- function(survey_clusters, survey_region_areas) {
 #'   * hivweight
 #'
 #' @examples
-#'
+#' \dontrun{
 #' surveys <- create_surveys_dhs("MWI")
 #' individuals <- create_individual_hiv_dhs(surveys)
+#' }
 #'
 #' @export
 create_individual_hiv_dhs <- function(surveys, clear_rdhs_cache = FALSE) {
@@ -585,8 +591,8 @@ create_individual_hiv_dhs <- function(surveys, clear_rdhs_cache = FALSE) {
   mrd <- rdhs::dhs_datasets(fileType = "MR", fileFormat = "flat")
   ard <- rdhs::dhs_datasets(fileType = "AR", fileFormat = "flat")
 
-  prd <- dplyr::filter(prd, SurveyId %in% surveys$SurveyId) 
-  ird <- dplyr::filter(ird, SurveyId %in% surveys$SurveyId) 
+  prd <- dplyr::filter(prd, SurveyId %in% surveys$SurveyId)
+  ird <- dplyr::filter(ird, SurveyId %in% surveys$SurveyId)
   mrd <- dplyr::filter(mrd, SurveyId %in% surveys$SurveyId)
   ard <- dplyr::filter(ard, SurveyId %in% surveys$SurveyId)
 
@@ -652,7 +658,7 @@ extract_individual_hiv_dhs <- function(SurveyId, prd_path, ird_path, mrd_path, a
   if (is.null(ir$v131)) {
     ir$v131 <- NA
   }
-  
+
   dat <- ir %>%
     dplyr::transmute(cluster_id = v001,
                      individual_id = caseid,
@@ -799,9 +805,10 @@ extract_individual_hiv_dhs <- function(SurveyId, prd_path, ird_path, mrd_path, a
 #'   * circ_who
 #'
 #' @examples
-#'
+#' \dontrun{
 #' surveys <- create_surveys_dhs("MWI")
 #' circ <- create_circumcision_dhs(surveys)
+#' }
 #'
 #' @export
 create_survey_circumcision_dhs <- function(surveys, clear_rdhs_cache = FALSE) {
@@ -903,8 +910,10 @@ extract_circumcision_dhs <- function(SurveyId, mrd_path){
 #' @return data.frame of survey metadata specification.
 #'
 #' @examples
+#' \dontrun{
 #' surveys <- create_surveys_dhs("MWI")
 #' survey_meta <- create_survey_meta_dhs(surveys)
+#' }
 #'
 #' @export
 create_survey_meta_dhs <- function(surveys) {
