@@ -1,4 +1,4 @@
-# naomi.utils 0.1.11
+# naomi.utils 0.1.2
 
 * Allow optional specification of cores for parallel computation, which may 
 help with memory problems when too many cores are used. 
