@@ -150,13 +150,21 @@ for (package in packages_copy) {
     details <- details[[1]]
     ## basename of the URL contains the name of the file when first uploaded
     path <- file.path(country_dir, basename(details[["url"]]))
+    upload <- TRUE
     tryCatch({
       ckanr::ckan_fetch(details$url, store = "disk", path = path)
       out <- readLines(path, n = 2, skipNul = TRUE)
       ## If you do not have access to download the resource CKAN returns
       ## you some HTML login page, if we get this then we want to error
       if (out[1] == "<!DOCTYPE html>" || out[2] == "<!DOCTYPE html>") {
+        upload <- FALSE
         stop("Your account does not have access to resource")
+      }
+      ## Also can return a HTML Gateway Time-out page if issue hitting endpoint
+      ## if this is the case then error
+      if (any(grepl("504 Gateway Time-out", out))) {
+        upload <- FALSE
+        stop("ADR timed out, upload manually or try again later")
       }
     },
     error = function(e) {
@@ -164,7 +172,7 @@ for (package in packages_copy) {
                       resource, package[["geo-location"]]))
       message(paste0("  ", e$message))
     })
-    if (!file.exists(path)) {
+    if (!upload || !file.exists(path)) {
       next
     }
     message(sprintf("Uploading %s file for country %s",
