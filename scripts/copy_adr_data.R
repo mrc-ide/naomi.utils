@@ -92,6 +92,17 @@ packages_keep <- vapply(packages_src$results, function(package) {
 }, logical(1))
 packages_copy <- packages_src$results[packages_keep]
 
+upload_package <- function(package_id, package_name, path, resource_type) {
+  ckanr::resource_create(
+    package_id,
+    name = package_name,
+    upload = path,
+    extras = list(
+      restricted = paste0('{"allowed_organizations": "unaids", ',
+                          '"allowed_users": "", "level": "restricted"}'),
+      resource_type = resource_type))
+}
+
 ## For each country, download 2021 resources
 ## Upload as 2022 dataset in imperial-college-london org
 ## then transfer from there
@@ -105,7 +116,7 @@ for (package in packages_copy) {
     tryCatch({
       new_package <- NULL
       new_package <- ckanr::package_create(
-        type = dest, owner_org = package[["organization"]][["name"]],
+        type = dest, owner_org = "naomi-development-team",
         extras = list("geo-location" = package[["geo-location"]],
                       type_name = dest_name,
                       maintainer_email = "naomi-support@unaids.org",
@@ -115,7 +126,7 @@ for (package in packages_copy) {
     },
     error = function(e) {
       message("Failed to create package for ", package[["geo-location"]])
-      message(e$message)
+      message(paste0("  ", e$message))
     })
     if (is.null(new_package)) {
       next
@@ -141,11 +152,17 @@ for (package in packages_copy) {
     path <- file.path(country_dir, basename(details[["url"]]))
     tryCatch({
       ckanr::ckan_fetch(details$url, store = "disk", path = path)
+      out <- readLines(path, n = 2, skipNul = TRUE)
+      ## If you do not have access to download the resource CKAN returns
+      ## you some HTML login page, if we get this then we want to error
+      if (out[1] == "<!DOCTYPE html>" || out[2] == "<!DOCTYPE html>") {
+        stop("Your account does not have access to resource")
+      }
     },
     error = function(e) {
       message(sprintf("Failed to download file %s for country %s - skipping",
                       resource, package[["geo-location"]]))
-      message(e$message)
+      message(paste0("  ", e$message))
     })
     if (!file.exists(path)) {
       next
@@ -168,19 +185,30 @@ for (package in packages_copy) {
           write.csv(x, path, quote = FALSE, row.names = FALSE,
                     na = "")
         }
-        new_resource <- ckanr::resource_create(
-          new_package[["id"]],
-          name = details[["name"]],
-          upload = path,
-          extras = list(
-            restricted = paste0('{"allowed_organizations": "unaids", ',
-                                '"allowed_users": "", "level": "restricted"}'),
-            resource_type = resource))
+        new_resource <- NULL
+        attempt <- 0
+        while (is.null(new_resource) && attempt < 5) {
+          attempt <- attempt + 1
+          message(sprintf("Uploading %s for country %s: attempt %s",
+                  resource, package[["geo-location"]], attempt))
+          tryCatch(
+            {
+              new_resource <- upload_package(new_package[["id"]],
+                                           details[["name"]],
+                                           path,
+                                           resource)
+            },
+            error = function(e) {
+              message(sprintf("Failed to upload file %s: attempt %s",
+                              resource, attempt))
+            }
+          )
+        }
       },
       error = function(e) {
         message(sprintf("Failed to upload file %s for country %s - skipping",
                         resource, package[["geo-location"]]))
-        message(e$message)
+        message(paste0("  ", e$message))
         create_release <<- FALSE
       })
     }
@@ -193,7 +221,7 @@ for (package in packages_copy) {
     error = function(e) {
       message(sprintf("Failed to create release for country %s",
                       package[["geo-location"]]))
-      message(e$message)
+      message(paste0("  ", e$message))
     })
   }
   if (dry_run) {
