@@ -85,7 +85,6 @@ for (country in multiple) {
                   country, src))
 }
 countries_to_copy <- countries_src[!(countries_src %in% multiple)]
-countries_to_copy <- c("Cameroon", "Mali")
 
 packages_keep <- vapply(packages_src$results, function(package) {
   package[["geo-location"]] %in% countries_to_copy
@@ -153,12 +152,24 @@ for (package in packages_copy) {
     upload <- TRUE
     tryCatch({
       ckanr::ckan_fetch(details$url, store = "disk", path = path)
-      out <- readLines(path, n = 2, skipNul = TRUE)
-      ## If you do not have access to download the resource CKAN returns
-      ## you some HTML login page, if we get this then we want to error
-      if (out[1] == "<!DOCTYPE html>" || out[2] == "<!DOCTYPE html>") {
-        upload <- FALSE
-        stop("Your account does not have access to resource")
+      if (resource == "inputs-unaids-geographic") {
+        out <- readLines(path, n = 1, skipNul = TRUE)
+        ## If you do not have access to download the resource CKAN returns
+        ## you some HTML login page, if we get this then we want to error.
+        ## Make sure this is a JSON file
+        if (!startsWith(out[1], "{")) {
+          upload <- FALSE
+          stop("Your account does not have access to resource")
+        }
+      } else {
+        out <- readLines(path, n = 2, skipNul = TRUE)
+        ## If you do not have access to download the resource CKAN returns
+        ## you some HTML login page, if we get this then we want to error.
+        ## Make sure the csv does not contain HTML tags
+        if (out[1] == "<!DOCTYPE html>" || out[2] == "<!DOCTYPE html>") {
+          upload <- FALSE
+          stop("Your account does not have access to resource")
+        }
       }
       ## Also can return a HTML Gateway Time-out page if issue hitting endpoint
       ## if this is the case then error
