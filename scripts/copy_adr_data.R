@@ -115,7 +115,7 @@ for (package in packages_copy) {
     tryCatch({
       new_package <- NULL
       new_package <- ckanr::package_create(
-        type = dest, owner_org = "naomi-development-team",
+        type = dest, owner_org = package[["organization"]][["name"]], 
         extras = list("geo-location" = package[["geo-location"]],
                       type_name = dest_name,
                       maintainer_email = "naomi-support@unaids.org",
