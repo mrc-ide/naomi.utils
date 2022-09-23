@@ -107,6 +107,7 @@ upload_package <- function(package_id, package_name, path, resource_type) {
 ## then transfer from there
 t <- tempfile()
 dir.create(t)
+package_no <- 0
 for (package in packages_copy) {
   country_dir <- file.path(t, package[["geo-location"]])
   dir.create(country_dir)
@@ -115,7 +116,7 @@ for (package in packages_copy) {
     tryCatch({
       new_package <- NULL
       new_package <- ckanr::package_create(
-        type = dest, owner_org = package[["organization"]][["name"]], 
+        type = dest, owner_org = package[["organization"]][["name"]],
         extras = list("geo-location" = package[["geo-location"]],
                       type_name = dest_name,
                       maintainer_email = "naomi-support@unaids.org",
@@ -220,6 +221,9 @@ for (package in packages_copy) {
             error = function(e) {
               message(sprintf("Failed to upload file %s: attempt %s",
                               resource, attempt))
+              ## If we've failed to upload it might be because ADR is
+              ## dealing with too many requests. Wait with incremental back off
+              Sys.sleep(10 * attempt)
             }
           )
         }
@@ -250,4 +254,11 @@ for (package in packages_copy) {
   }
   message(sprintf("Copy complete for %s see %s", package[["geo-location"]],
                   package_url))
+  package_no <- package_no + 1
+  if ((package_no %% 5) == 0) {
+    ## We've seen issues with ADR receiving too many requests in a short period
+    ## of time. After every 5 packages are uploaded wait for 2 mins to give
+    ## ADR time to handle requests
+    Sys.sleep(60 * 2)
+  }
 }
