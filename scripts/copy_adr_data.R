@@ -219,11 +219,13 @@ for (package in packages_copy) {
                                            resource)
             },
             error = function(e) {
-              message(sprintf("Failed to upload file %s: attempt %s",
-                              resource, attempt))
+              wait <- 10 * attempt
+              message(sprintf(paste0("Failed to upload file %s: attempt %s. ",
+                                     "Trying again in %s seconds."),
+                              resource, attempt, wait))
               ## If we've failed to upload it might be because ADR is
               ## dealing with too many requests. Wait with incremental back off
-              Sys.sleep(10 * attempt)
+              Sys.sleep(wait)
             }
           )
         }
@@ -259,6 +261,8 @@ for (package in packages_copy) {
     ## We've seen issues with ADR receiving too many requests in a short period
     ## of time. After every 5 packages are uploaded wait for 2 mins to give
     ## ADR time to handle requests
+    message(paste0("5 packages uploaded, sleeping for 2 mins to avoid ",
+                   "overloading ADR with requests"))
     Sys.sleep(60 * 2)
   }
 }
