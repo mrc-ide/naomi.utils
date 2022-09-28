@@ -36,7 +36,8 @@ dest <- "country-estimates-23"
 dest_name <- "HIV Estimates 2023"
 resources <- c("inputs-unaids-geographic", "inputs-unaids-anc",
                "inputs-unaids-art", "inputs-unaids-survey",
-               "inputs-unaids-population", "inputs-unaids-spectrum-file")
+               "inputs-unaids-population", "inputs-unaids-spectrum-file",
+               "inputs-unaids-shiny90-survey", "inputs-unaids-hiv-testing")
 
 ## No built in way to send custom commands to CKAN so do a gross hack
 ckan_create_release <- function(id) {
@@ -219,7 +220,7 @@ for (package in packages_copy) {
                                            resource)
             },
             error = function(e) {
-              wait <- 10 * attempt
+              wait <- 120 * attempt
               message(sprintf(paste0("Failed to upload file %s: attempt %s. ",
                                      "Trying again in %s seconds."),
                               resource, attempt, wait))
@@ -261,8 +262,8 @@ for (package in packages_copy) {
     ## We've seen issues with ADR receiving too many requests in a short period
     ## of time. After every 5 packages are uploaded wait for 2 mins to give
     ## ADR time to handle requests
-    message(paste0("5 packages uploaded, sleeping for 2 mins to avoid ",
+    message(paste0("5 packages uploaded, sleeping for 8 mins to avoid ",
                    "overloading ADR with requests"))
-    Sys.sleep(60 * 2)
+    Sys.sleep(60 * 8)
   }
 }
