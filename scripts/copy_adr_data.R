@@ -117,14 +117,14 @@ releases <- releases[!is.null(releases)]
 ## or avenir orgs as these are usually duplicates of country data
 orgs_to_ignore <- c("fjelltopp", "avenir-health", "imperial-college-london",
                     "naomi-development-team", "unaids", "project-balance")
-orgs <- vapply(packages_src$results,
+orgs <- vapply(releases$results,
                function(result) {
                  result[["organization"]][["name"]]
                }, character(1))
-packages_src$results <- packages_src$results[!(orgs %in% orgs_to_ignore)]
+releases$results <- releases$results[!(orgs %in% orgs_to_ignore)]
 
 ## Only create new packages for countries which don't already exist
-countries_src <- vapply(packages_src$results, "[[", character(1),
+countries_src <- vapply(releases$results, "[[", character(1),
                         "geo-location")
 countries_dest <- vapply(packages_dest$results, "[[", character(1),
                          "geo-location")
@@ -139,10 +139,10 @@ for (country in multiple) {
 }
 countries_to_copy <- countries_src[!(countries_src %in% multiple)]
 
-packages_keep <- vapply(packages_src$results, function(package) {
+packages_keep <- vapply(releases$results, function(package) {
   package[["geo-location"]] %in% countries_to_copy
 }, logical(1))
-packages_copy <- packages_src$results[packages_keep]
+packages_copy <- releases$results[packages_keep]
 
 upload_package <- function(package_id, package_name, path, resource_type) {
   ckanr::resource_create(
