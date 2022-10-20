@@ -88,6 +88,8 @@ get_release <- function(package, release_name) {
   for (rel in releases) {
     if (rel$name == release_name) {
       release_id <- rel$id
+      message(sprintf("Found release %s for package %s",
+                      release_name, package$name))
       break
     }
   }
