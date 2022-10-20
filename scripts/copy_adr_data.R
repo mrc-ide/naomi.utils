@@ -103,9 +103,9 @@ get_release <- function(package, release_name) {
       ),
       release_name, package$id, package$name
     ))
+    release_id <- releases[[1]]$id
   }
-  release_id <- releases[[1]]$
-    package_show(package$id, release_id)
+  package_show(package$id, release_id)
 }
 
 packages_src <- ckanr::package_search(
