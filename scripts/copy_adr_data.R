@@ -41,22 +41,18 @@ resources <- c("inputs-unaids-geographic", "inputs-unaids-anc",
 
 ## No built in way to send custom commands to CKAN so do a gross hack
 ckan_create_release <- function(id) {
-  res <- ckanr:::ckan_POST(
-    url = ckanr::get_default_url(),
-    method = "dataset_version_create",
-    body = jsonlite::toJSON(list(
-      dataset_id = id,
-      name = "2022 data transfer",
-      notes = paste0(
-        "Data automatically transferred from ",
-        "2022 dataset. Added blank columns to ART",
-        " data for new indicators."
-      )
-    ), auto_unbox = TRUE),
-    key = ckanr::get_default_key(),
-    encode = "json",
-    headers = ckanr:::ctj()
-  )
+  res <- ckanr:::ckan_POST(url = ckanr::get_default_url(),
+                    method = "dataset_version_create",
+                    body = jsonlite::toJSON(list(
+                      dataset_id = id,
+                      name = "2022 data transfer",
+                      notes = paste0("Data automatically transferred from ",
+                                     "2022 dataset. Added blank columns to ART",
+                                     " data for new indicators.")
+                    ), auto_unbox = TRUE),
+                    key = ckanr::get_default_key(),
+                    encode = "json",
+                    headers = ckanr:::ctj())
   ckanr:::jsl(res)
 }
 
@@ -108,14 +104,10 @@ get_release <- function(package, release_name) {
   package_show(package$id, release_id)
 }
 
-packages_src <- ckanr::package_search(
-  q = sprintf("type:%s", src),
-  rows = 1000
-)
-packages_dest <- ckanr::package_search(
-  q = sprintf("type:%s", dest),
-  rows = 1000
-)
+packages_src <- ckanr::package_search(q = sprintf("type:%s", src),
+                                       rows = 1000)
+packages_dest <- ckanr::package_search(q = sprintf("type:%s", dest),
+                                       rows = 1000)
 
 ## Get named release for package
 releases <- lapply(packages_src$results, get_release, "naomi_final_2022")
@@ -123,37 +115,27 @@ releases <- releases[!is.null(releases)]
 
 ## Don't migrate data for Fjeltopp, Naomi development team, Imperial, unaids
 ## or avenir orgs as these are usually duplicates of country data
-orgs_to_ignore <- c(
-  "fjelltopp", "avenir-health", "imperial-college-london",
-  "naomi-development-team", "unaids", "project-balance"
-)
-orgs <- vapply(
-  releases$results,
-  function(result) {
-    result[["organization"]][["name"]]
-  }, character(1)
-)
-releases$results <- releases$results[!(orgs %in% orgs_to_ignore)]
+orgs_to_ignore <- c("fjelltopp", "avenir-health", "imperial-college-london",
+                    "naomi-development-team", "unaids", "project-balance")
+orgs <- vapply(packages_src$results,
+               function(result) {
+                 result[["organization"]][["name"]]
+               }, character(1))
+packages_src$results <- packages_src$results[!(orgs %in% orgs_to_ignore)]
 
 ## Only create new packages for countries which don't already exist
-countries_src <- vapply(
-  releases$results, "[[", character(1),
-  "geo-location"
-)
-countries_dest <- vapply(
-  packages_dest$results, "[[", character(1),
-  "geo-location"
-)
+countries_src <- vapply(packages_src$results, "[[", character(1),
+                        "geo-location")
+countries_dest <- vapply(packages_dest$results, "[[", character(1),
+                         "geo-location")
 countries_keep <- !(countries_src %in% countries_dest)
 countries_src <- countries_src[countries_keep]
 
 ## If more than 1 dataset for a country - don't do anything report out
 multiple <- names(table(countries_src))[table(countries_src) > 1]
 for (country in multiple) {
-  message(sprintf(
-    "%s has more than 1 %s dataset, don't know how to migrate",
-    country, src
-  ))
+  message(sprintf("%s has more than 1 %s dataset, don't know how to migrate",
+                  country, src))
 }
 countries_to_copy <- countries_src[!(countries_src %in% multiple)]
 
@@ -168,13 +150,9 @@ upload_package <- function(package_id, package_name, path, resource_type) {
     name = package_name,
     upload = path,
     extras = list(
-      restricted = paste0(
-        '{"allowed_organizations": "unaids", ',
-        '"allowed_users": "", "level": "restricted"}'
-      ),
-      resource_type = resource_type
-    )
-  )
+      restricted = paste0('{"allowed_organizations": "unaids", ',
+                          '"allowed_users": "", "level": "restricted"}'),
+      resource_type = resource_type))
 }
 
 ## For each country, download 2021 resources
