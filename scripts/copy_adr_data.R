@@ -132,7 +132,6 @@ countries_dest <- vapply(packages_dest$results, "[[", character(1),
                          "geo-location")
 countries_keep <- !(countries_src %in% countries_dest)
 countries_src <- countries_src[countries_keep]
-countries_src <- c("Guinea", "Angola", "Senegal")
 
 ## If more than 1 dataset for a country - don't do anything report out
 multiple <- names(table(countries_src))[table(countries_src) > 1]
@@ -159,8 +158,7 @@ upload_package <- function(package_id, package_name, path, resource_type) {
 }
 
 ## For each country, download 2021 resources
-## Upload as 2022 dataset in imperial-college-london org
-## then transfer from there
+## Upload as 2022 dataset in countries organisation
 t <- tempfile()
 dir.create(t)
 package_no <- 0
@@ -172,7 +170,7 @@ for (package in packages_copy) {
     tryCatch({
       new_package <- NULL
       new_package <- ckanr::package_create(
-        type = dest, owner_org = "imperial-college-london",
+        type = dest, owner_org = package[["organization"]][["name"]],
         extras = list("geo-location" = package[["geo-location"]],
                       type_name = dest_name,
                       maintainer_email = "naomi-support@unaids.org",
