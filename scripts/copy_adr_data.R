@@ -113,25 +113,26 @@ packages_dest <- ckanr::package_search(q = sprintf("type:%s", dest),
 
 ## Get named release for package
 releases <- lapply(packages_src$results, get_release, "naomi_final_2022")
-releases <- releases[!is.null(releases)]
+releases <- releases[vapply(releases, function(x) !is.null(x), logical(1))]
 
 ## Don't migrate data for Fjeltopp, Naomi development team, Imperial, unaids
 ## or avenir orgs as these are usually duplicates of country data
 orgs_to_ignore <- c("fjelltopp", "avenir-health", "imperial-college-london",
                     "naomi-development-team", "unaids", "project-balance")
-orgs <- vapply(releases$results,
+orgs <- vapply(releases,
                function(result) {
                  result[["organization"]][["name"]]
                }, character(1))
-releases$results <- releases$results[!(orgs %in% orgs_to_ignore)]
+releases <- releases[!(orgs %in% orgs_to_ignore)]
 
 ## Only create new packages for countries which don't already exist
-countries_src <- vapply(releases$results, "[[", character(1),
+countries_src <- vapply(releases, "[[", character(1),
                         "geo-location")
 countries_dest <- vapply(packages_dest$results, "[[", character(1),
                          "geo-location")
 countries_keep <- !(countries_src %in% countries_dest)
 countries_src <- countries_src[countries_keep]
+countries_src <- c("Guinea", "Angola", "Senegal")
 
 ## If more than 1 dataset for a country - don't do anything report out
 multiple <- names(table(countries_src))[table(countries_src) > 1]
@@ -141,10 +142,10 @@ for (country in multiple) {
 }
 countries_to_copy <- countries_src[!(countries_src %in% multiple)]
 
-packages_keep <- vapply(releases$results, function(package) {
+packages_keep <- vapply(releases, function(package) {
   package[["geo-location"]] %in% countries_to_copy
 }, logical(1))
-packages_copy <- releases$results[packages_keep]
+packages_copy <- releases[packages_keep]
 
 upload_package <- function(package_id, package_name, path, resource_type) {
   ckanr::resource_create(
@@ -171,7 +172,7 @@ for (package in packages_copy) {
     tryCatch({
       new_package <- NULL
       new_package <- ckanr::package_create(
-        type = dest, owner_org = package[["organization"]][["name"]],
+        type = dest, owner_org = "imperial-college-london",
         extras = list("geo-location" = package[["geo-location"]],
                       type_name = dest_name,
                       maintainer_email = "naomi-support@unaids.org",
@@ -204,10 +205,16 @@ for (package in packages_copy) {
     }
     details <- details[[1]]
     ## basename of the URL contains the name of the file when first uploaded
-    path <- file.path(country_dir, basename(details[["url"]]))
+    ## if in a release the name of the file is file_name.extension?activity_id=...
+    ## uploading with this filename means ADR cannot detect file type and screws up
+    ## validation
+    file_name <- strsplit(basename(details[["url"]]), "?", fixed = TRUE)[[1]][1]
+    path <- file.path(country_dir, file_name)
     upload <- TRUE
     tryCatch({
-      ckanr::ckan_fetch(details$url, store = "disk", path = path)
+      httr::GET(details$url, httr::write_disk(path),
+                httr::add_headers("Content-Type" = "application/json",
+                                  "X-CKAN-API-Key" = key))
       if (resource == "inputs-unaids-geographic") {
         out <- readLines(path, n = 1, skipNul = TRUE)
         ## If you do not have access to download the resource CKAN returns
@@ -269,9 +276,9 @@ for (package in packages_copy) {
           tryCatch(
             {
               new_resource <- upload_package(new_package[["id"]],
-                                           details[["name"]],
-                                           path,
-                                           resource)
+                                             details[["name"]],
+                                             path,
+                                             resource)
             },
             error = function(e) {
               wait <- 120 * attempt
