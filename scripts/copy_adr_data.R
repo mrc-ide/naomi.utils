@@ -81,8 +81,8 @@ package_show <- function(dataset_id, release_id) {
 get_release <- function(package, release_name) {
   releases <- list_releases(package$id)
   if (length(releases) == 0) {
-    message(sprintf("No release found for %s - skipping", package$name))
-    return(NULL)
+    message(sprintf("No release found for %s using current data", package$name))
+    return(package)
   }
   release_id <- NULL
   for (rel in releases) {
@@ -111,22 +111,18 @@ packages_src <- ckanr::package_search(q = sprintf("type:%s", src),
 packages_dest <- ckanr::package_search(q = sprintf("type:%s", dest),
                                        rows = 1000)
 
-## Get named release for package
-releases <- lapply(packages_src$results, get_release, "naomi_final_2022")
-releases <- releases[vapply(releases, function(x) !is.null(x), logical(1))]
-
 ## Don't migrate data for Fjeltopp, Naomi development team, Imperial, unaids
 ## or avenir orgs as these are usually duplicates of country data
 orgs_to_ignore <- c("fjelltopp", "avenir-health", "imperial-college-london",
                     "naomi-development-team", "unaids", "project-balance")
-orgs <- vapply(releases,
+orgs <- vapply(packages_src$results,
                function(result) {
                  result[["organization"]][["name"]]
                }, character(1))
-releases <- releases[!(orgs %in% orgs_to_ignore)]
+packages_src$results <- packages_src$results[!(orgs %in% orgs_to_ignore)]
 
 ## Only create new packages for countries which don't already exist
-countries_src <- vapply(releases, "[[", character(1),
+countries_src <- vapply(packages_src$results, "[[", character(1),
                         "geo-location")
 countries_dest <- vapply(packages_dest$results, "[[", character(1),
                          "geo-location")
@@ -141,10 +137,14 @@ for (country in multiple) {
 }
 countries_to_copy <- countries_src[!(countries_src %in% multiple)]
 
-packages_keep <- vapply(releases, function(package) {
+packages_keep <- vapply(packages_src$results, function(package) {
   package[["geo-location"]] %in% countries_to_copy
 }, logical(1))
-packages_copy <- releases[packages_keep]
+packages_copy <- packages_src$results[packages_keep]
+
+## Get named release for package
+releases <- lapply(packages_copy, get_release, "naomi_final_2022")
+releases <- releases[vapply(releases, function(x) !is.null(x), logical(1))]
 
 upload_package <- function(package_id, package_name, path, resource_type) {
   ckanr::resource_create(
@@ -158,12 +158,11 @@ upload_package <- function(package_id, package_name, path, resource_type) {
 }
 
 ## For each country, download 2021 resources
-## Upload as 2022 dataset in imperial-college-london org
-## then transfer from there
+## Upload as 2022 dataset in countries organisation
 t <- tempfile()
 dir.create(t)
 package_no <- 0
-for (package in packages_copy) {
+for (package in releases) {
   country_dir <- file.path(t, package[["geo-location"]])
   dir.create(country_dir)
   message("Creating package for ", package[["geo-location"]])
@@ -211,7 +210,7 @@ for (package in packages_copy) {
     path <- file.path(country_dir, file_name)
     upload <- TRUE
     tryCatch({
-      httr::GET(details$url, httr::write_disk(path),
+      httr::GET(utils::URLencode(details$url), httr::write_disk(path),
                 httr::add_headers("Content-Type" = "application/json",
                                   "X-CKAN-API-Key" = key))
       if (resource == "inputs-unaids-geographic") {
@@ -241,11 +240,13 @@ for (package in packages_copy) {
       }
     },
     error = function(e) {
+      upload <- FALSE
       message(sprintf("Failed to download file %s for country %s - skipping",
                       resource, package[["geo-location"]]))
       message(paste0("  ", e$message))
     })
     if (!upload || !file.exists(path)) {
+      create_release <<- FALSE
       next
     }
     message(sprintf("Uploading %s file for country %s",
