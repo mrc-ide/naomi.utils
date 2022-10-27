@@ -47,7 +47,7 @@ ckan_create_release <- function(id) {
                       dataset_id = id,
                       name = "2022 data transfer",
                       notes = paste0("Data automatically transferred from ",
-                                     "2022 dataset. Added blank columns to ART",
+                                     "2022 dataset. Added blank columns to ANC",
                                      " data for new indicators.")
                     ), auto_unbox = TRUE),
                     key = ckanr::get_default_key(),
