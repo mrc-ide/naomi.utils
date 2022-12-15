@@ -19,11 +19,13 @@ Imports:
     forcats,
     ggplot2,
     haven,
+    hintr,
     lubridate,
     magrittr,
     raster,
     rdhs (>= 0.7.1),
     sf,
+    spud,
     survey,
     tidyr
 Suggests: 
