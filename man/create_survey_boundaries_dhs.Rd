@@ -36,6 +36,7 @@ To selected a different level supply a named vector with \code{survey_id} / \cod
 pairs, for example \code{levelrnk_select = c("MWI2015DHS" = 1)}. See examples.
 }
 \examples{
+\dontrun{
 surveys <- create_surveys_dhs("MWI")
 
 region_boundaries <- create_survey_boundaries_dhs(surveys)
@@ -43,6 +44,6 @@ region_boundaries <- create_survey_boundaries_dhs(surveys)
 ## Select three regions
 levelrnk_select = c("MWI2015DHS" = 1)
 region_boundaries <- create_survey_boundaries_dhs(surveys, levelrnk_select)
-
+}
 
 }

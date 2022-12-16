@@ -4,7 +4,7 @@
 \alias{create_individual_hiv_dhs}
 \title{Create individual HIV outcomes dataset from DHS}
 \usage{
-create_individual_hiv_dhs(surveys)
+create_individual_hiv_dhs(surveys, clear_rdhs_cache = FALSE)
 }
 \arguments{
 \item{surveys}{data.frame of surveys, returned by \code{create_surveys_dhs()}.}
@@ -38,8 +38,9 @@ The following fields are extracted:
 }
 }
 \examples{
-
+\dontrun{
 surveys <- create_surveys_dhs("MWI")
 individuals <- create_individual_hiv_dhs(surveys)
+}
 
 }

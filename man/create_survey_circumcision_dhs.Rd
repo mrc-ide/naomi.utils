@@ -4,7 +4,7 @@
 \alias{create_survey_circumcision_dhs}
 \title{Create male circumcision outcomes dataset from DHS}
 \usage{
-create_survey_circumcision_dhs(surveys)
+create_survey_circumcision_dhs(surveys, clear_rdhs_cache = FALSE)
 }
 \arguments{
 \item{surveys}{data.frame of surveys, returned by \code{create_surveys_dhs()}.}
@@ -28,8 +28,9 @@ The following fields are extracted:
 }
 }
 \examples{
-
+\dontrun{
 surveys <- create_surveys_dhs("MWI")
 circ <- create_circumcision_dhs(surveys)
+}
 
 }

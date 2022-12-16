@@ -16,7 +16,9 @@ data.frame of survey metadata specification.
 Create DHS survey meta data table
 }
 \examples{
+\dontrun{
 surveys <- create_surveys_dhs("MWI")
 survey_meta <- create_survey_meta_dhs(surveys)
+}
 
 }

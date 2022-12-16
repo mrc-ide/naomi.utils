@@ -4,7 +4,7 @@
 \alias{create_survey_clusters_dhs}
 \title{Create survey clusters dataset}
 \usage{
-create_survey_clusters_dhs(surveys)
+create_survey_clusters_dhs(surveys, clear_rdhs_cache = FALSE)
 }
 \arguments{
 \item{surveys}{data.frame of surveys, returned by \code{create_surveys_dhs()}.}
@@ -18,10 +18,12 @@ Create survey clusters dataset from DHS household recode and
 geocluster datasets.
 }
 \examples{
+\dontrun{
 surveys <- create_surveys_dhs("MWI")
 survey_regions <- create_survey_boundaries_dhs(surveys)
 surveys <- surveys_add_dhs_regvar(surveys, survey_regions)
 
 survey_clusters <- create_survey_clusters_dhs(surveys)
+}
 
 }

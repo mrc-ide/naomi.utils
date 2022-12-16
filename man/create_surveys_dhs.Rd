@@ -27,6 +27,8 @@ country code from the ISO3, selects relevant surveys, then constructs the
 \code{survey_id} and \code{survey_mid_calendar_quarter}.
 }
 \examples{
+\dontrun{
 create_surveys_dhs("MWI")
+}
 
 }
