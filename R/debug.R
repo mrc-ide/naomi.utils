@@ -14,7 +14,8 @@ naomi_debug <- function(id, jobid,
   debug <- hintr::download_debug(id, server = server)
   sp <- spud::sharepoint$new("https://imperiallondon.sharepoint.com")
   folder <- sp$folder("NaomiSupport-WP", path = dest_folder, verify = TRUE)
-  debug_folder <- folder$create(file.path(as.character(jobid), id))
+  debug_folder <- folder$create(as.character(jobid))
+  debug_folder <- debug_folder$create(id)
 
   dirs <- list.dirs(debug, recursive = FALSE, full.names = TRUE)
   files <- setdiff(list.files(debug, full.names = TRUE), dirs)
