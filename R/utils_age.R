@@ -9,3 +9,4 @@ get_age_groups <- function() {
   groups$age_group_span <- as.numeric(groups$age_group_span)
   groups
 }
+
