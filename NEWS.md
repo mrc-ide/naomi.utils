@@ -1,3 +1,8 @@
+# naomi.utils 0.0.13
+
+* Copy `get_age_groups()` from naomi package. 
+* Naomi [and therefore eppasm] are included as dependencies in other packages just to use this function. This causes slow loading and hits API data limit when installing packages on the orderly server.
+
 # naomi.utils 0.0.12
 
 * Add `clear_rdhs_cache` argument to `rdhs::download_dataset()` call
