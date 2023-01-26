@@ -4,10 +4,10 @@
 \alias{hintr_inputs_ready}
 \title{Prepare output from hintr debug rds for debugging}
 \usage{
-hintr_inputs_ready(jobid, root = ".")
+hintr_inputs_ready(issue_id, root = ".")
 }
 \arguments{
-\item{jobid}{The issue ID, the name of the folder in sharepoint}
+\item{issue_id}{The issue ID, the name of the folder in sharepoint}
 
 \item{root}{The debug root dir}
 }
