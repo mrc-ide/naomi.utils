@@ -11,6 +11,8 @@ RUN install_packages --repo "https://mrc-ide.r-universe.dev" \
         docopt \
         jsonlite
 
+RUN install_packages httr
+
 COPY copy_adr_data.R /usr/local/bin/
 
 ENTRYPOINT ["copy_adr_data.R"]
