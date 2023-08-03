@@ -10,6 +10,8 @@ RUN install_packages --repo "https://mrc-ide.r-universe.dev" \
         ckanr \
         docopt
 
-COPY remove_2023_datasets.R /usr/local/bin/
+RUN install_packages httr
 
-ENTRYPOINT ["remove_2023_datasets.R"]
+COPY remove_estimates_datasets.R /usr/local/bin/
+
+ENTRYPOINT ["remove_estimates_datasets.R"]
