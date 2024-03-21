@@ -1,20 +1,20 @@
 #' Download debug from server and upload into sharepoint
 #'
 #' @param id The model fit or calibrate ID to download debug for
-#' @param issue_id The issue ID, the name of the folder to create in sharepoint
+#' @param jobid The issue ID, the name of the folder to create in sharepoint
 #' @param dest_folder The root destination folder in sharepoint
 #' @param server The folder to download debug from, defaults to production
 #'   server
 #'
 #' @return Path to local debug
 #' @export
-naomi_debug <- function(id, issue_id,
+naomi_debug <- function(id, jobid,
                         dest_folder = "Shared Documents/2023_debug",
                         server = NULL) {
   debug <- hintr::download_debug(id, server = server)
   sp <- spud::sharepoint$new("https://imperiallondon.sharepoint.com")
   folder <- sp$folder("NaomiSupport-WP", path = dest_folder, verify = TRUE)
-  debug_folder <- folder$create(as.character(issue_id))
+  debug_folder <- folder$create(as.character(jobid))
   debug_folder <- debug_folder$create(id)
 
   dirs <- list.dirs(debug, recursive = FALSE, full.names = TRUE)
@@ -38,13 +38,13 @@ upload_files <- function(sp_folder, files) {
 
 #' Prepare output from hintr debug rds for debugging
 #'
-#' @param issue_id The issue ID, the name of the folder in sharepoint
+#' @param jobid The issue ID, the name of the folder in sharepoint
 #' @param root The debug root dir
 #'
 #' @return Path to local debug
 #' @export
-hintr_inputs_ready <- function(issue_id, root = ".") {
-  path <- file.path(normalizePath(root), issue_id)
+hintr_inputs_ready <- function(jobid, root = ".") {
+  path <- file.path(normalizePath(root), jobid)
 
   data <- readRDS(file.path(path, "data.rds"))$objects$data
   options <- readRDS(file.path(path, "data.rds"))$objects$options
