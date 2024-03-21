@@ -6,7 +6,7 @@
 \usage{
 naomi_debug(
   id,
-  issue_id,
+  jobid,
   dest_folder = "Shared Documents/2023_debug",
   server = NULL
 )
@@ -14,7 +14,7 @@ naomi_debug(
 \arguments{
 \item{id}{The model fit or calibrate ID to download debug for}
 
-\item{issue_id}{The issue ID, the name of the folder to create in sharepoint}
+\item{jobid}{The issue ID, the name of the folder to create in sharepoint}
 
 \item{dest_folder}{The root destination folder in sharepoint}
 
