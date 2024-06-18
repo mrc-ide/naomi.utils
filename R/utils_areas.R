@@ -269,7 +269,7 @@ gather_areas <- function(x) {
 
   for(i in 1:6) {
 
-    if(exists(paste0("id", i), x) && !is.na(x[[paste0("id", i)]])) {
+    if(exists(paste0("id", i), x) && !all(is.na(x[[paste0("id", i)]]))) {
 
       new_level <- x %>%
           dplyr::rename(area_id = paste0("id", i),

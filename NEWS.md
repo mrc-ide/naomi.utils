@@ -1,3 +1,7 @@
+# naomi.utils 0.0.14
+
+* Patch logic error in `gather_areas()`.
+
 # naomi.utils 0.0.13
 
 * Copy `get_age_groups()` from naomi package. 
