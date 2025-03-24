@@ -1,3 +1,6 @@
+# naomi.utils 0.0.14
+* Add functions to generate SHIPP tool from Naomi output and Spectrum file.
+
 # naomi.utils 0.0.13
 
 * Copy `get_age_groups()` from naomi package. 
