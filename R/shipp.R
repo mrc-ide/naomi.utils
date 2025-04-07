@@ -1778,29 +1778,26 @@ assert_shipp_resource_hierarchy <- function(outputs,
 
   if(length(pse_diff) != 0 ){
 
-    stop(paste0(t_("SHIPP_ERROR_KP_PREFIX"),
+    stop(paste0("KP PSE estimates available  for: \n",
              paste0(unique(pse$area_id), collapse = "; "),
-             t_("SHIPP_ERROR_NAOMI_MISMATCH"),
-             paste0(unique(naomi_ids), collapse = "; "),
-             t_("SHIPP_ERROR_CONTACT_SUPPORT")))
+             "\n\n Do not match Naomi estimates for: \n",
+             paste0(unique(naomi_ids)[1:10], collapse = "; ")))
   }
 
   if(length(female_srb_diff) != 0 ){
 
-    stop(paste0(t_("SHIPP_ERROR_FSRB_PREFIX"),
-                paste0(unique(pse$area_id), collapse = "; "),
-                t_("SHIPP_ERROR_NAOMI_MISMATCH"),
-                paste0(unique(naomi_ids), collapse = "; "),
-                t_("SHIPP_ERROR_CONTACT_SUPPORT")))
+    stop(paste0("Female SRB survey estimates available for: \n",
+                paste0(unique(pse$area_id)[1:10], collapse = "; "),
+                "Do not match Naomi estimates for: \n",
+                paste0(unique(naomi_ids)[1:10], collapse = "; ")))
   }
 
   if(length(male_srb_diff) != 0 ){
 
-    stop(paste0(t_("SHIPP_ERROR_MSRB_PREFIX"),
-                paste0(unique(pse$area_id), collapse = "; "),
-                t_("SHIPP_ERROR_NAOMI_MISMATCH"),
-                paste0(unique(naomi_ids), collapse = "; "),
-                t_("SHIPP_ERROR_CONTACT_SUPPORT")))
+    stop(paste0("Mistmatch with Naomi IDs. Male SRB survey estimates available for: \n",
+                paste0(unique(pse$area_id)[1:10], collapse = "; "),
+                "\n\n Do not match Naomi estimates for: \n",
+                paste0(unique(naomi_ids)[1:10], collapse = "; ")))
   }
 
 }
