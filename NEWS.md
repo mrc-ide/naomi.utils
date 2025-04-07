@@ -1,3 +1,6 @@
+# naomi.utils 0.0.15
+* Remove traduire hooks from SHIPP errors.
+
 # naomi.utils 0.0.14
 * Add functions to generate SHIPP tool from Naomi output and Spectrum file.
 
