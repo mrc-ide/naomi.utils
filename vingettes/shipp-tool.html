@@ -1,0 +1,1418 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+
+
+<title>SHIPP tool</title>
+
+<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
+// be compatible with the behavior of Pandoc < 2.8).
+document.addEventListener('DOMContentLoaded', function(e) {
+  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
+  var i, h, a;
+  for (i = 0; i < hs.length; i++) {
+    h = hs[i];
+    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
+    a = h.attributes;
+    while (a.length > 0) h.removeAttribute(a[0].name);
+  }
+});
+</script>
+
+<style type="text/css">
+  code{white-space: pre-wrap;}
+  span.smallcaps{font-variant: small-caps;}
+  span.underline{text-decoration: underline;}
+  div.column{display: inline-block; vertical-align: top; width: 50%;}
+  div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+  ul.task-list{list-style: none;}
+    </style>
+
+
+
+
+
+
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">SHIPP tool</h1>
+
+
+
+<pre><code>## 
+## Attaching package: &#39;naomi.utils&#39;</code></pre>
+<pre><code>## The following object is masked from &#39;package:naomi&#39;:
+## 
+##     get_age_groups</code></pre>
+<div id="background" class="section level2">
+<h2>Background</h2>
+<p>Many HIV prevention programmes aim to reduce new infections but it is
+infeasible to target all individuals living in locations with moderate
+to high HIV incidence. In different geographic settings, with different
+background incidence, sexual behaviours confer different levels of risk
+of HIV infection.</p>
+<p>Recent HIV programming guidance introduces thresholds for
+prioritization considering both HIV incidence and sexual behaviours to
+reach the largest population at risk of HIV. The SHIPP tool provides the
+“denominator” for HIV prevention categorised by sex, age, geography, and
+sexual behaviour.</p>
+</div>
+<div id="data-inputs" class="section level2">
+<h2>Data inputs</h2>
+<p>These categorizations are calculated using subnational estimates of
+HIV prevalence and incidence by age and sex produced by the Naomi model.
+<a href="https://github.com/mrc-ide/naomi">Naomi</a> is a small-area
+estimation model for estimating HIV prevalence and PLHIV, ART coverage,
+and new HIV infections at a district level by sex and five-year age
+group. The model combines district-level data about multiple outcomes
+from several sources in a Bayesian statistical model to produce robust
+indicators of subnational HIV burden. Naomi is used to update annual
+estimates of subnational HIV burden as part of the <a href="https://www.unaids.org/en/dataanalysis/knowyourresponse/HIVdata_estimates">UNAIDS
+HIV estimates process</a>.</p>
+<p>The tool synthesises the most recent estimates of subnational HIV
+prevalence and incidence with outputs from additional statistical models
+describing subnational variation in sexual behaviour and estimates of
+key populations at an elevated risk of HIV infection:</p>
+<ul>
+<li>We extend the <strong><a href="https://journals.plos.org/globalpublichealth/article?id=10.1371/journal.pgph.0001731">Howes
+et al.</a></strong> spatiotemporal multinomial model of sexual behaviour
+proportions to both men and women aged 15-49. This model utilizes
+household survey data (Demographic and Health Surveys, Population-based
+HIV Impact Assessments, Multiple Indicator Cluster Surveys, and other
+country-specific surveys) to develop spatially smoothed district-level
+estimates of the proportion of the population in each of three
+behavioural group (no sex, one regular partner, non-regular partner(s))
+described below. The model includes terms for age (5-year age groups), a
+main spatial effect, a spatial interaction term for 5-year age groups,
+and survey year (a temporal effect). Men’s and women’s behavioural data
+is fitted separately, though all countries are fitted in a single model
+stratified by sex. The models are fit using the INLA package in R using
+the multinomial-Poisson transformation.</li>
+<li><strong><a href="https://www.medrxiv.org/content/10.1101/2022.07.27.22278071v2">Stevens
+et al.</a></strong> model for population size estimates (PSEs) of key
+populations in sub-Saharan Africa at an admin-1 level (regional),
+including female sex workers (FSW), men who have sex with men (MSM), and
+people who inject drugs (PWID).</li>
+<li><strong><a href="https://bmcpublichealth.biomedcentral.com/articles/10.1186/s12889-022-13451-y">Nguyen
+et al.</a></strong>: model for age at sexual debut in sub-Saharan
+Africa.</li>
+</ul>
+<p>The outputs of these models are stored in an external repository, <a href="http://github/mrc-ide/naomi.resources">naomi-resources</a> and are
+updated annually to incorporate newly released survey data and to align
+with changes in geographic areas in country specific administrative
+boundaries required for planning.</p>
+<p>In addition to estimates produced by subnational models, the tool
+incorporates consensus estimates of KP population size and HIV incidence
+that are developed by national HIV estimates teams as part of the annual
+UNAIDS HIV estimates process. For more information on this exercise
+please see <a href="https://hivtools.unaids.org/hiv-estimates-training-material-en/">14G
+Key Population Workbook</a>.</p>
+</div>
+<div id="tool-workflow" class="section level2">
+<h2>Tool workflow</h2>
+<p>This tool is now integrated into the <a href="https://naomi.unaids.org/login">Naomi web application</a> and is
+generated after completing the Naomi model as described in <a href="https://hivtools.unaids.org/hiv-estimates-training-material-en/">22G
+Naomi sub-national estimates: Creating subnational HIV
+estimates</a>.</p>
+<p>If you are running a Naomi model fit with updated administrative
+boundaries, you may receive an error that the external database
+containing the sexual behaviour or KP PSE model is out of date:</p>
+<p>Error: Available KP PSE estimates for: MWI_1_1; MWI_1_2; MWI_1_3</p>
+<p>Do not match Naomi estimates for: MWI_1_1xc; MWI_2_25d; MWI_2_3cv</p>
+<p>To update estimates, please contact Naomi support.</p>
+</div>
+<div id="shipp-tool-estimates-process" class="section level2">
+<h2>SHIPP Tool estimates process</h2>
+<p><strong>1. Estimate key population sizes by district and
+age</strong>:</p>
+<p>Regional KP proportion estimates from <a href="https://www.medrxiv.org/content/10.1101/2022.07.27.22278071v2">Stevens
+et al.</a> are disaggregated by age and district.</p>
+<ul>
+<li><em>Nationally adjusted age distributions for MSM and FSW</em>: For
+MSM and FSW, estimates for ages 15-49 are age-disaggregated using South
+Africa’s <a href="https://www.thembisa.org/content/downloadPage/Thembisa4_3">Thembisa</a>
+model estimates of the age distribution for FSW and MSM - Gamma(29,9)
+for FSW and Gamma(25,7) for MSM - then adjusted for the distribution of
+age at sexual debut by sex and country <a href="https://bmcpublichealth.biomedcentral.com/articles/10.1186/s12889-022-13451-y">(Nguyen
+et al.)</a> to account for differences between South Africa and the
+other countries included in the SHIPP tool.</li>
+<li><em>Uniformly adjusted age distribution for PWID</em>: For age
+distribution of PWID, we utilize a uniform literature estimate of age
+distribution from <a href="web">Hines et al</a> across countries (mean
+age 29.4, SD 7).</li>
+<li><em>Calculating total KP population by age and district</em>:
+Country specific regional KP proportions from the <em>Stevens et al</em>
+model are applied to district level population estimates from Naomi and
+adjusted by age distribution described above.
+<ul>
+<li>This includes an assumption that a nominal number of PWID (~9%) are
+female who are removed from the denominator. As such, PWID are assumed
+as male from this point onwards.</li>
+</ul></li>
+</ul>
+<p><strong>2. Separate general population sexual behaviour groups from
+KP populations calculated in (1)</strong>:</p>
+<div id="snvcbfwlms" style="padding-left:0px;padding-right:0px;padding-top:10px;padding-bottom:10px;overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
+<style>#snvcbfwlms table {
+  font-family: system-ui, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#snvcbfwlms thead, #snvcbfwlms tbody, #snvcbfwlms tfoot, #snvcbfwlms tr, #snvcbfwlms td, #snvcbfwlms th {
+  border-style: none;
+}
+
+#snvcbfwlms p {
+  margin: 0;
+  padding: 0;
+}
+
+#snvcbfwlms .gt_table {
+  display: table;
+  border-collapse: collapse;
+  line-height: normal;
+  margin-left: 0;
+  margin-right: auto;
+  color: #333333;
+  font-size: smaller;
+  font-weight: normal;
+  font-style: normal;
+  background-color: #FFFFFF;
+  width: auto;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #A8A8A8;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #A8A8A8;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+}
+
+#snvcbfwlms .gt_caption {
+  padding-top: 4px;
+  padding-bottom: 4px;
+}
+
+#snvcbfwlms .gt_title {
+  color: #333333;
+  font-size: 125%;
+  font-weight: initial;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-bottom-color: #FFFFFF;
+  border-bottom-width: 0;
+}
+
+#snvcbfwlms .gt_subtitle {
+  color: #333333;
+  font-size: 85%;
+  font-weight: initial;
+  padding-top: 3px;
+  padding-bottom: 5px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-top-color: #FFFFFF;
+  border-top-width: 0;
+}
+
+#snvcbfwlms .gt_heading {
+  background-color: #FFFFFF;
+  text-align: left;
+  border-bottom-color: #FFFFFF;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+}
+
+#snvcbfwlms .gt_bottom_border {
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+}
+
+#snvcbfwlms .gt_col_headings {
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+}
+
+#snvcbfwlms .gt_col_heading {
+  color: #333333;
+  background-color: #BEBEBE;
+  font-size: small;
+  font-weight: normal;
+  text-transform: inherit;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: bottom;
+  padding-top: 5px;
+  padding-bottom: 6px;
+  padding-left: 5px;
+  padding-right: 5px;
+  overflow-x: hidden;
+}
+
+#snvcbfwlms .gt_column_spanner_outer {
+  color: #333333;
+  background-color: #BEBEBE;
+  font-size: small;
+  font-weight: normal;
+  text-transform: inherit;
+  padding-top: 0;
+  padding-bottom: 0;
+  padding-left: 4px;
+  padding-right: 4px;
+}
+
+#snvcbfwlms .gt_column_spanner_outer:first-child {
+  padding-left: 0;
+}
+
+#snvcbfwlms .gt_column_spanner_outer:last-child {
+  padding-right: 0;
+}
+
+#snvcbfwlms .gt_column_spanner {
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  vertical-align: bottom;
+  padding-top: 5px;
+  padding-bottom: 5px;
+  overflow-x: hidden;
+  display: inline-block;
+  width: 100%;
+}
+
+#snvcbfwlms .gt_spanner_row {
+  border-bottom-style: hidden;
+}
+
+#snvcbfwlms .gt_group_heading {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  color: #333333;
+  background-color: #D3D3D3;
+  font-size: 100%;
+  font-weight: initial;
+  text-transform: inherit;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: middle;
+  text-align: left;
+}
+
+#snvcbfwlms .gt_empty_group_heading {
+  padding: 0.5px;
+  color: #333333;
+  background-color: #D3D3D3;
+  font-size: 100%;
+  font-weight: initial;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  vertical-align: middle;
+}
+
+#snvcbfwlms .gt_from_md > :first-child {
+  margin-top: 0;
+}
+
+#snvcbfwlms .gt_from_md > :last-child {
+  margin-bottom: 0;
+}
+
+#snvcbfwlms .gt_row {
+  padding-top: 3px;
+  padding-bottom: 3px;
+  padding-left: 5px;
+  padding-right: 5px;
+  margin: 10px;
+  border-top-style: solid;
+  border-top-width: 1px;
+  border-top-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: middle;
+  overflow-x: hidden;
+}
+
+#snvcbfwlms .gt_stub {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  text-transform: inherit;
+  border-right-style: solid;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#snvcbfwlms .gt_stub_row_group {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  text-transform: inherit;
+  border-right-style: solid;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+  padding-left: 5px;
+  padding-right: 5px;
+  vertical-align: top;
+}
+
+#snvcbfwlms .gt_row_group_first td {
+  border-top-width: 2px;
+}
+
+#snvcbfwlms .gt_row_group_first th {
+  border-top-width: 2px;
+}
+
+#snvcbfwlms .gt_summary_row {
+  color: #333333;
+  background-color: #FFFFFF;
+  text-transform: inherit;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#snvcbfwlms .gt_first_summary_row {
+  border-top-style: solid;
+  border-top-color: #D3D3D3;
+}
+
+#snvcbfwlms .gt_first_summary_row.thick {
+  border-top-width: 2px;
+}
+
+#snvcbfwlms .gt_last_summary_row {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+}
+
+#snvcbfwlms .gt_grand_summary_row {
+  color: #333333;
+  background-color: #FFFFFF;
+  text-transform: inherit;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#snvcbfwlms .gt_first_grand_summary_row {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-top-style: double;
+  border-top-width: 6px;
+  border-top-color: #D3D3D3;
+}
+
+#snvcbfwlms .gt_last_grand_summary_row_top {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-bottom-style: double;
+  border-bottom-width: 6px;
+  border-bottom-color: #D3D3D3;
+}
+
+#snvcbfwlms .gt_striped {
+  background-color: rgba(128, 128, 128, 0.05);
+}
+
+#snvcbfwlms .gt_table_body {
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+}
+
+#snvcbfwlms .gt_footnotes {
+  color: #333333;
+  background-color: #FFFFFF;
+  border-bottom-style: none;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+}
+
+#snvcbfwlms .gt_footnote {
+  margin: 0px;
+  font-size: 90%;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#snvcbfwlms .gt_sourcenotes {
+  color: #333333;
+  background-color: #FFFFFF;
+  border-bottom-style: none;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+}
+
+#snvcbfwlms .gt_sourcenote {
+  font-size: 90%;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#snvcbfwlms .gt_left {
+  text-align: left;
+}
+
+#snvcbfwlms .gt_center {
+  text-align: center;
+}
+
+#snvcbfwlms .gt_right {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+#snvcbfwlms .gt_font_normal {
+  font-weight: normal;
+}
+
+#snvcbfwlms .gt_font_bold {
+  font-weight: bold;
+}
+
+#snvcbfwlms .gt_font_italic {
+  font-style: italic;
+}
+
+#snvcbfwlms .gt_super {
+  font-size: 65%;
+}
+
+#snvcbfwlms .gt_footnote_marks {
+  font-size: 75%;
+  vertical-align: 0.4em;
+  position: initial;
+}
+
+#snvcbfwlms .gt_asterisk {
+  font-size: 100%;
+  vertical-align: 0;
+}
+
+#snvcbfwlms .gt_indent_1 {
+  text-indent: 5px;
+}
+
+#snvcbfwlms .gt_indent_2 {
+  text-indent: 10px;
+}
+
+#snvcbfwlms .gt_indent_3 {
+  text-indent: 15px;
+}
+
+#snvcbfwlms .gt_indent_4 {
+  text-indent: 20px;
+}
+
+#snvcbfwlms .gt_indent_5 {
+  text-indent: 25px;
+}
+</style>
+<table class="gt_table" data-quarto-disable-processing="false" data-quarto-bootstrap="false">
+  <thead>
+    <tr class="gt_heading">
+      <td colspan="2" class="gt_heading gt_title gt_font_normal gt_bottom_border" style>HIV prevention priority groups</td>
+    </tr>
+    
+    <tr class="gt_col_headings">
+      <th class="gt_col_heading gt_columns_bottom_border gt_left" rowspan="1" colspan="1" scope="col" id="Category">Category</th>
+      <th class="gt_col_heading gt_columns_bottom_border gt_left" rowspan="1" colspan="1" scope="col" id="HIV related risk">HIV related risk</th>
+    </tr>
+  </thead>
+  <tbody class="gt_table_body">
+    <tr><td headers="Category" class="gt_row gt_left">No sex</td>
+<td headers="HIV related risk" class="gt_row gt_left">Not sexually active</td></tr>
+    <tr><td headers="Category" class="gt_row gt_left">One regular</td>
+<td headers="HIV related risk" class="gt_row gt_left">Sexually active, one cohabiting/marital partner</td></tr>
+    <tr><td headers="Category" class="gt_row gt_left">Non-regular</td>
+<td headers="HIV related risk" class="gt_row gt_left">Non-regular sexual partner(s)</td></tr>
+    <tr><td headers="Category" class="gt_row gt_left">Key Populations</td>
+<td headers="HIV related risk" class="gt_row gt_left">FSW (women), MSM and PWID (men)</td></tr>
+  </tbody>
+  
+  
+</table>
+</div>
+<p>Subtract the proportion of KPs from sexual behaviour groups estimated
+in <em>Risher et al</em> model:</p>
+<ul>
+<li>FSWs only subtracted from non-regular partner(s) group of females
+across ages.</li>
+<li>MSM and PWID subtracted proportionally from all male behaviour
+categories.</li>
+</ul>
+<p><strong>3. Estimate HIV prevalence by behaviour</strong></p>
+<p>HIV prevalence ratios by behaviour group are used to distribute PLHIV
+between behavioural risk groups.</p>
+<ul>
+<li>Household survey data is used to estimate HIV prevalence in the no
+sex, one regular and non-regular partner(s) groups to calculate log
+odds-ratios for each behavioural category.</li>
+<li>HIV prevalence ratios for KPs are based on the ratio of KP HIV
+prevalence from the <em>Stevens et al</em> model to HIV prevalence among
+all women (FSW) or men (MSM and PWID).</li>
+<li>HIV prevalence by behaviour is not explicitly presented – it is used
+to subtract off population sizes to present the population susceptible
+to HIV (HIV-negative).</li>
+</ul>
+<p><em>For female KPs, HIV prevalence ratios are derived based
+on:</em></p>
+<ul>
+<li>A linear regression through regional (admin-1 level) estimates of
+the ratio of KP prevalence to general population prevalence used to
+predict an age-district-specific FSW to general population prevalence
+ratio.</li>
+</ul>
+<p><em>For males KPs, HIV prevalence ratios are derived based
+on:</em></p>
+<ul>
+<li>Regional (admin-1 level) estimates of the ratio of KP prevalence to
+general population prevalence among 15-24 year olds for MSM (due to the
+young age distribution of MSM) or among 15-49 year olds for PWID (due to
+the older age distribution of PWID) applied to all age groups among MSM
+and PWID in districts by region (admin-1 unit).</li>
+</ul>
+<p><strong>4. Estimate HIV incidence rates and new HIV infections by
+behaviour</strong></p>
+<p>While maintaining age/sex/district-specific HIV incidence from Naomi,
+distribute HIV incidence between our 4 different behavioural groups
+utilizing incidence rate ratios (IRRs) from the literature:</p>
+<ul>
+<li>Risk ratios for non-regular sex partner(s) relative to those with a
+single cohabiting/marital sex partner for
+females<sup><em>1,2,3</em></sup> and
+males.<sup><em>1,2,4</em></sup></li>
+<li>For FSW, ratio of HIV incidence among women in key populations vs
+general population women derived based on HIV incidence category in
+district and tiered risk ratio.<sup><em>5</em></sup></li>
+<li>For MSM and PWID, using regional (admin-1) KP prevalence estimates
+relative to general population prevalence<sup><em>6</em></sup> and
+estimates from systematic review &amp;
+meta-regression.<sup><em>7</em></sup></li>
+<li>National KP new infections are scaled to consensus estimates of KP
+HIV incidence maintaining the relative district-level proportions
+associated with the above two bullet points. As such, the precise risk
+ratios for KPs will not necessarily match the risk ratios listed in the
+table below.</li>
+</ul>
+<p>Number of new infections by sexual behaviour group is derived by
+multiplying these estimated HIV incidence rates by behaviour times the
+population sizes of HIV-negative individuals by behaviour, in each of
+the 5-year age groups</p>
+<div id="risxzigzex" style="padding-left:0px;padding-right:0px;padding-top:10px;padding-bottom:10px;overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
+<style>#risxzigzex table {
+  font-family: system-ui, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#risxzigzex thead, #risxzigzex tbody, #risxzigzex tfoot, #risxzigzex tr, #risxzigzex td, #risxzigzex th {
+  border-style: none;
+}
+
+#risxzigzex p {
+  margin: 0;
+  padding: 0;
+}
+
+#risxzigzex .gt_table {
+  display: table;
+  border-collapse: collapse;
+  line-height: normal;
+  margin-left: 0;
+  margin-right: auto;
+  color: #333333;
+  font-size: smaller;
+  font-weight: normal;
+  font-style: normal;
+  background-color: #FFFFFF;
+  width: auto;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #A8A8A8;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #A8A8A8;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+}
+
+#risxzigzex .gt_caption {
+  padding-top: 4px;
+  padding-bottom: 4px;
+}
+
+#risxzigzex .gt_title {
+  color: #333333;
+  font-size: 125%;
+  font-weight: initial;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-bottom-color: #FFFFFF;
+  border-bottom-width: 0;
+}
+
+#risxzigzex .gt_subtitle {
+  color: #333333;
+  font-size: 85%;
+  font-weight: initial;
+  padding-top: 3px;
+  padding-bottom: 5px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-top-color: #FFFFFF;
+  border-top-width: 0;
+}
+
+#risxzigzex .gt_heading {
+  background-color: #FFFFFF;
+  text-align: left;
+  border-bottom-color: #FFFFFF;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+}
+
+#risxzigzex .gt_bottom_border {
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+}
+
+#risxzigzex .gt_col_headings {
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+}
+
+#risxzigzex .gt_col_heading {
+  color: #333333;
+  background-color: #BEBEBE;
+  font-size: small;
+  font-weight: normal;
+  text-transform: inherit;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: bottom;
+  padding-top: 5px;
+  padding-bottom: 6px;
+  padding-left: 5px;
+  padding-right: 5px;
+  overflow-x: hidden;
+}
+
+#risxzigzex .gt_column_spanner_outer {
+  color: #333333;
+  background-color: #BEBEBE;
+  font-size: small;
+  font-weight: normal;
+  text-transform: inherit;
+  padding-top: 0;
+  padding-bottom: 0;
+  padding-left: 4px;
+  padding-right: 4px;
+}
+
+#risxzigzex .gt_column_spanner_outer:first-child {
+  padding-left: 0;
+}
+
+#risxzigzex .gt_column_spanner_outer:last-child {
+  padding-right: 0;
+}
+
+#risxzigzex .gt_column_spanner {
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  vertical-align: bottom;
+  padding-top: 5px;
+  padding-bottom: 5px;
+  overflow-x: hidden;
+  display: inline-block;
+  width: 100%;
+}
+
+#risxzigzex .gt_spanner_row {
+  border-bottom-style: hidden;
+}
+
+#risxzigzex .gt_group_heading {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  color: #333333;
+  background-color: #D3D3D3;
+  font-size: 100%;
+  font-weight: initial;
+  text-transform: inherit;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: middle;
+  text-align: left;
+}
+
+#risxzigzex .gt_empty_group_heading {
+  padding: 0.5px;
+  color: #333333;
+  background-color: #D3D3D3;
+  font-size: 100%;
+  font-weight: initial;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  vertical-align: middle;
+}
+
+#risxzigzex .gt_from_md > :first-child {
+  margin-top: 0;
+}
+
+#risxzigzex .gt_from_md > :last-child {
+  margin-bottom: 0;
+}
+
+#risxzigzex .gt_row {
+  padding-top: 3px;
+  padding-bottom: 3px;
+  padding-left: 5px;
+  padding-right: 5px;
+  margin: 10px;
+  border-top-style: solid;
+  border-top-width: 1px;
+  border-top-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: middle;
+  overflow-x: hidden;
+}
+
+#risxzigzex .gt_stub {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  text-transform: inherit;
+  border-right-style: solid;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#risxzigzex .gt_stub_row_group {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  text-transform: inherit;
+  border-right-style: solid;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+  padding-left: 5px;
+  padding-right: 5px;
+  vertical-align: top;
+}
+
+#risxzigzex .gt_row_group_first td {
+  border-top-width: 2px;
+}
+
+#risxzigzex .gt_row_group_first th {
+  border-top-width: 2px;
+}
+
+#risxzigzex .gt_summary_row {
+  color: #333333;
+  background-color: #FFFFFF;
+  text-transform: inherit;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#risxzigzex .gt_first_summary_row {
+  border-top-style: solid;
+  border-top-color: #D3D3D3;
+}
+
+#risxzigzex .gt_first_summary_row.thick {
+  border-top-width: 2px;
+}
+
+#risxzigzex .gt_last_summary_row {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+}
+
+#risxzigzex .gt_grand_summary_row {
+  color: #333333;
+  background-color: #FFFFFF;
+  text-transform: inherit;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#risxzigzex .gt_first_grand_summary_row {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-top-style: double;
+  border-top-width: 6px;
+  border-top-color: #D3D3D3;
+}
+
+#risxzigzex .gt_last_grand_summary_row_top {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-bottom-style: double;
+  border-bottom-width: 6px;
+  border-bottom-color: #D3D3D3;
+}
+
+#risxzigzex .gt_striped {
+  background-color: rgba(128, 128, 128, 0.05);
+}
+
+#risxzigzex .gt_table_body {
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+}
+
+#risxzigzex .gt_footnotes {
+  color: #333333;
+  background-color: #FFFFFF;
+  border-bottom-style: none;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+}
+
+#risxzigzex .gt_footnote {
+  margin: 0px;
+  font-size: 90%;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#risxzigzex .gt_sourcenotes {
+  color: #333333;
+  background-color: #FFFFFF;
+  border-bottom-style: none;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+}
+
+#risxzigzex .gt_sourcenote {
+  font-size: 90%;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#risxzigzex .gt_left {
+  text-align: left;
+}
+
+#risxzigzex .gt_center {
+  text-align: center;
+}
+
+#risxzigzex .gt_right {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+#risxzigzex .gt_font_normal {
+  font-weight: normal;
+}
+
+#risxzigzex .gt_font_bold {
+  font-weight: bold;
+}
+
+#risxzigzex .gt_font_italic {
+  font-style: italic;
+}
+
+#risxzigzex .gt_super {
+  font-size: 65%;
+}
+
+#risxzigzex .gt_footnote_marks {
+  font-size: 75%;
+  vertical-align: 0.4em;
+  position: initial;
+}
+
+#risxzigzex .gt_asterisk {
+  font-size: 100%;
+  vertical-align: 0;
+}
+
+#risxzigzex .gt_indent_1 {
+  text-indent: 5px;
+}
+
+#risxzigzex .gt_indent_2 {
+  text-indent: 10px;
+}
+
+#risxzigzex .gt_indent_3 {
+  text-indent: 15px;
+}
+
+#risxzigzex .gt_indent_4 {
+  text-indent: 20px;
+}
+
+#risxzigzex .gt_indent_5 {
+  text-indent: 25px;
+}
+</style>
+<table class="gt_table" data-quarto-disable-processing="false" data-quarto-bootstrap="false">
+  <thead>
+    
+    <tr class="gt_col_headings">
+      <th class="gt_col_heading gt_columns_bottom_border gt_left" rowspan="1" colspan="1" scope="col" id="Category">Category</th>
+      <th class="gt_col_heading gt_columns_bottom_border gt_left" rowspan="1" colspan="1" scope="col" id="Females">Females</th>
+      <th class="gt_col_heading gt_columns_bottom_border gt_left" rowspan="1" colspan="1" scope="col" id="Males">Males</th>
+    </tr>
+  </thead>
+  <tbody class="gt_table_body">
+    <tr><td headers="Category" class="gt_row gt_left"><div class="gt_from_md"><p>No sex</p>
+</div></td>
+<td headers="Females" class="gt_row gt_left"><div class="gt_from_md"><p>0</p>
+</div></td>
+<td headers="Males" class="gt_row gt_left"><div class="gt_from_md"><p>0</p>
+</div></td></tr>
+    <tr><td headers="Category" class="gt_row gt_left"><div class="gt_from_md"><p>One regular</p>
+</div></td>
+<td headers="Females" class="gt_row gt_left"><div class="gt_from_md"><p>1 (reference category)</p>
+</div></td>
+<td headers="Males" class="gt_row gt_left"><div class="gt_from_md"><p>1 (reference category)</p>
+</div></td></tr>
+    <tr><td headers="Category" class="gt_row gt_left"><div class="gt_from_md"><p>Non-regular</p>
+</div></td>
+<td headers="Females" class="gt_row gt_left"><div class="gt_from_md"><p><em>Aged 15-24</em>: 1.72 <br> Aged 25-49: 2.1 <sup><em>1,2,3</em></sup></p>
+</div></td>
+<td headers="Males" class="gt_row gt_left"><div class="gt_from_md"><p><em>Aged 15-24</em>: 1.89 <br> Aged 25-49: 2.1 <sup><em>1,2,4</em></sup></p>
+</div></td></tr>
+    <tr><td headers="Category" class="gt_row gt_left"><div class="gt_from_md"><p>Key Populations</p>
+</div></td>
+<td headers="Females" class="gt_row gt_left"><div class="gt_from_md"><p><strong>FSW</strong>: <br> Very high: 3 <br> High: 4 <br>Moderate: 7 <br>Low: 11 <br>Very low: 17 <sup><em>5</em></sup></p>
+</div></td>
+<td headers="Males" class="gt_row gt_left"><div class="gt_from_md"><p><strong>MSM</strong>: 2.5-250<sup><em>6,7</em></sup> <br> <strong>PWID</strong> 2.5-55 <sup><em>6</em></sup></p>
+</div></td></tr>
+  </tbody>
+  
+  
+</table>
+</div>
+<p><sup> 1 </sup> ALPHA Network pooled analysis (Slaymaker et al. CROI
+2020)</p>
+<p><sup> 2 </sup> <a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC8743366/">Jia et
+al. 2022</a></p>
+<p><sup> 3 </sup> <a href="https://journals.lww.com/jaids/fulltext/2022/07010/high_rates_of_pre_exposure_prophylaxis_eligibility.7.aspx">Ssempijja
+et al. 2022</a>.</p>
+<p><sup> 4 </sup> <a href="https://journals.lww.com/jaids/Fulltext/2022/06001/Implementing_PrEP_Services_in_Diverse_Health_Care.15.aspx">Hoffman
+et al. 2022</a></p>
+<p><sup> 5 </sup> <a href="https://www.medrxiv.org/content/10.1101/2023.10.17.23297108v2">Jones
+et al. 2023</a></p>
+<p><sup> 6 </sup> <a href="https://www.medrxiv.org/content/10.1101/2022.07.27.22278071v2">Stevens
+et al. 2023</a></p>
+<p><sup> 7 </sup> <a href="https://www.medrxiv.org/content/10.1101/2022.11.14.22282329v1">Stannah
+et al. 2022</a></p>
+</div>
+<div id="limitations-of-tool" class="section level2">
+<h2>Limitations of tool</h2>
+<p>Risk behaviour population size estimates at a district level have a
+high degree of uncertainty, which is not captured in the current version
+of the tool.</p>
+<p>There is uncertainty in:</p>
+<ul>
+<li>KP sizes and their age and geographical disaggregation</li>
+<li>Small area estimates based on survey data</li>
+<li>Behavioural reports in surveys</li>
+<li>Incidence rate ratios by behaviour</li>
+<li>Naomi estimates</li>
+</ul>
+<p>As such, SHIPP tool estimates should be considered indicative rather
+than exact.</p>
+</div>
+<div id="usage-of-tool-outputs" class="section level2">
+<h2>Usage of tool outputs</h2>
+<p>Recommendations for usage of tool outputs for prioritising groups for
+HIV prevention can be found <a href="https://hivtools.unaids.org/pse/">on the UNAIDS website</a>.</p>
+</div>
+
+
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>
