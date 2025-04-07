@@ -4,7 +4,7 @@
   changed too. A dataset will not be created if it already exists in the
   `dest` package type. Similary a dataset won't be created if there isn't a
   unique package for that country and type (as we don't know which to
-  copy from). Before running delete any 2022 packages you want to replace.
+  copy from). Before running delete any 2023 packages you want to replace.
 
 Usage:
     copy_adr_data.R  [--dry-run] [--site=<site>] --key=<key>
@@ -30,10 +30,10 @@ if (site == "prod") {
 message("Running migration on site ", url)
 
 ckanr::ckanr_setup(url = url, key = key)
-src <- "country-estimates-22"
-dest <- "country-estimates-23"
+src <- "country-estimates-23"
+dest <- "country-estimates-24"
 ## The display name of the package being created, ADR requies this
-dest_name <- "HIV Estimates 2023"
+dest_name <- "HIV Estimates 2024"
 resources <- c("inputs-unaids-geographic", "inputs-unaids-anc",
                "inputs-unaids-art", "inputs-unaids-survey",
                "inputs-unaids-population", "inputs-unaids-spectrum-file",
@@ -45,10 +45,9 @@ ckan_create_release <- function(id) {
                     method = "dataset_version_create",
                     body = jsonlite::toJSON(list(
                       dataset_id = id,
-                      name = "2022 data transfer",
+                      name = "2023 data transfer",
                       notes = paste0("Data automatically transferred from ",
-                                     "2022 dataset. Added blank columns to ANC",
-                                     " data for new indicators.")
+                                     "2023 dataset.")
                     ), auto_unbox = TRUE),
                     key = ckanr::get_default_key(),
                     encode = "json",
@@ -143,7 +142,7 @@ packages_keep <- vapply(packages_src$results, function(package) {
 packages_copy <- packages_src$results[packages_keep]
 
 ## Get named release for package
-releases <- lapply(packages_copy, get_release, "naomi_final_2022")
+releases <- lapply(packages_copy, get_release, "naomi_final_2023")
 releases <- releases[vapply(releases, function(x) !is.null(x), logical(1))]
 
 upload_package <- function(package_id, package_name, path, resource_type) {
@@ -174,7 +173,7 @@ for (package in releases) {
         extras = list("geo-location" = package[["geo-location"]],
                       type_name = dest_name,
                       maintainer_email = "naomi-support@unaids.org",
-                      year = "2023"),
+                      year = "2024"),
         maintainer = "Naomi team",
         notes = "A record of the input data and final HIV estimates.")
     },

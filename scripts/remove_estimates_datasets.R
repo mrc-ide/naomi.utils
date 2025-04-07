@@ -1,11 +1,11 @@
 #! /usr/bin/env Rscript
-"Delete 2023 ADR datasets. We need to do this because we want to
+"Delete estimates 2024 ADR datasets. We need to do this because we want to
   retrun the data copy script copying over data from a release
   instead of the current version of the data.
 
 Usage:
-    remove_2023_datasets.R  [--dry-run] [--site=<site>] --key=<key>
-    remove_2023_datasets.R -h | --help
+    remove_estimates_datasets.R  [--dry-run] [--site=<site>] --key=<key>
+    remove_estimates_datasets.R -h | --help
 
 Options
     --dry-run     Run in dry-run mode.
@@ -27,7 +27,7 @@ if (site == "prod") {
 message("Deleting datasets from ", url)
 
 ckanr::ckanr_setup(url = url, key = key)
-type <- "country-estimates-23"
+type <- "country-estimates-24"
 
 datasets <- ckanr::package_search(q = sprintf("type:%s", type),
                                   rows = 1000)
