@@ -923,7 +923,9 @@ create_survey_meta_dhs <- function(surveys) {
   ## Unsure if filtering on PublicationTitle == "Final Report" is most robust
   ## way to do this.
   final_rep <- dplyr::filter(publications, PublicationTitle == "Final Report")
-  final_rep <- dplyr::select(final_rep, SurveyId, report_url = PublicationURL)
+  final_rep <- dplyr::select(final_rep, SurveyId, report_url = PublicationURL) %>%
+    dplyr::group_by(SurveyId) %>%
+    dplyr::filter(row_number() == 1)
 
   stopifnot( !duplicated(final_rep$SurveyId) )
 
