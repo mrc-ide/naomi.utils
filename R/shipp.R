@@ -714,8 +714,8 @@ shipp_adjust_sexbehav_fsw <- function(outputs,
 #'
 #' @param outputs Naomi output.
 #' @param options Naomi model options.
-#' @param msm_est 5-year estimates of MSM PSEs generated from `shipp__disaggregate_msm()`.
-#' @param pwid_est 5-year estimates of MSM PSEs generated from `shipp__disaggregate_pwid()`.
+#' @param msm_est 5-year estimates of MSM PSEs generated from `shipp_disaggregate_msm()`.
+#' @param pwid_est 5-year estimates of MSM PSEs generated from `shipp_disaggregate_pwid()`.
 #'
 #' @return District level estimates of male sexual risk behaviour groups
 #' @keywords internal
@@ -1644,53 +1644,53 @@ shipp_calculate_incidence_male <- function(naomi_output,
 }
 
 #' Reformat output for individual spreadsheet tabs (e.g. "PSE F15-19")
-#' 
+#'
 #' @param shipp_all list of SHIPP outputs from shipp_generate_risk_populations
 #' @return list of output for each spreadsheet tab
 
 shipp_reformat_output <- function(shipp_all) {
-  
+
   # reshape women's outputs into individual dataframes
   shipp_f <- lapply(c("Y015_019","Y020_024","Y025_029","Y030_034","Y035_039",
-                      "Y040_044","Y045_049","Y015_024","Y025_049","Y015_049"), 
-                    shipp_combine_cats_female, 
+                      "Y040_044","Y045_049","Y015_024","Y025_049","Y015_049"),
+                    shipp_combine_cats_female,
                     shipp_all$female_incidence,
                     shipp_all$naomi_output)
-  
+
   names(shipp_f) <- c("PSE_F15_19", "PSE_F20_24", "PSE_F25_29", "PSE_F30_34",
                       "PSE_F35_39", "PSE_F40_44", "PSE_F45_49", "PSE_F15_24",
                       "PSE_F25_49", "PSE_F15_49")
-  
+
   # reshape men's outputs into individual dataframes
   shipp_m <- lapply(c("Y015_019","Y020_024","Y025_029","Y030_034","Y035_039",
-                      "Y040_044","Y045_049","Y015_024","Y025_049","Y015_049"), 
-                    shipp_combine_cats_male, 
+                      "Y040_044","Y045_049","Y015_024","Y025_049","Y015_049"),
+                    shipp_combine_cats_male,
                     shipp_all$male_incidence,
                     shipp_all$naomi_output)
-  
+
   names(shipp_m) <- c("PSE_M15_19", "PSE_M20_24", "PSE_M25_29", "PSE_M30_34",
                       "PSE_M35_39", "PSE_M40_44", "PSE_M45_49", "PSE_M15_24",
                       "PSE_M25_49", "PSE_M15_49")
-  
+
   out <- c(shipp_all, shipp_f, shipp_m)
-  
+
   out
-  
+
 }
 
 #' Prep women's outputs for spreadsheet tabs, including combining non-regular
 #' partner group with KPs to make "elevated risk" group
-#' 
+#'
 #' @param age_filter formatted as eg "Y015_019"
-#' @param shipp female outputs 
+#' @param shipp female outputs
 #' @param naomi_output naomi output used for pulling in country & area names
 #' @return dataframe ready to write to Excel tab
 
 shipp_combine_cats_female <- function(age_filter, shipp, naomi_output) {
-  
+
   # filter to age category we're outputting
   shipp <- shipp %>% dplyr::filter(age_group==age_filter)
-  
+
   # create new variables to write to sheets
   shipp <- shipp %>%
     dplyr::mutate(
@@ -1698,7 +1698,7 @@ shipp_combine_cats_female <- function(age_filter, shipp, naomi_output) {
       elevrisk = sexnonreg + sexpaid12m,
       susceptible_elevrisk = susceptible_sexnonreg + susceptible_sexpaid12m,
       infections_elevrisk = infections_sexnonreg + infections_sexpaid12m,
-      incidence_elevrisk = ((incidence_sexnonreg * susceptible_sexnonreg) + 
+      incidence_elevrisk = ((incidence_sexnonreg * susceptible_sexnonreg) +
                               (incidence_sexpaid12m * susceptible_sexpaid12m))/susceptible_elevrisk,
       # create new variables for population sizes by incidence category
       pop_low_inc = ifelse(incidence_sexcohab<0.003, susceptible_sexcohab, 0) +
@@ -1726,15 +1726,16 @@ shipp_combine_cats_female <- function(age_filter, shipp, naomi_output) {
                                  susceptible_elevrisk, 0),
       pop_vhigh_inc_elev = ifelse(incidence_elevrisk>=0.03, susceptible_elevrisk, 0)
     )
-  
+
   # add country & area name to dataframe
   shipp <- shipp %>%
-    dplyr::left_join(naomi_output %>% dplyr::select(Country, area_id, area_name))
-  
-  # create blank column for filling column Z 
+    dplyr::left_join(naomi_output %>% dplyr::select(Country, area_id, area_name),
+                     by = join_by(area_id))
+
+  # create blank column for filling column Z
   # (is there a way to do this directly in write to xlsx by skipping a column?)
   shipp$" " <- ""
-  
+
   # multiply columns x 100 to match formatting
   shipp <- shipp %>%
     dplyr::mutate(nosex12m_perc = nosex12m*100,
@@ -1743,34 +1744,34 @@ shipp_combine_cats_female <- function(age_filter, shipp, naomi_output) {
                   inc_nosex12m_x100 = incidence_nosex12m*100,
                   inc_sexcohab_x100 = incidence_sexcohab*100,
                   inc_elevrisk_x100 = incidence_elevrisk*100)
-  
+
   # dataframe with columns in correct order to write out
-  shipp %>% 
+  shipp %>%
     dplyr::select(Country, area_id, area_name, nosex12m_perc, sexcohab_perc, elevrisk_perc,
                   susceptible_nosex12m, susceptible_sexcohab, susceptible_elevrisk,
                   population, plhiv, infections_nosex12m, infections_sexcohab,
-                  infections_elevrisk, infections, inc_nosex12m_x100, 
+                  infections_elevrisk, infections, inc_nosex12m_x100,
                   inc_sexcohab_x100, inc_elevrisk_x100, incidence, incidence_cat,
-                  rr_sexpaid12m, pop_low_inc, pop_mod_inc, pop_high_inc, pop_vhigh_inc, 
-                  " ", pop_low_inc_cohab, pop_mod_inc_cohab, pop_high_inc_cohab, 
+                  rr_sexpaid12m, pop_low_inc, pop_mod_inc, pop_high_inc, pop_vhigh_inc,
+                  " ", pop_low_inc_cohab, pop_mod_inc_cohab, pop_high_inc_cohab,
                   pop_vhigh_inc_cohab, pop_low_inc_elev, pop_mod_inc_elev,
                   pop_high_inc_elev, pop_vhigh_inc_elev)
-  
+
 }
 
 #' Prep men's outputs for spreadsheet tabs, including combining non-regular
 #' partner group with KPs to make "elevated risk" group
-#' 
+#'
 #' @param age_filter formatted as eg "Y015_019"
-#' @param shipp male outputs 
+#' @param shipp male outputs
 #' @param naomi_output naomi output used for pulling in country & area names
 #' @return dataframe ready to write to Excel tab
 
 shipp_combine_cats_male <- function(age_filter, shipp, naomi_output) {
-  
+
   # filter to age category we're outputting
   shipp <- shipp %>% dplyr::filter(age_group==age_filter)
-  
+
   # create new variables to write to sheets
   shipp <- shipp %>%
     dplyr::mutate(
@@ -1778,7 +1779,7 @@ shipp_combine_cats_male <- function(age_filter, shipp, naomi_output) {
       elevrisk = sexnonreg + msm + pwid,
       susceptible_elevrisk = susceptible_sexnonreg + susceptible_msm + susceptible_pwid,
       infections_elevrisk = infections_sexnonreg + infections_msm + infections_pwid,
-      incidence_elevrisk = ((incidence_sexnonreg * susceptible_sexnonreg) + 
+      incidence_elevrisk = ((incidence_sexnonreg * susceptible_sexnonreg) +
                               (incidence_msm * susceptible_msm) +
                               (incidence_pwid * susceptible_pwid))/susceptible_elevrisk,
       # create new variables for population sizes by incidence category
@@ -1807,16 +1808,17 @@ shipp_combine_cats_male <- function(age_filter, shipp, naomi_output) {
                                  susceptible_elevrisk, 0),
       pop_vhigh_inc_elev = ifelse(incidence_elevrisk>=0.03, susceptible_elevrisk, 0)
     )
-  
+
   # add country & area name to dataframe
   shipp <- shipp %>%
-    dplyr::left_join(naomi_output %>% dplyr::select(Country, area_id, area_name))
-  
-  # create blank column for filling column Z 
+    dplyr::left_join(naomi_output %>% dplyr::select(Country, area_id, area_name),
+                     by = dplyr::join_by(area_id))
+
+  # create blank column for filling column Z
   # (is there a way to do this directly in write to xlsx by skipping a column?)
   shipp$" " <- ""
   shipp$"  " <- ""
-  
+
   # multiply columns x 100 to match formatting
   shipp <- shipp %>%
     dplyr::mutate(nosex12m_perc = nosex12m*100,
@@ -1825,19 +1827,19 @@ shipp_combine_cats_male <- function(age_filter, shipp, naomi_output) {
                   inc_nosex12m_x100 = incidence_nosex12m*100,
                   inc_sexcohab_x100 = incidence_sexcohab*100,
                   inc_elevrisk_x100 = incidence_elevrisk*100)
-  
+
   # dataframe with columns in correct order to write out
-  shipp %>% 
+  shipp %>%
     dplyr::select(Country, area_id, area_name, nosex12m_perc, sexcohab_perc, elevrisk_perc,
                   susceptible_nosex12m, susceptible_sexcohab, susceptible_elevrisk,
                   population, plhiv, infections_nosex12m, infections_sexcohab,
-                  infections_elevrisk, infections, inc_nosex12m_x100, 
+                  infections_elevrisk, infections, inc_nosex12m_x100,
                   inc_sexcohab_x100, inc_elevrisk_x100, incidence, incidence_cat,
-                  " ", pop_low_inc, pop_mod_inc, pop_high_inc, pop_vhigh_inc, 
-                  "  ", pop_low_inc_cohab, pop_mod_inc_cohab, pop_high_inc_cohab, 
+                  " ", pop_low_inc, pop_mod_inc, pop_high_inc, pop_vhigh_inc,
+                  "  ", pop_low_inc_cohab, pop_mod_inc_cohab, pop_high_inc_cohab,
                   pop_vhigh_inc_cohab, pop_low_inc_elev, pop_mod_inc_elev,
                   pop_high_inc_elev, pop_vhigh_inc_elev)
-  
+
 }
 
 #' Generate outputs to update SHIPP tool.
@@ -1851,12 +1853,8 @@ shipp_combine_cats_male <- function(age_filter, shipp, naomi_output) {
 #' @return Output files to update SHIPP excel workbook.
 #' @keywords internal
 
-# pjnz <- "~/Downloads/bwa2024.PJNZ"
-# naomi_output <- "~/Downloads/bwa_naomi2024.zip"
-
-
 shipp_generate_risk_populations <- function(naomi_output,
-                                           pjnz,
+                                           pjnz = NULL,
                                            consensus_est = "goals",
                                            survey_year = 2018) {
 
@@ -1882,7 +1880,11 @@ shipp_generate_risk_populations <- function(naomi_output,
 
   # Consensus estimates
   goals <- naomi.resources::load_shipp_exdata("goals", "SSA") |> dplyr::filter(iso3 == iso)
-  kp_wb <- naomi.utils:::extract_kp_workbook(pjnz)
+
+  if(consensus_est == "goals"){kp_wb = NULL}
+  if(!is.null(pjnz) && consensus_est == "kp_wb"){
+    kp_wb <- naomi.utils:::extract_kp_workbook(pjnz)}
+
 
   # Disaggregate subnational KP PSEs from Stevens et al. analysis to 5-year bands
   fsw_est <- shipp_disaggregate_fsw(outputs, iso, naomi_pop,
@@ -1938,7 +1940,7 @@ shipp_generate_risk_populations <- function(naomi_output,
             meta_consensus = meta)
 
   v <- shipp_reformat_output(v)
-  
+
   v
 
 }
@@ -2013,15 +2015,35 @@ assert_shipp_resource_hierarchy <- function(outputs,
 #' @return Path to complete xlsx file
 #' @keywords internal
 write_xlsx_sheets <- function(template, sheets, path) {
-  wb <- openxlsx::loadWorkbook(template)
-  for (sheet in names(sheets)) {
-    openxlsx::writeData(wb, sheet, sheets[[sheet]],
-                        startRow = 2,
-                        colNames = FALSE)
-  }
 
-  openxlsx::saveWorkbook(wb, path)
+  cat("Reading data: ")
+  t_start <- Sys.time()
+  wb <- openxlsx2::wb_load(template)
+  cat(round(Sys.time() - t_start, 2), "s\n")
+
+  # Write data in template
+  cat("Writing data into workbook: ")
+  t_sheet <- Sys.time()
+  for (sheet in names(sheets)) {
+
+    if (grepl("PSE", sheet)) { start <- 3 } else { start <- 2 }
+
+    wb$add_data(
+      sheet = sheet,
+      x = as.data.frame(sheets[[sheet]]),
+      dims  = paste0("A", start),
+      col_names = FALSE)
+  }
+  cat(round(Sys.time() - t_sheet, 2), "s\n")
+
+  # Save out template to specified path
+  cat("Saving workbook: ")
+  t_save <- Sys.time()
+
+  openxlsx2::wb_save(wb, file = path, overwrite = TRUE)
+  cat(round(Sys.time() - t_save, 2), "s\n")
   path
+
 }
 
 
@@ -2033,6 +2055,7 @@ write_xlsx_sheets <- function(template, sheets, path) {
 #'
 #' @return Path to output file and metadata for file
 #' @export
+
 generate_shipp_tool <- function(output, pjnz, path = tempfile(fileext = ".xlsx")) {
 
   risk_populations <- shipp_generate_risk_populations(output, pjnz)
@@ -2040,8 +2063,27 @@ generate_shipp_tool <- function(output, pjnz, path = tempfile(fileext = ".xlsx")
   sheets <- list(
     "All outputs - F" = risk_populations$female_incidence,
     "All outputs - M" = risk_populations$male_incidence,
-    "NAOMI outputs" = risk_populations$naomi_output
-  )
+    "NAOMI outputs" = risk_populations$naomi_output,
+    "PSE F15-19" = risk_populations$PSE_F15_19,
+    "PSE F20-24" = risk_populations$PSE_F20_24,
+    "PSE F25-29"  = risk_populations$PSE_F25_29,
+    "PSE F30-34"  = risk_populations$PSE_F30_34,
+    "PSE F35-39" = risk_populations$PSE_F35_39,
+    "PSE F40-44" = risk_populations$PSE_F40_44,
+    "PSE F45-49"  = risk_populations$PSE_F45_49,
+    "PSE F15-24" = risk_populations$PSE_F15_24,
+    "PSE F25-49" = risk_populations$PSE_F25_49,
+    "PSE F15-49"  = risk_populations$PSE_F15_49,
+    "PSE M15-19" = risk_populations$PSE_M15_19,
+    "PSE M20-24" = risk_populations$PSE_M20_24,
+    "PSE M25-29" = risk_populations$PSE_M25_29,
+    "PSE M30-34" = risk_populations$PSE_M30_34,
+    "PSE M35-39" = risk_populations$PSE_M35_39,
+    "PSE M40-44"= risk_populations$PSE_M40_44,
+    "PSE M45-49" = risk_populations$PSE_M45_49,
+    "PSE M15-24" = risk_populations$PSE_M15_24,
+    "PSE M25-49" = risk_populations$PSE_M25_49,
+    "PSE M15-49" = risk_populations$PSE_M15_49)
 
   template_path <- naomi.resources::get_shipp_workbook_path()
 
@@ -2143,6 +2185,7 @@ extract_kp_workbook <- function(pjnz_list){
   kp_out
 
 }
+
 
 
 
