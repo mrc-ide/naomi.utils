@@ -1701,30 +1701,30 @@ shipp_combine_cats_female <- function(age_filter, shipp, naomi_output) {
       incidence_elevrisk = ((incidence_sexnonreg * susceptible_sexnonreg) +
                               (incidence_sexpaid12m * susceptible_sexpaid12m))/susceptible_elevrisk,
       # create new variables for population sizes by incidence category
-      pop_low_inc = ifelse(incidence_sexcohab<0.003, susceptible_sexcohab, 0) +
-        ifelse(incidence_elevrisk<0.003, susceptible_elevrisk, 0),
-      pop_mod_inc = ifelse(incidence_sexcohab>=0.003 & incidence_sexcohab<0.01,
+      pop_low_inc = ifelse(incidence_sexcohab<0.002, susceptible_sexcohab, 0) +
+        ifelse(incidence_elevrisk<0.002, susceptible_elevrisk, 0),
+      pop_mod_inc = ifelse(incidence_sexcohab>=0.002 & incidence_sexcohab<0.005,
                susceptible_sexcohab, 0) +
-        ifelse(incidence_elevrisk>=0.003 & incidence_elevrisk<0.01,
+        ifelse(incidence_elevrisk>=0.002 & incidence_elevrisk<0.005,
                susceptible_elevrisk, 0),
-      pop_high_inc = ifelse(incidence_sexcohab>=0.01 & incidence_sexcohab<0.03,
+      pop_high_inc = ifelse(incidence_sexcohab>=0.005 & incidence_sexcohab<0.02,
                susceptible_sexcohab, 0) +
-        ifelse(incidence_elevrisk>=0.01 & incidence_elevrisk<0.03,
+        ifelse(incidence_elevrisk>=0.005 & incidence_elevrisk<0.02,
                susceptible_elevrisk, 0),
-      pop_vhigh_inc = ifelse(incidence_sexcohab>=0.03, susceptible_sexcohab, 0) +
-        ifelse(incidence_elevrisk>=0.03, susceptible_elevrisk, 0),
-      pop_low_inc_cohab = ifelse(incidence_sexcohab<0.003, susceptible_sexcohab, 0),
-      pop_mod_inc_cohab = ifelse(incidence_sexcohab>=0.003 & incidence_sexcohab<0.01,
+      pop_vhigh_inc = ifelse(incidence_sexcohab>=0.02, susceptible_sexcohab, 0) +
+        ifelse(incidence_elevrisk>=0.02, susceptible_elevrisk, 0),
+      pop_low_inc_cohab = ifelse(incidence_sexcohab<0.002, susceptible_sexcohab, 0),
+      pop_mod_inc_cohab = ifelse(incidence_sexcohab>=0.002 & incidence_sexcohab<0.005,
                                  susceptible_sexcohab, 0),
-      pop_high_inc_cohab = ifelse(incidence_sexcohab>=0.01 & incidence_sexcohab<0.03,
+      pop_high_inc_cohab = ifelse(incidence_sexcohab>=0.005 & incidence_sexcohab<0.02,
                                   susceptible_sexcohab, 0),
-      pop_vhigh_inc_cohab = ifelse(incidence_sexcohab>=0.03, susceptible_sexcohab, 0),
-      pop_low_inc_elev = ifelse(incidence_elevrisk<0.003, susceptible_elevrisk, 0),
-      pop_mod_inc_elev = ifelse(incidence_elevrisk>=0.003 & incidence_elevrisk<0.01,
+      pop_vhigh_inc_cohab = ifelse(incidence_sexcohab>=0.02, susceptible_sexcohab, 0),
+      pop_low_inc_elev = ifelse(incidence_elevrisk<0.002, susceptible_elevrisk, 0),
+      pop_mod_inc_elev = ifelse(incidence_elevrisk>=0.002 & incidence_elevrisk<0.005,
                                 susceptible_elevrisk, 0),
-      pop_high_inc_elev = ifelse(incidence_elevrisk>=0.01 & incidence_elevrisk<0.03,
+      pop_high_inc_elev = ifelse(incidence_elevrisk>=0.005 & incidence_elevrisk<0.02,
                                  susceptible_elevrisk, 0),
-      pop_vhigh_inc_elev = ifelse(incidence_elevrisk>=0.03, susceptible_elevrisk, 0)
+      pop_vhigh_inc_elev = ifelse(incidence_elevrisk>=0.02, susceptible_elevrisk, 0)
     )
 
   # add country & area name to dataframe
@@ -1783,30 +1783,30 @@ shipp_combine_cats_male <- function(age_filter, shipp, naomi_output) {
                               (incidence_msm * susceptible_msm) +
                               (incidence_pwid * susceptible_pwid))/susceptible_elevrisk,
       # create new variables for population sizes by incidence category
-      pop_low_inc = ifelse(incidence_sexcohab<0.003, susceptible_sexcohab, 0) +
-        ifelse(incidence_elevrisk<0.003, susceptible_elevrisk, 0),
-      pop_mod_inc = ifelse(incidence_sexcohab>=0.003 & incidence_sexcohab<0.01,
+      pop_low_inc = ifelse(incidence_sexcohab<0.002, susceptible_sexcohab, 0) +
+        ifelse(incidence_elevrisk<0.002, susceptible_elevrisk, 0),
+      pop_mod_inc = ifelse(incidence_sexcohab>=0.002 & incidence_sexcohab<0.005,
                susceptible_sexcohab, 0) +
-        ifelse(incidence_elevrisk>=0.003 & incidence_elevrisk<0.01,
+        ifelse(incidence_elevrisk>=0.002 & incidence_elevrisk<0.005,
                susceptible_elevrisk, 0),
-      pop_high_inc = ifelse(incidence_sexcohab>=0.01 & incidence_sexcohab<0.03,
+      pop_high_inc = ifelse(incidence_sexcohab>=0.005 & incidence_sexcohab<0.02,
                susceptible_sexcohab, 0) +
-        ifelse(incidence_elevrisk>=0.01 & incidence_elevrisk<0.03,
+        ifelse(incidence_elevrisk>=0.005 & incidence_elevrisk<0.02,
                susceptible_elevrisk, 0),
-      pop_vhigh_inc = ifelse(incidence_sexcohab>=0.03, susceptible_sexcohab, 0) +
-        ifelse(incidence_elevrisk>=0.03, susceptible_elevrisk, 0),
-      pop_low_inc_cohab = ifelse(incidence_sexcohab<0.003, susceptible_sexcohab, 0),
-      pop_mod_inc_cohab = ifelse(incidence_sexcohab>=0.003 & incidence_sexcohab<0.01,
+      pop_vhigh_inc = ifelse(incidence_sexcohab>=0.02, susceptible_sexcohab, 0) +
+        ifelse(incidence_elevrisk>=0.02, susceptible_elevrisk, 0),
+      pop_low_inc_cohab = ifelse(incidence_sexcohab<0.002, susceptible_sexcohab, 0),
+      pop_mod_inc_cohab = ifelse(incidence_sexcohab>=0.002 & incidence_sexcohab<0.005,
                                  susceptible_sexcohab, 0),
-      pop_high_inc_cohab = ifelse(incidence_sexcohab>=0.01 & incidence_sexcohab<0.03,
+      pop_high_inc_cohab = ifelse(incidence_sexcohab>=0.005 & incidence_sexcohab<0.02,
                                   susceptible_sexcohab, 0),
-      pop_vhigh_inc_cohab = ifelse(incidence_sexcohab>=0.03, susceptible_sexcohab, 0),
-      pop_low_inc_elev = ifelse(incidence_elevrisk<0.003, susceptible_elevrisk, 0),
-      pop_mod_inc_elev = ifelse(incidence_elevrisk>=0.003 & incidence_elevrisk<0.01,
+      pop_vhigh_inc_cohab = ifelse(incidence_sexcohab>=0.02, susceptible_sexcohab, 0),
+      pop_low_inc_elev = ifelse(incidence_elevrisk<0.002, susceptible_elevrisk, 0),
+      pop_mod_inc_elev = ifelse(incidence_elevrisk>=0.002 & incidence_elevrisk<0.005,
                                 susceptible_elevrisk, 0),
-      pop_high_inc_elev = ifelse(incidence_elevrisk>=0.01 & incidence_elevrisk<0.03,
+      pop_high_inc_elev = ifelse(incidence_elevrisk>=0.005 & incidence_elevrisk<0.02,
                                  susceptible_elevrisk, 0),
-      pop_vhigh_inc_elev = ifelse(incidence_elevrisk>=0.03, susceptible_elevrisk, 0)
+      pop_vhigh_inc_elev = ifelse(incidence_elevrisk>=0.02, susceptible_elevrisk, 0)
     )
 
   # add country & area name to dataframe
