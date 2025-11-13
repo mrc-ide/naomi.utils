@@ -7,7 +7,6 @@
 #' @return Calibrated naomi output matched to MWI test data on
 #'   `naomi.resources` to be used to generate the shipp tool.
 #' @keywords internal
-#' @export
 
 make_shipp_testfiles <- function(naomi_output) {
   # Create naomi outputs align with testing data in naomi.resources:

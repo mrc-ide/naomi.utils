@@ -2032,13 +2032,13 @@ assert_shipp_resource_hierarchy <- function(outputs,
 #' @keywords internal
 write_xlsx_sheets <- function(template, sheets, path) {
 
-  cat("Reading data: ")
+  message("Reading data: ")
   t_start <- Sys.time()
   wb <- openxlsx2::wb_load(template)
-  cat(round(Sys.time() - t_start, 2), "s\n")
+  message(round(Sys.time() - t_start, 2), "s\n")
 
   # Write data in template
-  cat("Writing data into workbook: ")
+  message("Writing data into workbook: ")
   t_sheet <- Sys.time()
   for (sheet in names(sheets)) {
 
@@ -2050,14 +2050,14 @@ write_xlsx_sheets <- function(template, sheets, path) {
       dims  = paste0("A", start),
       col_names = FALSE)
   }
-  cat(round(Sys.time() - t_sheet, 2), "s\n")
+  message(round(Sys.time() - t_sheet, 2), "s\n")
 
   # Save out template to specified path
-  cat("Saving workbook: ")
+  message("Saving workbook: ")
   t_save <- Sys.time()
 
   openxlsx2::wb_save(wb, file = path, overwrite = TRUE)
-  cat(round(Sys.time() - t_save, 2), "s\n")
+  message(round(Sys.time() - t_save, 2), "s\n")
   path
 
 }
