@@ -9,6 +9,7 @@ RUN apt-get update && apt-get -y install --no-install-recommends \
 RUN install_packages --repo "https://mrc-ide.r-universe.dev" \
         ckanr \
         docopt \
+        httr \
         jsonlite
 
 COPY copy_adr_data.R /usr/local/bin/
