@@ -194,10 +194,6 @@ shipp_format_naomi <- function(outputs, options, quarter){
     naomi_wide$area_name <- stringr::str_to_title(naomi_wide$area_name)
   }
 
-  if(options$area_scope %in% c("TCD","GIN")) {
-    naomi_wide$area_name <- iconv(naomi_wide$area_name, from="UTF-8",to="LATIN1")
-  }
-
   v <- list(naomi_long = df2,
             naomi_wide = naomi_wide)
 
