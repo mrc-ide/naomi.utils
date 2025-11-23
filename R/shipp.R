@@ -702,7 +702,21 @@ shipp_adjust_sexbehav_fsw <- function(outputs,
       sexpaid12m = fsw_prop,
       sexnonreg = 1 - nosex12m - sexcohab - sexpaid12m,
       fsw_prop = NULL
-    ) %>%
+    )
+
+  ## fix district/age groups where
+  if(sum(adj_female_srb$sexnonreg<0)>0) {
+    print("FSW exceed sexnonreg - Correcting Sexnonreg Proportion")
+    adj_female_srb <- adj_female_srb %>%
+      mutate(
+        sexcohab = ifelse(sexnonreg < 0, sexcohab + sexnonreg, sexcohab),
+        sexnonreg = ifelse(sexnonreg < 0, 0, sexnonreg)
+      )
+
+  }
+
+  ## reshape the data
+  adj_female_srb <- adj_female_srb %>%
     tidyr::pivot_longer(
       cols = c(nosex12m,sexcohab,sexnonregplus,sexnonreg,sexpaid12m),
       names_to = "indicator",
@@ -818,7 +832,7 @@ shipp_calculate_prevalence_female <- function(naomi_output,
                                              options,
                                              fsw_est,
                                              female_srb,
-                                             survey_year_sample = 2018,
+                                             survey_year_sample = 2022,
                                              quarter) {
 
   # Naomi estimates of PLHIV and population by district and age band
@@ -956,7 +970,7 @@ shipp_calculate_prevalence_male <- function(naomi_output,
                                            options,
                                            msm_est,
                                            male_srb,
-                                           survey_year_sample = 2018,
+                                           survey_year_sample = 2022,
                                            quarter) {
 
   # Naomi estimates of PLHIV and population by district and age band
@@ -1144,7 +1158,7 @@ shipp_calculate_incidence_female <- function(naomi_output,
                                             options, iso,
                                             female_srb,
                                             female_logit_prevalence,
-                                            survey_year = 2018,
+                                            survey_year = 2022,
                                             consensus_est,
                                             goals,
                                             kp_wb) {
@@ -1254,6 +1268,45 @@ shipp_calculate_incidence_female <- function(naomi_output,
     dplyr::mutate(
       # Adjust district-level new infections and incidence for FSW
       infections_sexpaid12m = infections_sexpaid12m * fsw_ratio,
+    )
+
+  nwhile <- 1
+  # Do this adjustment iteratively for districts where there are more KP infections
+  # than there are new infections in the district
+  while(sum(df2$infections<df2$infections_sexpaid12m) > 0 & nwhile<25) {
+    print("Re-adjusting new infections for KPs")
+    ## Need second adjustment for districts where there are now more infections in KPs
+    ## than there are new infections in the district
+    kp_max <- df2 %>%
+      filter(infections_sexpaid12m > infections) %>%
+      mutate(infections_sexpaid12m = infections)
+
+    # redo the ratios for KPs
+    kp_max_excluded <- df2 %>%
+      filter(!infections_sexpaid12m > infections)
+    # Sum prior count of new infections
+    fsw_sum <- sum(kp_max_excluded$infections_sexpaid12m)
+
+    # Sum new infections excluded from the new ratio
+    fsw_sum_excluded <- sum(kp_max$infections_sexpaid12m)
+
+    # Generate a ratio to scale FSW new infections by
+    fsw_ratio <- (fsw_consensus - fsw_sum_excluded) / fsw_sum
+
+    # Adjust new infections
+    df2 <- kp_max_excluded %>%
+      dplyr::mutate(
+        # Adjust district-level new infections and incidence for MSM
+        infections_sexpaid12m = infections_sexpaid12m * fsw_ratio,
+      ) %>%
+      bind_rows(kp_max)
+    nwhile <- nwhile + 1
+  }
+
+  # Adjust new infections, other groups
+  df2 <- df2 %>%
+    dplyr::mutate(
+      # Adjust district-level new infections and incidence for FSW
       incidence_sexpaid12m = infections_sexpaid12m / susceptible_sexpaid12m,
       # Calculate incidence in rest of groups
       incidence_sexcohab = (infections - infections_sexpaid12m) / (susceptible_sexcohab + rr_sexnonreg * susceptible_sexnonreg),
@@ -1394,7 +1447,7 @@ shipp_calculate_incidence_male <- function(naomi_output,
                                           options, iso,
                                           male_srb,
                                           male_logit_prevalence,
-                                          survey_year = 2018,
+                                          survey_year = 2022,
                                           consensus_est,
                                           goals,
                                           kp_wb) {
@@ -1505,14 +1558,60 @@ shipp_calculate_incidence_male <- function(naomi_output,
   msm_ratio <- msm_consensus / msm_sum
   pwid_ratio <- pwid_consensus / pwid_sum
 
-  # Adjust new infections
+  # Adjust new infections for KPs
   df2 <- df1 %>%
     dplyr::mutate(
       # Adjust district-level new infections and incidence for MSM
       infections_msm = infections_msm * msm_ratio,
-      incidence_msm = infections_msm / susceptible_msm,
       # Adjust district-level new infections and incidence for PWID
       infections_pwid = infections_pwid * pwid_ratio,
+    )
+
+  nwhile <- 1
+  # Do this adjustment iteratively for districts where there are more KP infections
+  # than there are new infections in the district
+  while(sum(df2$infections<(df2$infections_msm + df2$infections_pwid)) > 0 & nwhile<25) {
+    print("Re-adjusting new infections for KPs")
+    ## Need second adjustment for districts where there are now more infections in KPs
+    ## than there are new infections in the district
+    kp_max <- df2 %>%
+      filter((infections_msm + infections_pwid) > infections) %>%
+      mutate(infections_msm = (rr_msm/(rr_pwid + rr_msm)) * infections,
+             infections_pwid = infections - infections_msm)
+
+    # redo the ratios for KPs
+    kp_max_excluded <- df2 %>%
+      filter(!(infections_msm + infections_pwid) > infections)
+    # Sum prior count of new infections
+    msm_sum <- sum(kp_max_excluded$infections_msm)
+    pwid_sum <- sum(kp_max_excluded$infections_pwid)
+
+    # Sum new infections excluded from the new ratio
+    msm_sum_excluded <- sum(kp_max$infections_msm)
+    pwid_sum_excluded <- sum(kp_max$infections_pwid)
+
+    # Generate a ratio to scale MSM and PWID new infections by
+    msm_ratio <- (msm_consensus - msm_sum_excluded) / msm_sum
+    pwid_ratio <- (pwid_consensus - pwid_sum_excluded) / pwid_sum
+
+    # Adjust new infections
+    df2 <- kp_max_excluded %>%
+      dplyr::mutate(
+        # Adjust district-level new infections and incidence for MSM
+        infections_msm = infections_msm * msm_ratio,
+        # Adjust district-level new infections and incidence for PWID
+        infections_pwid = infections_pwid * pwid_ratio,
+      ) %>%
+      bind_rows(kp_max)
+    nwhile <- nwhile + 1
+  }
+
+  # New infections for all groups
+  df2 <- df2 %>%
+    dplyr::mutate(
+      # Adjust district-level new infections and incidence for MSM
+      incidence_msm = infections_msm / susceptible_msm,
+      # Adjust district-level new infections and incidence for PWID
       incidence_pwid = infections_pwid / susceptible_pwid,
 
       # Adjust sexcohab and sexnonreg new infections and incidence to scale rest of infections
@@ -1867,7 +1966,7 @@ shipp_combine_cats_male <- function(age_filter, shipp, naomi_output) {
 shipp_generate_risk_populations <- function(naomi_output,
                                            pjnz = NULL,
                                            consensus_est = "goals",
-                                           survey_year = 2018) {
+                                           survey_year = 2022) {
 
 
   outputs <- naomi::read_output_package(naomi_output)
@@ -2072,9 +2171,10 @@ write_xlsx_sheets <- function(template, sheets, path) {
 #' @return Path to output file and metadata for file
 #' @export
 
-generate_shipp_tool <- function(output, pjnz, path = tempfile(fileext = ".xlsx")) {
+generate_shipp_tool <- function(output, pjnz, path = tempfile(fileext = ".xlsx"),
+                                survey_year = 2022) {
 
-  risk_populations <- shipp_generate_risk_populations(output, pjnz)
+  risk_populations <- shipp_generate_risk_populations(output, pjnz, survey_year = survey_year)
 
   sheets <- list(
     "All outputs - F" = risk_populations$female_incidence,
