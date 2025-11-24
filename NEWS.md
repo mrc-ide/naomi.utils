@@ -5,7 +5,7 @@
 * Ensure Naomi T3 pulled in for countries with multiple historical surveys (MWI, ZAF) 
 * Year for SRB results now pulled in from "Model inputs" tab in the SHIPP wb template. 
   Year set to year of most recent survey with SRB data and to 2018 for countries where
-  most recent SRb survey is older that 2018.
+  most recent SRB survey is older that 2018.
 
 # naomi.utils 0.0.16
 
