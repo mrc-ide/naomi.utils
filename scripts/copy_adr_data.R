@@ -4,7 +4,8 @@
   changed too. A dataset will not be created if it already exists in the
   `dest` package type. Similary a dataset won't be created if there isn't a
   unique package for that country and type (as we don't know which to
-  copy from). Before running delete any 2022 packages you want to replace.
+  copy from). Before running delete any destination year packages you
+  want to replace.
 
 Usage:
     copy_adr_data.R  [--dry-run] [--site=<site>] --key=<key>
@@ -30,14 +31,18 @@ if (site == "prod") {
 message("Running migration on site ", url)
 
 ckanr::ckanr_setup(url = url, key = key)
-src <- "country-estimates-22"
-dest <- "country-estimates-23"
-## The display name of the package being created, ADR requies this
-dest_name <- "HIV Estimates 2023"
+src_year <- "2025"
+dest_year <- "2026"
+src <- "country-estimates-25"
+dest <- "country-estimates-26"
+## The display name of the package being created, ADR requires this
+dest_name <- paste("HIV Estimates", dest_year)
 resources <- c("inputs-unaids-geographic", "inputs-unaids-anc",
                "inputs-unaids-art", "inputs-unaids-survey",
                "inputs-unaids-population", "inputs-unaids-spectrum-file",
-               "inputs-unaids-shiny90-survey", "inputs-unaids-hiv-testing")
+               "inputs-unaids-shiny90-survey", "inputs-unaids-hiv-testing",
+               "inputs-unaids-vmmc-coverage-outputs",
+               "inputs-unaids-vmmc-coverage-inputs")
 
 ## No built in way to send custom commands to CKAN so do a gross hack
 ckan_create_release <- function(id) {
@@ -45,10 +50,9 @@ ckan_create_release <- function(id) {
                     method = "dataset_version_create",
                     body = jsonlite::toJSON(list(
                       dataset_id = id,
-                      name = "2022 data transfer",
-                      notes = paste0("Data automatically transferred from ",
-                                     "2022 dataset. Added blank columns to ANC",
-                                     " data for new indicators.")
+                      name = paste(src_year, "data transfer"),
+                      notes = paste("Data automatically transferred from",
+                                    src_year, "dataset.")
                     ), auto_unbox = TRUE),
                     key = ckanr::get_default_key(),
                     encode = "json",
@@ -82,7 +86,7 @@ get_release <- function(package, release_name) {
   releases <- list_releases(package$id)
   if (length(releases) == 0) {
     message(sprintf("No release found for %s using current data", package$name))
-    return(package)
+    out_package <- package
   }
   release_id <- NULL
   for (rel in releases) {
@@ -90,24 +94,24 @@ get_release <- function(package, release_name) {
       release_id <- rel$id
       message(sprintf("Found release %s for package %s",
                       release_name, package$name))
-      break
+      out_package <- package_show(package$id, release_id)
     }
   }
   if (is.null(release_id)) {
     message(sprintf(
       paste0(
         "Release %s not found in package %s with name %s, ",
-        "falling back to most recent release"
+        "falling back to current data"
       ),
       release_name, package$id, package$name
     ))
-    release_id <- releases[[1]]$id
+    out_package <- package
   }
-  package_show(package$id, release_id)
+  out_package
 }
 
 packages_src <- ckanr::package_search(q = sprintf("type:%s", src),
-                                       rows = 1000)
+                                      rows = 1000)
 packages_dest <- ckanr::package_search(q = sprintf("type:%s", dest),
                                        rows = 1000)
 
@@ -143,7 +147,7 @@ packages_keep <- vapply(packages_src$results, function(package) {
 packages_copy <- packages_src$results[packages_keep]
 
 ## Get named release for package
-releases <- lapply(packages_copy, get_release, "naomi_final_2022")
+releases <- lapply(packages_copy, get_release, paste0("naomi_final_", src_year))
 releases <- releases[vapply(releases, function(x) !is.null(x), logical(1))]
 
 upload_package <- function(package_id, package_name, path, resource_type) {
@@ -157,8 +161,8 @@ upload_package <- function(package_id, package_name, path, resource_type) {
       resource_type = resource_type))
 }
 
-## For each country, download 2021 resources
-## Upload as 2022 dataset in countries organisation
+## For each country, download previous year resources
+## Upload as next year dataset in countries organisation
 t <- tempfile()
 dir.create(t)
 package_no <- 0
@@ -174,7 +178,7 @@ for (package in releases) {
         extras = list("geo-location" = package[["geo-location"]],
                       type_name = dest_name,
                       maintainer_email = "naomi-support@unaids.org",
-                      year = "2023"),
+                      year = src_year),
         maintainer = "Naomi team",
         notes = "A record of the input data and final HIV estimates.")
     },
@@ -234,7 +238,7 @@ for (package in releases) {
       }
       ## Also can return a HTML Gateway Time-out page if issue hitting endpoint
       ## if this is the case then error
-      if (any(grepl("504 Gateway Time-out", out))) {
+      if (any(grepl("504 Gateway Time-out", out, useBytes = TRUE))) {
         upload <- FALSE
         stop("ADR timed out, upload manually or try again later")
       }
