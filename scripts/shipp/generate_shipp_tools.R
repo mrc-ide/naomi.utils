@@ -34,7 +34,7 @@ shipp_ahoy <- function(iso){
       naomi_file <- naomi_file_map[naomi_file_map$iso3 == iso, ]$naomi_file
       generate_shipp_tool(naomi_file, pjnz = NULL,
                           path = file.path(shipp_dir, paste0(iso, "_2025_shipp.xlsx")))
-      
+
       data.frame(iso3 = iso, success = TRUE, message = "success", stringsAsFactors = FALSE)
     },
     error = function(e) {
@@ -44,7 +44,6 @@ shipp_ahoy <- function(iso){
 }
 
 iso_to_run <- naomi_file_map$iso3
-iso_to_run <- c("GIN")
 
 results <- do.call(rbind, lapply(iso_to_run, shipp_ahoy))
 
