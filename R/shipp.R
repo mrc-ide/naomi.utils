@@ -1971,8 +1971,8 @@ shipp_combine_cats_male <- function(age_filter, shipp, naomi_output) {
 
   # create blank column for filling column Z
   # (is there a way to do this directly in write to xlsx by skipping a column?)
-  shipp$" " <- ""
-  shipp$"  " <- ""
+  shipp$X1 <- ""
+  shipp$X2 <- ""
 
   # multiply columns x 100 to match formatting
   shipp <- shipp %>%
@@ -2007,13 +2007,13 @@ shipp_combine_cats_male <- function(age_filter, shipp, naomi_output) {
                   inc_sexnonreg_x100, inc_kp_x100,
                   incidence,
                   # Incidence category
-                  incidence_cat, "  ",
+                  incidence_cat, X1,
                   # Pop sizes per HIV incidence category, non-KP
                   pop_low_inc_nonkp, pop_mod_inc_nonkp, pop_high_inc_nonkp,
                   pop_vhigh_inc_nonkp,
                   # Pop sizes per HIV incidence category, KP
                   pop_low_inc_kp, pop_mod_inc_kp, pop_high_inc_kp,
-                  pop_vhigh_inc_kp,  " ",
+                  pop_vhigh_inc_kp,  X2,
                   # Pop sizes per HIV incidence category, non-KP, one cohabiting partner
                   pop_low_inc_cohab, pop_mod_inc_cohab, pop_high_inc_cohab,
                   pop_vhigh_inc_cohab,
