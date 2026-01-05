@@ -10,7 +10,7 @@ shipp_calculate_incidence_female(
   iso,
   female_srb,
   female_logit_prevalence,
-  survey_year = 2018,
+  survey_year,
   consensus_est,
   goals,
   kp_wb

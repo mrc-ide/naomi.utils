@@ -1154,7 +1154,7 @@ shipp_calculate_incidence_female <- function(naomi_output,
                                             options, iso,
                                             female_srb,
                                             female_logit_prevalence,
-                                            survey_year = 2022,
+                                            survey_year,
                                             consensus_est,
                                             goals,
                                             kp_wb) {
@@ -1443,7 +1443,7 @@ shipp_calculate_incidence_male <- function(naomi_output,
                                           options, iso,
                                           male_srb,
                                           male_logit_prevalence,
-                                          survey_year = 2022,
+                                          survey_year,
                                           consensus_est,
                                           goals,
                                           kp_wb) {
@@ -2107,7 +2107,7 @@ shipp_generate_risk_populations <- function(naomi_output,
                                                       options, iso,
                                                       female_srb,
                                                       female_logit_prevalence,
-                                                      survey_year,
+                                                      survey_year = survey_year,
                                                       consensus_est, goals, kp_wb)
 
 
@@ -2115,7 +2115,7 @@ shipp_generate_risk_populations <- function(naomi_output,
                                                   options, iso,
                                                   male_srb,
                                                   male_logit_prevalence,
-                                                  survey_year,
+                                                  survey_year = survey_year,
                                                   consensus_est, goals, kp_wb)
 
   meta <- data.frame(kp = c("FSW", "MSM", "PWID"),

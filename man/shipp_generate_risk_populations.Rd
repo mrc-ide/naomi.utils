@@ -6,9 +6,8 @@
 \usage{
 shipp_generate_risk_populations(
   naomi_output,
-  pjnz,
-  consensus_est = "goals",
-  survey_year = 2018
+  pjnz = NULL,
+  consensus_est = "goals"
 )
 }
 \arguments{
