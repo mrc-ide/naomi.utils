@@ -1269,7 +1269,7 @@ shipp_calculate_incidence_female <- function(naomi_output,
   nwhile <- 1
   # Do this adjustment iteratively for districts where there are more KP infections
   # than there are new infections in the district
-  while(sum(df2$infections<df2$infections_sexpaid12m) > 0 & nwhile<25) {
+  while (sum(df2$infections<df2$infections_sexpaid12m) > 0 & nwhile < 25) {
     print("Re-adjusting new infections for KPs")
     ## Need second adjustment for districts where there are now more infections in KPs
     ## than there are new infections in the district
