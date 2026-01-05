@@ -701,7 +701,7 @@ shipp_adjust_sexbehav_fsw <- function(outputs,
     )
 
   ## fix district/age groups where
-  if(sum(adj_female_srb$sexnonreg<0)>0) {
+  if (sum(adj_female_srb$sexnonreg < 0) > 0) {
     print("FSW exceed sexnonreg - Correcting Sexnonreg Proportion")
     adj_female_srb <- adj_female_srb %>%
       mutate(
