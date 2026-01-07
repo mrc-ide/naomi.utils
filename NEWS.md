@@ -1,11 +1,12 @@
 # naomi.utils 0.0.17
 
-* Add fix for KP new infections exceeding new infections in a given age/district
-* Add fix for PSE for KPs exceeding size of non-regular partners group
-* Ensure Naomi T3 pulled in for countries with multiple historical surveys (MWI, ZAF) 
-* Year for SRB results now pulled in from "Model inputs" tab in the SHIPP wb template. 
-  Year set to year of most recent survey with SRB data and to 2018 for countries where
-  most recent SRB survey is older that 2018.
+Updates to SHIPP workbook processing code for 2025 estimates update:
+* Add fix to avoid new infections among KP exceeding total new infections in a given age/district
+* Add fix to avoid PSE for KPs exceeding size of non-regular partners group
+* Ensure Naomi T3 pulled in as "current estimates" for countries that used custom Naomi version with two household surveys surveys (MWI, ZAF)
+* Year for sexual risk behaviour survey results now pulled in from "Model inputs" tab in the SHIPP workbook template. 
+  Year set to year of most recent survey with sexual risk behaviour data and to 2018 for countries where
+  most recent sexual risk behaviour survey is older that 2018.
 
 # naomi.utils 0.0.16
 

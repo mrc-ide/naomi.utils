@@ -701,7 +701,7 @@ shipp_adjust_sexbehav_fsw <- function(outputs,
     )
 
   ## fix district/age groups where
-  if(sum(adj_female_srb$sexnonreg<0)>0) {
+  if (sum(adj_female_srb$sexnonreg < 0) > 0) {
     print("FSW exceed sexnonreg - Correcting Sexnonreg Proportion")
     adj_female_srb <- adj_female_srb %>%
       mutate(
@@ -1268,7 +1268,7 @@ shipp_calculate_incidence_female <- function(naomi_output,
   nwhile <- 1
   # Do this adjustment iteratively for districts where there are more KP infections
   # than there are new infections in the district
-  while(sum(df2$infections<df2$infections_sexpaid12m) > 0 & nwhile<25) {
+  while (sum(df2$infections<df2$infections_sexpaid12m) > 0 & nwhile < 25) {
     print("Re-adjusting new infections for KPs")
     ## Need second adjustment for districts where there are now more infections in KPs
     ## than there are new infections in the district
@@ -1565,7 +1565,7 @@ shipp_calculate_incidence_male <- function(naomi_output,
   nwhile <- 1
   # Do this adjustment iteratively for districts where there are more KP infections
   # than there are new infections in the district
-  while(sum(df2$infections<(df2$infections_msm + df2$infections_pwid)) > 0 & nwhile<25) {
+  while (sum(df2$infections<(df2$infections_msm + df2$infections_pwid)) > 0 & nwhile < 25) {
     print("Re-adjusting new infections for KPs")
     ## Need second adjustment for districts where there are now more infections in KPs
     ## than there are new infections in the district
@@ -1816,31 +1816,31 @@ shipp_combine_cats_female <- function(age_filter, shipp, naomi_output) {
       susceptible_sexnonkp= susceptible_sexnonreg + susceptible_sexcohab,
       infections_sexnonkp = infections_sexnonreg + infections_sexcohab,
       incidence_sexnonkp = ((incidence_sexnonreg * susceptible_sexnonreg) +
-                              (incidence_sexcohab* susceptible_sexcohab))/susceptible_sexnonkp,
+                              (incidence_sexcohab * susceptible_sexcohab)) / susceptible_sexnonkp,
       # Create new variables for population sizes by incidence category
       # Non-KP total: sexcohab + sexnonreg
-      pop_low_inc_nonkp = ifelse(incidence_sexnonkp<0.002, susceptible_sexnonkp, 0),
-      pop_mod_inc_nonkp = ifelse(incidence_sexnonkp>=0.002 & incidence_sexnonkp<0.005,
-                                 susceptible_sexnonkp, 0),
-      pop_high_inc_nonkp = ifelse(incidence_sexnonkp>=0.005 & incidence_sexnonkp<0.02,
-                                  susceptible_sexnonkp, 0),
-      pop_vhigh_inc_nonkp = ifelse(incidence_sexnonkp>=0.02, susceptible_sexnonkp, 0),
+      pop_low_inc_nonkp = ifelse(incidence_sexnonkp < 0.002, susceptible_sexnonkp, 0.0),
+      pop_mod_inc_nonkp = ifelse(incidence_sexnonkp >= 0.002 & incidence_sexnonkp < 0.005,
+                                 susceptible_sexnonkp, 0.0),
+      pop_high_inc_nonkp = ifelse(incidence_sexnonkp >= 0.005 & incidence_sexnonkp < 0.02,
+                                  susceptible_sexnonkp, 0.0),
+      pop_vhigh_inc_nonkp = ifelse(incidence_sexnonkp >= 0.02, susceptible_sexnonkp, 0),
 
       # KP: FSW (sexpaid12m)
-      pop_low_inc_kp = ifelse(incidence_sexpaid12m<0.002, susceptible_sexpaid12m, 0),
-      pop_mod_inc_kp = ifelse(incidence_sexpaid12m>=0.002 & incidence_sexpaid12m<0.005,
-                                 susceptible_sexpaid12m, 0),
-      pop_high_inc_kp = ifelse(incidence_sexpaid12m>=0.005 & incidence_sexpaid12m<0.02,
-                                  susceptible_sexpaid12m, 0),
-      pop_vhigh_inc_kp = ifelse(incidence_sexpaid12m>=0.02, susceptible_sexpaid12m, 0),
+      pop_low_inc_kp = ifelse(incidence_sexpaid12m < 0.002, susceptible_sexpaid12m, 0.0),
+      pop_mod_inc_kp = ifelse(incidence_sexpaid12m >= 0.002 & incidence_sexpaid12m < 0.005,
+                                 susceptible_sexpaid12m, 0.0),
+      pop_high_inc_kp = ifelse(incidence_sexpaid12m >= 0.005 & incidence_sexpaid12m < 0.02,
+                                  susceptible_sexpaid12m, 0.0),
+      pop_vhigh_inc_kp = ifelse(incidence_sexpaid12m >= 0.02, susceptible_sexpaid12m, 0.0),
 
       # Non-KP: One cohabiting partner (sexcohab)
-      pop_low_inc_cohab = ifelse(incidence_sexcohab<0.002, susceptible_sexcohab, 0),
-      pop_mod_inc_cohab = ifelse(incidence_sexcohab>=0.002 & incidence_sexcohab<0.005,
-                                 susceptible_sexcohab, 0),
-      pop_high_inc_cohab = ifelse(incidence_sexcohab>=0.005 & incidence_sexcohab<0.02,
-                                  susceptible_sexcohab, 0),
-      pop_vhigh_inc_cohab = ifelse(incidence_sexcohab>=0.02, susceptible_sexcohab, 0),
+      pop_low_inc_cohab = ifelse(incidence_sexcohab < 0.002, susceptible_sexcohab, 0.0),
+      pop_mod_inc_cohab = ifelse(incidence_sexcohab >= 0.002 & incidence_sexcohab < 0.005,
+                                 susceptible_sexcohab, 0.0),
+      pop_high_inc_cohab = ifelse(incidence_sexcohab >= 0.005 & incidence_sexcohab < 0.02,
+                                  susceptible_sexcohab, 0.0),
+      pop_vhigh_inc_cohab = ifelse(incidence_sexcohab >= 0.02, susceptible_sexcohab, 0.0),
 
       # Non-KP: Non-regular partner
       pop_low_inc_sexnonreg = ifelse(incidence_sexnonreg<0.002, susceptible_sexnonreg, 0),
@@ -1870,8 +1870,7 @@ shipp_combine_cats_female <- function(age_filter, shipp, naomi_output) {
       pop_mod_inc_sexnonreg = sum(pop_mod_inc_sexnonreg, na.rm = TRUE),
       pop_high_inc_sexnonreg = sum(pop_high_inc_sexnonreg, na.rm = TRUE),
       pop_vhigh_inc_sexnonreg = sum(pop_vhigh_inc_sexnonreg, na.rm = TRUE),
-      .groups = "drop"
-    )
+      .groups = "drop")
 
 
   # Subset additional indicators based on combined age categories
@@ -1895,15 +1894,16 @@ shipp_combine_cats_female <- function(age_filter, shipp, naomi_output) {
   shipp_out <- shipp_out %>%
     dplyr::mutate(
       # Risk categories % of total
-      nosex12m_perc = nosex12m*100,
-      sexcohab_perc = sexcohab*100,
-      sexnonreg_perc = sexnonreg*100,
-      sexpaid12m_perc = sexpaid12m*100,
+      nosex12m_perc = nosex12m * 100,
+      sexcohab_perc = sexcohab * 100,
+      sexnonreg_perc = sexnonreg * 100,
+      sexpaid12m_perc = sexpaid12m * 100,
       # Incidence
       inc_nosex12m_x100 = incidence_nosex12m*100,
       inc_sexcohab_x100 = incidence_sexcohab*100,
       inc_sexnonreg_x100 = incidence_sexnonreg*100,
       inc_kp_x100 = incidence_kp*100)
+
 
   # dataframe with columns in correct order to write out
   shipp_out %>%
@@ -1988,28 +1988,28 @@ shipp_combine_cats_male <- function(age_filter, shipp, naomi_output) {
 
       # Create new variables for population sizes by incidence category
       # Non-KP total: sexcohab + sexnonreg
-      pop_low_inc_nonkp = ifelse(incidence_sexnonkp<0.002, susceptible_sexnonkp, 0),
-      pop_mod_inc_nonkp = ifelse(incidence_sexnonkp>=0.002 & incidence_sexnonkp<0.005,
-                                 susceptible_sexnonkp, 0),
-      pop_high_inc_nonkp = ifelse(incidence_sexnonkp>=0.005 & incidence_sexnonkp<0.02,
-                                  susceptible_sexnonkp, 0),
-      pop_vhigh_inc_nonkp = ifelse(incidence_sexnonkp>=0.02, susceptible_sexnonkp, 0),
+      pop_low_inc_nonkp = ifelse(incidence_sexnonkp < 0.002, susceptible_sexnonkp, 0.0),
+      pop_mod_inc_nonkp = ifelse(incidence_sexnonkp >= 0.002 & incidence_sexnonkp < 0.005,
+                                 susceptible_sexnonkp, 0.0),
+      pop_high_inc_nonkp = ifelse(incidence_sexnonkp >= 0.005 & incidence_sexnonkp < 0.02,
+                                  susceptible_sexnonkp, 0.0),
+      pop_vhigh_inc_nonkp = ifelse(incidence_sexnonkp >= 0.02, susceptible_sexnonkp, 0.0),
 
       # KP: PWID and MSM
-      pop_low_inc_kp = ifelse(incidence_kp<0.002, susceptible_kp, 0),
-      pop_mod_inc_kp = ifelse(incidence_kp>=0.002 & incidence_kp<0.005,
-                              susceptible_kp, 0),
-      pop_high_inc_kp = ifelse(incidence_kp>=0.005 & incidence_kp<0.02,
-                               susceptible_kp, 0),
-      pop_vhigh_inc_kp = ifelse(incidence_kp>=0.02, susceptible_kp, 0),
+      pop_low_inc_kp = ifelse(incidence_kp < 0.002, susceptible_kp, 0.0),
+      pop_mod_inc_kp = ifelse(incidence_kp >= 0.002 & incidence_kp < 0.005,
+                              susceptible_kp, 0.0),
+      pop_high_inc_kp = ifelse(incidence_kp >= 0.005 & incidence_kp < 0.02,
+                               susceptible_kp, 0.0),
+      pop_vhigh_inc_kp = ifelse(incidence_kp >= 0.02, susceptible_kp, 0.0),
 
       # Non-KP: One cohabiting partner (sexcohab)
-      pop_low_inc_cohab = ifelse(incidence_sexcohab<0.002, susceptible_sexcohab, 0),
-      pop_mod_inc_cohab = ifelse(incidence_sexcohab>=0.002 & incidence_sexcohab<0.005,
-                                 susceptible_sexcohab, 0),
-      pop_high_inc_cohab = ifelse(incidence_sexcohab>=0.005 & incidence_sexcohab<0.02,
-                                  susceptible_sexcohab, 0),
-      pop_vhigh_inc_cohab = ifelse(incidence_sexcohab>=0.02, susceptible_sexcohab, 0),
+      pop_low_inc_cohab = ifelse(incidence_sexcohab < 0.002, susceptible_sexcohab, 0.0),
+      pop_mod_inc_cohab = ifelse(incidence_sexcohab >= 0.002 & incidence_sexcohab < 0.005,
+                                 susceptible_sexcohab, 0.0),
+      pop_high_inc_cohab = ifelse(incidence_sexcohab >= 0.005 & incidence_sexcohab < 0.02,
+                                  susceptible_sexcohab, 0.0),
+      pop_vhigh_inc_cohab = ifelse(incidence_sexcohab >= 0.02, susceptible_sexcohab, 0.0),
 
       # Non-KP: Non-regular partner
       pop_low_inc_sexnonreg = ifelse(incidence_sexnonreg<0.002, susceptible_sexnonreg, 0),
@@ -2041,8 +2041,7 @@ shipp_combine_cats_male <- function(age_filter, shipp, naomi_output) {
       pop_mod_inc_sexnonreg = sum(pop_mod_inc_sexnonreg, na.rm = TRUE),
       pop_high_inc_sexnonreg = sum(pop_high_inc_sexnonreg, na.rm = TRUE),
       pop_vhigh_inc_sexnonreg = sum(pop_vhigh_inc_sexnonreg, na.rm = TRUE),
-      .groups = "drop"
-    )
+      .groups = "drop")
 
   # Subset additional indicators based on combined age categories
   shipp_out <- dplyr::filter(shipp, age_group == age_filter) |>
@@ -2064,15 +2063,15 @@ shipp_combine_cats_male <- function(age_filter, shipp, naomi_output) {
   shipp_out <- shipp_out %>%
     dplyr::mutate(
       # Risk categories % of total
-      nosex12m_perc = nosex12m*100,
-      sexcohab_perc = sexcohab*100,
-      sexnonreg_perc = sexnonreg*100,
-      kp_perc = kp*100,
+      nosex12m_perc = nosex12m * 100,
+      sexcohab_perc = sexcohab * 100,
+      sexnonreg_perc = sexnonreg * 100,
+      kp_perc = kp * 100,
       # Incidence
-      inc_nosex12m_x100 = incidence_nosex12m*100,
-      inc_sexcohab_x100 = incidence_sexcohab*100,
-      inc_sexnonreg_x100 = incidence_sexnonreg*100,
-      inc_kp_x100 = incidence_kp*100)
+      inc_nosex12m_x100 = incidence_nosex12m * 100,
+      inc_sexcohab_x100 = incidence_sexcohab * 100,
+      inc_sexnonreg_x100 = incidence_sexnonreg * 100,
+      inc_kp_x100 = incidence_kp * 100)
 
   # dataframe with columns in correct order to write out
   shipp_out %>%
