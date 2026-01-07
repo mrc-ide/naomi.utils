@@ -1149,7 +1149,6 @@ logit_scale_prev <- function(lor, N_fine, plhiv) {
 #'
 #' @return Wide format output required for the SHIPP workbook.
 #' @keywords internal
-
 shipp_calculate_incidence_female <- function(naomi_output,
                                             options, iso,
                                             female_srb,
@@ -1369,7 +1368,7 @@ shipp_calculate_incidence_female <- function(naomi_output,
                     prev_sexcohab = plhiv_sexcohab/(susceptible_sexcohab + plhiv_sexcohab),
                     prev_sexnonreg = plhiv_sexnonreg/(susceptible_sexnonreg + plhiv_sexnonreg),
                     prev_sexpaid12m = plhiv_sexpaid12m/(susceptible_sexpaid12m + plhiv_sexpaid12m),
-                    rr_sexpaid12m = NA)
+                    rr_sexpaid12m = incidence_sexpaid12m/incidence_sexcohab)
   }
 
   # Aggregate data
@@ -1793,11 +1792,24 @@ shipp_reformat_output <- function(shipp_all) {
 
 shipp_combine_cats_female <- function(age_filter, shipp, naomi_output) {
 
-  # Filter to age category we're outputting
-  shipp <- shipp %>% dplyr::filter(age_group==age_filter)
+  combined_age_cats <- c("Y015_024", "Y025_049", "Y015_049")
 
-  # Create new variables to write to sheets
-  shipp <- shipp %>%
+  if(!(age_filter %in% combined_age_cats)){age_groups <- age_filter}
+  if(age_filter == "Y015_024"){age_groups <- c("Y015_019", "Y020_024")}
+  if(age_filter == "Y025_049"){age_groups <- c("Y025_029","Y030_034","Y035_039",
+                                               "Y040_044","Y045_049")}
+  if(age_filter == "Y015_049"){age_groups <- c("Y015_019","Y020_024","Y025_029",
+                                               "Y030_034","Y035_039","Y040_044",
+                                               "Y045_049")}
+
+  # Filter to age category we're outputting
+  shipp_pop_risk_cat <- shipp %>% dplyr::filter(age_group %in% age_groups)
+
+  # Calculate population by risk categories:
+  # Calculated by summing 5-year age band risk populations to ensure all combined
+  # age categories contain risk populations based on thresholds from 5-year
+  # age-band incidence
+  pop_risk_cat <- shipp_pop_risk_cat |>
     dplyr::mutate(
       # Create new variables for non-KP risk group (combining sexcohab and sexnonreg)
       sexnonkp = sexcohab + sexnonreg,
@@ -1806,7 +1818,6 @@ shipp_combine_cats_female <- function(age_filter, shipp, naomi_output) {
       incidence_sexnonkp = ((incidence_sexnonreg * susceptible_sexnonreg) +
                               (incidence_sexcohab* susceptible_sexcohab))/susceptible_sexnonkp,
       # Create new variables for population sizes by incidence category
-
       # Non-KP total: sexcohab + sexnonreg
       pop_low_inc_nonkp = ifelse(incidence_sexnonkp<0.002, susceptible_sexnonkp, 0),
       pop_mod_inc_nonkp = ifelse(incidence_sexnonkp>=0.002 & incidence_sexnonkp<0.005,
@@ -1837,20 +1848,51 @@ shipp_combine_cats_female <- function(age_filter, shipp, naomi_output) {
                                 susceptible_sexnonreg, 0),
       pop_high_inc_sexnonreg = ifelse(incidence_sexnonreg>=0.005 & incidence_sexnonreg<0.02,
                                  susceptible_sexnonreg, 0),
-      pop_vhigh_inc_sexnonreg = ifelse(incidence_sexnonreg>=0.02, susceptible_sexnonreg, 0)
+      pop_vhigh_inc_sexnonreg = ifelse(incidence_sexnonreg>=0.02, susceptible_sexnonreg, 0))|>
+    dplyr::group_by(area_id) |>
+    dplyr::summarise(
+      # Sum KP variables
+      # Don't need to sum KP variables as we do in `shipp_combine_cats_male()`
+      # as only only one KP group
+      pop_low_inc_nonkp = sum(pop_low_inc_nonkp, na.rm = TRUE),
+      pop_mod_inc_nonkp = sum(pop_mod_inc_nonkp, na.rm = TRUE),
+      pop_high_inc_nonkp = sum(pop_high_inc_nonkp, na.rm = TRUE),
+      pop_vhigh_inc_nonkp = sum(pop_vhigh_inc_nonkp, na.rm = TRUE),
+      pop_low_inc_kp = sum(pop_low_inc_kp, na.rm = TRUE),
+      pop_mod_inc_kp = sum(pop_mod_inc_kp, na.rm = TRUE),
+      pop_high_inc_kp = sum(pop_high_inc_kp, na.rm = TRUE),
+      pop_vhigh_inc_kp = sum(pop_vhigh_inc_kp, na.rm = TRUE),
+      pop_low_inc_cohab = sum(pop_low_inc_cohab, na.rm = TRUE),
+      pop_mod_inc_cohab = sum(pop_mod_inc_cohab, na.rm = TRUE),
+      pop_high_inc_cohab = sum(pop_high_inc_cohab, na.rm = TRUE),
+      pop_vhigh_inc_cohab = sum(pop_vhigh_inc_cohab, na.rm = TRUE),
+      pop_low_inc_sexnonreg = sum(pop_low_inc_sexnonreg, na.rm = TRUE),
+      pop_mod_inc_sexnonreg = sum(pop_mod_inc_sexnonreg, na.rm = TRUE),
+      pop_high_inc_sexnonreg = sum(pop_high_inc_sexnonreg, na.rm = TRUE),
+      pop_vhigh_inc_sexnonreg = sum(pop_vhigh_inc_sexnonreg, na.rm = TRUE),
+      .groups = "drop"
     )
 
-  # add country & area name to dataframe
-  shipp <- shipp %>%
-    dplyr::left_join(naomi_output %>% dplyr::select(Country, area_id, area_name),
-                     by = join_by(area_id))
+
+  # Subset additional indicators based on combined age categories
+  shipp_out <- dplyr::filter(shipp, age_group == age_filter) |>
+    # Add population groups by risk category
+    dplyr::left_join(pop_risk_cat, by = dplyr::join_by(area_id)) |>
+    # KP group variables
+    dplyr::mutate(
+      incidence_kp = incidence_sexpaid12m,
+      infections_kp = infections_sexpaid12m,
+      susceptible_kp = susceptible_sexpaid12m) |>
+    # Add country and area name |>
+    dplyr::left_join(naomi_output |>  dplyr::select(Country, area_id, area_name),
+                     by = dplyr::join_by(area_id))
 
   # create blank column for filling column Z
   # (is there a way to do this directly in write to xlsx by skipping a column?)
-  shipp$" " <- ""
+  shipp_out$" " <- ""
 
   # multiply columns x 100 to match formatting
-  shipp <- shipp %>%
+  shipp_out <- shipp_out %>%
     dplyr::mutate(
       # Risk categories % of total
       nosex12m_perc = nosex12m*100,
@@ -1861,25 +1903,25 @@ shipp_combine_cats_female <- function(age_filter, shipp, naomi_output) {
       inc_nosex12m_x100 = incidence_nosex12m*100,
       inc_sexcohab_x100 = incidence_sexcohab*100,
       inc_sexnonreg_x100 = incidence_sexnonreg*100,
-      inc_sexpaid12m_x100 = incidence_sexpaid12m*100)
+      inc_kp_x100 = incidence_kp*100)
 
   # dataframe with columns in correct order to write out
-  shipp %>%
+  shipp_out %>%
     dplyr::select(Country, area_id, area_name,
                   # Risk categories % of total
                   nosex12m_perc, sexcohab_perc,
                   sexnonreg_perc, sexpaid12m_perc,
                   # Population size by behaviour
                   susceptible_nosex12m, susceptible_sexcohab,
-                  susceptible_sexnonreg, susceptible_sexpaid12m,
+                  susceptible_sexnonreg, susceptible_kp,
                   population, plhiv,
                   # Estimated new HIV infections
                   infections_nosex12m, infections_sexcohab,
-                  infections_sexnonreg, infections_sexpaid12m,
+                  infections_sexnonreg, infections_kp,
                   infections,
                   # Estimates HIV incidence rates
                   inc_nosex12m_x100, inc_sexcohab_x100,
-                  inc_sexnonreg_x100, inc_sexpaid12m_x100,
+                  inc_sexnonreg_x100, inc_kp_x100,
                   incidence,
                   # Incidence category
                   incidence_cat,
@@ -1896,7 +1938,8 @@ shipp_combine_cats_female <- function(age_filter, shipp, naomi_output) {
                   pop_vhigh_inc_cohab,
                   # Pop sizes per HIV incidence category, non-KP, non-regular partner(s)
                   pop_low_inc_sexnonreg, pop_mod_inc_sexnonreg,
-                  pop_high_inc_sexnonreg, pop_vhigh_inc_sexnonreg)
+                  pop_high_inc_sexnonreg, pop_vhigh_inc_sexnonreg) |>
+    arrange(area_id)
 
 }
 
@@ -1910,11 +1953,25 @@ shipp_combine_cats_female <- function(age_filter, shipp, naomi_output) {
 
 shipp_combine_cats_male <- function(age_filter, shipp, naomi_output) {
 
-  # filter to age category we're outputting
-  shipp <- shipp %>% dplyr::filter(age_group==age_filter)
+  combined_age_cats <- c("Y015_024", "Y025_049", "Y015_049")
 
-  # Create new variables to write to sheets
-  shipp <- shipp %>%
+  if(!(age_filter %in% combined_age_cats)){age_groups <- age_filter}
+  if(age_filter == "Y015_024"){age_groups <- c("Y015_019", "Y020_024")}
+  if(age_filter == "Y025_049"){age_groups <- c("Y025_029","Y030_034","Y035_039",
+                                               "Y040_044","Y045_049")}
+  if(age_filter == "Y015_049"){age_groups <- c("Y015_019","Y020_024","Y025_029",
+                                               "Y030_034","Y035_039","Y040_044",
+                                               "Y045_049")}
+
+  # Filter to age category we're outputting
+  shipp_pop_risk_cat <- shipp |> dplyr::filter(age_group %in% age_groups)
+
+
+  # Calculate population by risk categories:
+  # Calculated by summing 5-year age band risk populations to ensure all combined
+  # age categories contain risk populations based on thresholds from 5-year
+  # age-band incidence
+  pop_risk_cat <- shipp_pop_risk_cat |>
     dplyr::mutate(
       # Create new variables for non-KP risk group (combining sexcohab and sexnonreg)
       sexnonkp = sexcohab + sexnonreg,
@@ -1930,7 +1987,6 @@ shipp_combine_cats_male <- function(age_filter, shipp, naomi_output) {
                               (incidence_msm* susceptible_msm))/susceptible_kp,
 
       # Create new variables for population sizes by incidence category
-
       # Non-KP total: sexcohab + sexnonreg
       pop_low_inc_nonkp = ifelse(incidence_sexnonkp<0.002, susceptible_sexnonkp, 0),
       pop_mod_inc_nonkp = ifelse(incidence_sexnonkp>=0.002 & incidence_sexnonkp<0.005,
@@ -1961,21 +2017,51 @@ shipp_combine_cats_male <- function(age_filter, shipp, naomi_output) {
                                      susceptible_sexnonreg, 0),
       pop_high_inc_sexnonreg = ifelse(incidence_sexnonreg>=0.005 & incidence_sexnonreg<0.02,
                                       susceptible_sexnonreg, 0),
-      pop_vhigh_inc_sexnonreg = ifelse(incidence_sexnonreg>=0.02, susceptible_sexnonreg, 0)
+      pop_vhigh_inc_sexnonreg = ifelse(incidence_sexnonreg>=0.02, susceptible_sexnonreg, 0))|>
+    dplyr::group_by(area_id) |>
+    dplyr::summarise(
+      # Sum KP variables
+      infections_kp = sum(infections_kp, na.rm = TRUE),
+      kp = sum(kp, na.rm = TRUE),
+      susceptible_kp = sum(susceptible_kp, na.rm = TRUE),
+      # Sum population groups
+      pop_low_inc_nonkp = sum(pop_low_inc_nonkp, na.rm = TRUE),
+      pop_mod_inc_nonkp = sum(pop_mod_inc_nonkp, na.rm = TRUE),
+      pop_high_inc_nonkp = sum(pop_high_inc_nonkp, na.rm = TRUE),
+      pop_vhigh_inc_nonkp = sum(pop_vhigh_inc_nonkp, na.rm = TRUE),
+      pop_low_inc_kp = sum(pop_low_inc_kp, na.rm = TRUE),
+      pop_mod_inc_kp = sum(pop_mod_inc_kp, na.rm = TRUE),
+      pop_high_inc_kp = sum(pop_high_inc_kp, na.rm = TRUE),
+      pop_vhigh_inc_kp = sum(pop_vhigh_inc_kp, na.rm = TRUE),
+      pop_low_inc_cohab = sum(pop_low_inc_cohab, na.rm = TRUE),
+      pop_mod_inc_cohab = sum(pop_mod_inc_cohab, na.rm = TRUE),
+      pop_high_inc_cohab = sum(pop_high_inc_cohab, na.rm = TRUE),
+      pop_vhigh_inc_cohab = sum(pop_vhigh_inc_cohab, na.rm = TRUE),
+      pop_low_inc_sexnonreg = sum(pop_low_inc_sexnonreg, na.rm = TRUE),
+      pop_mod_inc_sexnonreg = sum(pop_mod_inc_sexnonreg, na.rm = TRUE),
+      pop_high_inc_sexnonreg = sum(pop_high_inc_sexnonreg, na.rm = TRUE),
+      pop_vhigh_inc_sexnonreg = sum(pop_vhigh_inc_sexnonreg, na.rm = TRUE),
+      .groups = "drop"
     )
 
-  # add country & area name to dataframe
-  shipp <- shipp %>%
-    dplyr::left_join(naomi_output %>% dplyr::select(Country, area_id, area_name),
+  # Subset additional indicators based on combined age categories
+  shipp_out <- dplyr::filter(shipp, age_group == age_filter) |>
+    # Add population groups by risk category
+    dplyr::left_join(pop_risk_cat, by = dplyr::join_by(area_id)) |>
+    # Calculate incidence rates for KP groups
+    dplyr::mutate(
+      incidence_kp = infections_kp/ susceptible_kp) |>
+    # Add country and area name |>
+    dplyr::left_join(naomi_output |>  dplyr::select(Country, area_id, area_name),
                      by = dplyr::join_by(area_id))
 
   # create blank column for filling column Z
   # (is there a way to do this directly in write to xlsx by skipping a column?)
-  shipp$X1 <- ""
-  shipp$X2 <- ""
+  shipp_out$X1 <- ""
+  shipp_out$X2 <- ""
 
   # multiply columns x 100 to match formatting
-  shipp <- shipp %>%
+  shipp_out <- shipp_out %>%
     dplyr::mutate(
       # Risk categories % of total
       nosex12m_perc = nosex12m*100,
@@ -1989,7 +2075,7 @@ shipp_combine_cats_male <- function(age_filter, shipp, naomi_output) {
       inc_kp_x100 = incidence_kp*100)
 
   # dataframe with columns in correct order to write out
-  shipp %>%
+  shipp_out %>%
     dplyr::select(Country, area_id, area_name,
                   # Risk categories % of total
                   nosex12m_perc, sexcohab_perc,
@@ -2019,7 +2105,8 @@ shipp_combine_cats_male <- function(age_filter, shipp, naomi_output) {
                   pop_vhigh_inc_cohab,
                   # Pop sizes per HIV incidence category, non-KP, non-regular partner(s)
                   pop_low_inc_sexnonreg, pop_mod_inc_sexnonreg,
-                  pop_high_inc_sexnonreg, pop_vhigh_inc_sexnonreg)
+                  pop_high_inc_sexnonreg, pop_vhigh_inc_sexnonreg) |>
+    arrange(area_id)
 
 }
 
