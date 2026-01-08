@@ -187,7 +187,13 @@ shipp_format_naomi <- function(outputs, options, quarter){
                   `Pop15-49all`,`Pop15-49f`,`Pop15-49m`,
                   `PLHIV15-49all`,`PLHIV15-49f`,`PLHIV15-49m`,
                   `new15-49all`,`new15-49f`,`new15-49m`,
-                  `Inci15-49f`,`Incicategory15-49f`,`Inci15-49m`,`Incicategory15-49m`)
+                  `Inci15-49f`,`Incicategory15-49f`,`Inci15-49m`,`Incicategory15-49m`) |>
+    # Convert all columns to numeric except:
+    # Country, area_id, area_name,and risk categories
+    dplyr::mutate(across(
+      .cols = -c(Country, area_id, area_name, contains("category")),
+      .fns = ~ suppressWarnings(as.numeric(.))
+    ))
 
   ## Clean up area names and Country names
   if(options$area_scope=="AGO") {
