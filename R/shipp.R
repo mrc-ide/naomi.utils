@@ -2331,7 +2331,7 @@ generate_shipp_tool <- function(output, pjnz, path = tempfile(fileext = ".xlsx")
   sheets <- list(
     "All outputs - F" = risk_populations$female_incidence,
     "All outputs - M" = risk_populations$male_incidence,
-    "NAOMI outputs" = risk_populations$naomi_output,
+    "Naomi outputs" = risk_populations$naomi_output,
     "PSE F15-19" = risk_populations$PSE_F15_19,
     "PSE F20-24" = risk_populations$PSE_F20_24,
     "PSE F25-29"  = risk_populations$PSE_F25_29,
