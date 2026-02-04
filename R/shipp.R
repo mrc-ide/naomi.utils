@@ -1256,7 +1256,12 @@ shipp_calculate_incidence_female <- function(naomi_output,
   # Sum prior count of new infections
   fsw_sum <- sum(df1$infections_sexpaid12m)
   # Generate a ratio to scale FSW new infections by
-  fsw_ratio <- fsw_consensus / fsw_sum
+  if(!is.na(fsw_consensus)) {
+    fsw_ratio <- fsw_consensus / fsw_sum
+  } else {
+    fsw_consensus <- sum(df1$infections_sexpaid12m)
+    fsw_ratio <- 1
+  }
 
   # Adjust new infections
   df2 <- df1 %>%
@@ -2323,10 +2328,11 @@ write_xlsx_sheets <- function(template, sheets, path) {
 #' @return Path to output file and metadata for file
 #' @export
 
-generate_shipp_tool <- function(output, pjnz, path = tempfile(fileext = ".xlsx")) {
+generate_shipp_tool <- function(output, pjnz, path = tempfile(fileext = ".xlsx"),
+                                consensus_est = "goals") {
 
 
-  risk_populations <- shipp_generate_risk_populations(output, pjnz)
+  risk_populations <- shipp_generate_risk_populations(output, pjnz, consensus_est)
 
   sheets <- list(
     "All outputs - F" = risk_populations$female_incidence,
