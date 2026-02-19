@@ -1,4 +1,5 @@
-# naomi.utils 0.0.16
+# naomi.utils 0.0.17
+
 * Remove `spud` dependency as package is deprecated 
 * Fix GE dataset parsing broken by R/sf upgrade
   * After upgrading to R 4.5.2, readRDS() now returns cached GE GPS files as sf 
@@ -7,7 +8,6 @@
   * Fix adds st_drop_geometry() before as.data.frame() to remove the geometry 
     column before processing, with the sf object reconstructed from LONGNUM/LATNUM 
     as before.
-
 
 # naomi.utils 0.0.16
 
