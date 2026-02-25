@@ -26,7 +26,6 @@ Imports:
     raster,
     rdhs (>= 0.7.1),
     sf,
-    spud,
     survey,
     tidyr
 Suggests: 
