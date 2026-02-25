@@ -46,8 +46,8 @@ upload_files <- function(sp_folder, files) {
 hintr_inputs_ready <- function(jobid, root = ".") {
   path <- file.path(normalizePath(root), jobid)
 
-  data <- readRDS(file.path(path, "data.rds"))$objects$data
-  options <- readRDS(file.path(path, "data.rds"))$objects$options
+  data <- readRDS(file.path(path, "data.rds"))$variables$data
+  options <- readRDS(file.path(path, "data.rds"))$variables$options
 
   data <- lapply(data, function(x){x$path <- file.path(path, "files", x$path); x})
 

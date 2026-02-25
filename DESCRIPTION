@@ -1,6 +1,6 @@
 Package: naomi.utils
 Title: Utility Functions For Naomi Datasets
-Version: 0.0.16
+Version: 0.0.17
 Authors@R: 
     person(given = "Jeffrey",
            family = "Eaton",
@@ -26,7 +26,6 @@ Imports:
     raster,
     rdhs (>= 0.7.1),
     sf,
-    spud,
     survey,
     tidyr
 Suggests: 
