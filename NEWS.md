@@ -1,6 +1,8 @@
 # naomi.utils 0.0.17
 
 * Remove `spud` dependency as package is deprecated 
+* Update debug functions in line with updated data structure in fit object 
+downloaded from download_debug()
 * Fix GE dataset parsing broken by R/sf upgrade
   * After upgrading to R 4.5.2, readRDS() now returns cached GE GPS files as sf 
     objects rather than plain data frames. This caused type.convert() to fail on 
