@@ -401,16 +401,18 @@ create_survey_clusters_dhs <- function(surveys, clear_rdhs_cache = FALSE) {
     ged$path <-  unlist(rdhs::get_datasets(ged, clear_cache = clear_rdhs_cache))
 
     ge <- lapply(ged$path, readRDS)
+    ge <- lapply(ge, sf::st_drop_geometry)
     ge <- lapply(ge, as.data.frame)
     ge <- Map(f = dplyr::mutate,
               ge,
-              survey_id = ged$survey_id,
-              SurveyYear = ged$SurveyYear,
-              SurveyType = ged$SurveyType,
+              survey_id   = ged$survey_id,
+              SurveyYear  = ged$SurveyYear,
+              SurveyType  = ged$SurveyType,
               CountryName = ged$CountryName)
     ge <- Map(replace, ge, lapply(ge, `==`, "NULL"), NA)
-    ge <- lapply(ge, type.convert)
-    ge <- dplyr::bind_rows(ge)
+    ge <- dplyr::bind_rows(ge)              # bind first so columns are consistent
+    ge <- type.convert(ge, as.is = TRUE)   # then convert — note as.is = TRUE avoids
+    # character columns becoming factors
     ge <- sf::st_as_sf(ge, coords = c("LONGNUM", "LATNUM"), remove = FALSE)
 
     ge <- dplyr::filter(ge, LONGNUM != 0)
