@@ -1,5 +1,6 @@
 # naomi.utils 0.0.17
 
+
 Updates to SHIPP workbook processing code for 2025 estimates update:
 * Add fix to avoid new infections among KP exceeding total new infections in a given age/district
 * Add fix to avoid PSE for KPs exceeding size of non-regular partners group
@@ -7,6 +8,18 @@ Updates to SHIPP workbook processing code for 2025 estimates update:
 * Year for sexual risk behaviour survey results now pulled in from "Model inputs" tab in the SHIPP workbook template. 
   Year set to year of most recent survey with sexual risk behaviour data and to 2018 for countries where
   most recent sexual risk behaviour survey is older that 2018.
+* Remove `spud` dependency as package is deprecated 
+* Update debug functions in line with updated data structure in fit object 
+downloaded from download_debug()
+* Fix GE dataset parsing broken by R/sf upgrade
+  * After upgrading to R 4.5.2, readRDS() now returns cached GE GPS files as sf 
+    objects rather than plain data frames. This caused type.convert() to fail on 
+    the retained sfc geometry column.
+  * Fix adds st_drop_geometry() before as.data.frame() to remove the geometry 
+    column before processing, with the sf object reconstructed from LONGNUM/LATNUM 
+    as before.
+* Add option to produce SHIPP without scaling to national envelope of KP PSE and new infections from Goals.
+
 
 # naomi.utils 0.0.16
 
