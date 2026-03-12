@@ -228,7 +228,7 @@ shipp_disaggregate_fsw <- function(outputs,
                                   goals,
                                   kp_wb){
 
-  # Extract country specific national FSW PSEs from Goals database
+  # Admin1 KP SE from Oli's model
   pse <- naomi.resources::load_shipp_exdata("kp_estimates", iso) %>%
     dplyr::filter(kp == "FSW", indicator == "pse_prop")
 
@@ -251,11 +251,9 @@ shipp_disaggregate_fsw <- function(outputs,
   # Default: Scale estimates to national PSE from Goals
   if(consensus_est == "goals") {
     fsw_consensus <- goals$`fsw-pse`
-  }
-
-  # If scale to KP workbook specified: Scale estimates to national PSE from KP WB
-  # If estimate from KP WB is missing or equal to zero -> scale to Goals
-  if(consensus_est == "kp_wb") {
+  } else if (consensus_est == "kp_wb") {
+    # If scale to KP workbook specified: Scale estimates to national PSE from KP WB
+    # If estimate from KP WB is missing or equal to zero -> scale to Goals
 
     fsw_consensus <- kp_wb[kp_wb$key_population == "FSW", ]$population_size
 
@@ -1161,6 +1159,7 @@ shipp_calculate_incidence_female <- function(naomi_output,
                                             female_logit_prevalence,
                                             survey_year,
                                             consensus_est,
+                                            scale_fsw_new_infections,
                                             goals,
                                             kp_wb) {
 
@@ -1244,30 +1243,31 @@ shipp_calculate_incidence_female <- function(naomi_output,
       infections_sexpaid12m = susceptible_sexpaid12m * incidence_sexpaid12m)
 
   # Scale FSW new infections to consensus estimate from Goals or KP Workbook
-  if(consensus_est == "goals") {
-    fsw_consensus <- goals$`fsw-new_inf`
-  }
-
-  # If scale to KP workbook specified: Scale estimates to national NIs from KP WB
-  # If estimate from KP WB is missing or equal to zero -> scale to Goals
-  if(consensus_est == "kp_wb") {
-
-    fsw_consensus <- kp_wb[kp_wb$key_population == "FSW", ]$infections
-
-    if(is.na(fsw_consensus) | fsw_consensus == 0) {
-      fsw_consensus <- goals$`fsw-new_inf`}
-  }
 
 
   # Sum prior count of new infections
-  fsw_sum <- sum(df1$infections_sexpaid12m)
-  # Generate a ratio to scale FSW new infections by
-  if(!is.na(fsw_consensus)) {
-    fsw_ratio <- fsw_consensus / fsw_sum
-  } else {
+
+
+
+  if(scale_fsw_new_infections == FALSE){
     fsw_consensus <- sum(df1$infections_sexpaid12m)
     fsw_ratio <- 1
+  } else{
+    # Default - scale new infections to Goals
+    if(consensus_est == "goals") {
+      fsw_consensus <- goals$`fsw-new_inf`
+    } else if (consensus_est == "kp_wb") {
+      # If scale to KP workbook specified: Scale estimates to national NIs from KP WB
+      # If estimate from KP WB is missing or equal to zero -> scale to Goals
+      fsw_consensus <- kp_wb[kp_wb$key_population == "FSW", ]$infections
+      if(is.na(fsw_consensus) | fsw_consensus == 0) {
+        fsw_consensus <- goals$`fsw-new_inf`}
+    }
+
+    fsw_sum <- sum(df1$infections_sexpaid12m)
+    fsw_ratio <- fsw_consensus / fsw_sum
   }
+
 
   # Adjust new infections
   df2 <- df1 %>%
@@ -1944,7 +1944,7 @@ shipp_combine_cats_female <- function(age_filter, shipp, naomi_output) {
                   # Pop sizes per HIV incidence category, non-KP, non-regular partner(s)
                   pop_low_inc_sexnonreg, pop_mod_inc_sexnonreg,
                   pop_high_inc_sexnonreg, pop_vhigh_inc_sexnonreg) |>
-    arrange(area_id)
+    dplyr::arrange(area_id)
 
 }
 
@@ -2109,7 +2109,7 @@ shipp_combine_cats_male <- function(age_filter, shipp, naomi_output) {
                   # Pop sizes per HIV incidence category, non-KP, non-regular partner(s)
                   pop_low_inc_sexnonreg, pop_mod_inc_sexnonreg,
                   pop_high_inc_sexnonreg, pop_vhigh_inc_sexnonreg) |>
-    arrange(area_id)
+    dplyr::arrange(area_id)
 
 }
 
@@ -2126,7 +2126,8 @@ shipp_combine_cats_male <- function(age_filter, shipp, naomi_output) {
 
 shipp_generate_risk_populations <- function(naomi_output,
                                            pjnz = NULL,
-                                           consensus_est = "goals") {
+                                           consensus_est,
+                                           scale_fsw_new_infections) {
 
 
   outputs <- naomi::read_output_package(naomi_output)
@@ -2194,19 +2195,24 @@ shipp_generate_risk_populations <- function(naomi_output,
 
   # Calculate risk group incidence
   female_incidence <- shipp_calculate_incidence_female(naomi$naomi_long,
-                                                      options, iso,
+                                                      options,
+                                                      iso,
                                                       female_srb,
                                                       female_logit_prevalence,
                                                       survey_year = survey_year,
-                                                      consensus_est, goals, kp_wb)
+                                                      consensus_est,
+                                                      scale_fsw_new_infections,
+                                                      goals, kp_wb)
 
 
   male_incidence <- shipp_calculate_incidence_male(naomi$naomi_long,
-                                                  options, iso,
+                                                  options,
+                                                  iso,
                                                   male_srb,
                                                   male_logit_prevalence,
                                                   survey_year = survey_year,
-                                                  consensus_est, goals, kp_wb)
+                                                  consensus_est,
+                                                  goals, kp_wb)
 
   meta <- data.frame(kp = c("FSW", "MSM", "PWID"),
                      consensus_estimate = c(unique(fsw_est$consensus_estimate),
@@ -2334,11 +2340,17 @@ write_xlsx_sheets <- function(template, sheets, path) {
 #' @return Path to output file and metadata for file
 #' @export
 
-generate_shipp_tool <- function(output, pjnz, path = tempfile(fileext = ".xlsx"),
-                                consensus_est = "goals") {
+generate_shipp_tool <- function(output,
+                                pjnz,
+                                consensus_est = "goals",
+                                scale_fsw_new_infections = TRUE,
+                                path = tempfile(fileext = ".xlsx")) {
 
 
-  risk_populations <- shipp_generate_risk_populations(output, pjnz, consensus_est)
+  risk_populations <- shipp_generate_risk_populations(output,
+                                                      pjnz,
+                                                      consensus_est,
+                                                      scale_fsw_new_infections)
 
   sheets <- list(
     "All outputs - F" = risk_populations$female_incidence,
