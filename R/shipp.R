@@ -225,6 +225,7 @@ shipp_disaggregate_fsw <- function(outputs,
                                   iso,
                                   naomi_pop,
                                   consensus_est,
+                                  scale_fsw_pse,
                                   goals,
                                   kp_wb){
 
@@ -265,7 +266,7 @@ shipp_disaggregate_fsw <- function(outputs,
   pop <- naomi_pop[naomi_pop$area_level == 0 & naomi_pop$age_group == "Y015_049" & naomi_pop$sex == "female",]$population
   prop_pop <- fsw_consensus / pop
 
-  if(prop_pop < 0.05) {
+  if(prop_pop < 0.05 && scale_fsw_pse) {
     # Scale total FSW population to consensus PSE estimate
     fsw_scaled <- fsw %>%
       dplyr::mutate(
@@ -386,6 +387,7 @@ shipp_disaggregate_pwid <- function(outputs,
                                    iso,
                                    naomi_pop,
                                    consensus_est,
+                                   scale_pwid_pse,
                                    goals,
                                    kp_wb)
 {
@@ -426,7 +428,7 @@ shipp_disaggregate_pwid <- function(outputs,
   pop <- naomi_pop[naomi_pop$area_level == 0 & naomi_pop$age_group == "Y015_049" & naomi_pop$sex == "male",]$population
   prop_pop <- pwid_consensus / pop
 
-  if(prop_pop < 0.05) {
+  if(prop_pop < 0.05 && scale_pwid_pse) {
 
     # Scale total PWID population to consensus PSE estimate
     pwid_scaled <- pwid %>%
@@ -496,6 +498,7 @@ shipp_disaggregate_msm <- function(outputs,
                                   iso,
                                   naomi_pop,
                                   consensus_est,
+                                  scale_msm_pse,
                                   goals,
                                   kp_wb
                                   )
@@ -540,7 +543,7 @@ shipp_disaggregate_msm <- function(outputs,
   pop <- naomi_pop[naomi_pop$area_level == 0 & naomi_pop$age_group == "Y015_049" & naomi_pop$sex == "male",]$population
   prop_pop <- msm_consensus / pop
 
-  if(prop_pop < 0.05) {
+  if(prop_pop < 0.05 && scale_msm_pse) {
 
     # Scale total MSM population to consensus PSE estimate
     msm_scaled <- msm %>%
@@ -1455,6 +1458,8 @@ shipp_calculate_incidence_male <- function(naomi_output,
                                           male_logit_prevalence,
                                           survey_year,
                                           consensus_est,
+                                          scale_msm_new_infections,
+                                          scale_pwid_new_infections,
                                           goals,
                                           kp_wb) {
 
@@ -1532,37 +1537,47 @@ shipp_calculate_incidence_male <- function(naomi_output,
 
   # Scale MSM and PWID new infections consensus estimate for KP Workbook or Goals
   # Check for consensus estimate of MSM and PWID new infections
-  # Scale FSW new infections to consensus estimate from Goals or KP Workbook
 
-  if(consensus_est == "goals") {
-    msm_consensus <- goals$`msm-new_inf`
-    pwid_consensus <- goals$`pwid-new_inf`
-  }
-
-  # If scale to KP workbook specified: Scale estimates to national NIs from KP WB
-  # If estimate from KP WB is missing or equal to zero -> scale to Goals
-  if(consensus_est == "kp_wb") {
-
-    msm_consensus <- kp_wb[kp_wb$key_population == "MSM", ]$infections
-    if(is.na(msm_consensus) | msm_consensus == 0) {
-      msm_consensus <- goals$`msm-new_inf`}
-
-    pwid_consensus <- kp_wb[kp_wb$key_population == "PWID", ]$infections
-    if(is.na(pwid_consensus) | pwid_consensus == 0) {
-      pwid_consensus <- goals$`pwid-new_inf`}
-  }
-
-  # scale consensus that we'll use to account for the 1:10 ratio assumption of
-  # male:female PWID
-  pwid_consensus <- pwid_consensus * 0.91
-
-  # Sum prior count of new infections
   msm_sum <- sum(df1$infections_msm)
   pwid_sum <- sum(df1$infections_pwid)
 
-  # Generate a ratio to scale MSM and PWID new infections by
-  msm_ratio <- msm_consensus / msm_sum
-  pwid_ratio <- pwid_consensus / pwid_sum
+  if(scale_msm_new_infections == FALSE) {
+    msm_consensus <- msm_sum
+    msm_ratio <- 1
+  } else {
+    # Default - scale new infections to Goals
+    if(consensus_est == "goals") {
+      msm_consensus <- goals$`msm-new_inf`
+    } else if (consensus_est == "kp_wb") {
+      # If scale to KP workbook specified: Scale estimates to national NIs from KP WB
+      # If estimate from KP WB is missing or equal to zero -> scale to Goals
+      msm_consensus <- kp_wb[kp_wb$key_population == "MSM", ]$infections
+      if(is.na(msm_consensus) | msm_consensus == 0) {
+        msm_consensus <- goals$`msm-new_inf`}
+    }
+
+    msm_ratio <- msm_consensus / msm_sum
+  }
+
+  if(scale_pwid_new_infections == FALSE) {
+    pwid_consensus <- pwid_sum
+    pwid_ratio <- 1
+  } else {
+    # Default - scale new infections to Goals
+    if(consensus_est == "goals") {
+      pwid_consensus <- goals$`pwid-new_inf`
+    } else if (consensus_est == "kp_wb") {
+      pwid_consensus <- kp_wb[kp_wb$key_population == "PWID", ]$infections
+      if(is.na(pwid_consensus) | pwid_consensus == 0) {
+        pwid_consensus <- goals$`pwid-new_inf`}
+    }
+
+    # scale consensus that we'll use to account for the 1:10 ratio assumption of
+    # male:female PWID
+    pwid_consensus <- pwid_consensus * 0.91
+
+    pwid_ratio <- pwid_consensus / pwid_sum
+  }
 
   # Adjust new infections for KPs
   df2 <- df1 %>%
@@ -1661,7 +1676,7 @@ shipp_calculate_incidence_male <- function(naomi_output,
         "population_nosex12m" = sum(population_nosex12m * as.integer(age_group %in% age_groups)),
         "population_sexcohab" = sum(population_sexcohab * as.integer(age_group %in% age_groups)),
         "population_sexnonreg" = sum(population_sexnonreg * as.integer(age_group %in% age_groups)),
-        "population_msm" = sum(population_pwid * as.integer(age_group %in% age_groups)),
+        "population_msm" = sum(population_msm * as.integer(age_group %in% age_groups)),
         "population_pwid" = sum(population_pwid * as.integer(age_group %in% age_groups)),
         "plhiv_nosex12m" = sum(plhiv_nosex12m * as.integer(age_group %in% age_groups)),
         "plhiv_sexnonreg" = sum(plhiv_sexnonreg * as.integer(age_group %in% age_groups)),
@@ -2127,7 +2142,12 @@ shipp_combine_cats_male <- function(age_filter, shipp, naomi_output) {
 shipp_generate_risk_populations <- function(naomi_output,
                                            pjnz = NULL,
                                            consensus_est,
-                                           scale_fsw_new_infections) {
+                                           scale_fsw_new_infections,
+                                           scale_msm_new_infections = TRUE,
+                                           scale_pwid_new_infections = TRUE,
+                                           scale_fsw_pse = TRUE,
+                                           scale_msm_pse = TRUE,
+                                           scale_pwid_pse = TRUE) {
 
 
   outputs <- naomi::read_output_package(naomi_output)
@@ -2167,11 +2187,11 @@ shipp_generate_risk_populations <- function(naomi_output,
 
   # Disaggregate subnational KP PSEs from Stevens et al. analysis to 5-year bands
   fsw_est <- shipp_disaggregate_fsw(outputs, iso, naomi_pop,
-                                    consensus_est, goals, kp_wb)
+                                    consensus_est, scale_fsw_pse, goals, kp_wb)
   pwid_est <- shipp_disaggregate_pwid(outputs, iso, naomi_pop,
-                                      consensus_est, goals, kp_wb)
+                                      consensus_est, scale_pwid_pse, goals, kp_wb)
   msm_est <- shipp_disaggregate_msm(outputs, iso, naomi_pop,
-                                    consensus_est, goals, kp_wb)
+                                    consensus_est, scale_msm_pse, goals, kp_wb)
 
   # Adjust SAE model output with KP proportions
   female_srb <- shipp_adjust_sexbehav_fsw(outputs, options, fsw_est)
@@ -2212,6 +2232,8 @@ shipp_generate_risk_populations <- function(naomi_output,
                                                   male_logit_prevalence,
                                                   survey_year = survey_year,
                                                   consensus_est,
+                                                  scale_msm_new_infections,
+                                                  scale_pwid_new_infections,
                                                   goals, kp_wb)
 
   meta <- data.frame(kp = c("FSW", "MSM", "PWID"),
@@ -2344,13 +2366,23 @@ generate_shipp_tool <- function(output,
                                 pjnz,
                                 consensus_est = "goals",
                                 scale_fsw_new_infections = TRUE,
+                                scale_msm_new_infections = TRUE,
+                                scale_pwid_new_infections = TRUE,
+                                scale_fsw_pse = TRUE,
+                                scale_msm_pse = TRUE,
+                                scale_pwid_pse = TRUE,
                                 path = tempfile(fileext = ".xlsx")) {
 
 
   risk_populations <- shipp_generate_risk_populations(output,
                                                       pjnz,
                                                       consensus_est,
-                                                      scale_fsw_new_infections)
+                                                      scale_fsw_new_infections,
+                                                      scale_msm_new_infections,
+                                                      scale_pwid_new_infections,
+                                                      scale_fsw_pse,
+                                                      scale_msm_pse,
+                                                      scale_pwid_pse)
 
   sheets <- list(
     "All outputs - F" = risk_populations$female_incidence,
