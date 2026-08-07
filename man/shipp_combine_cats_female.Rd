@@ -2,8 +2,7 @@
 % Please edit documentation in R/shipp.R
 \name{shipp_combine_cats_female}
 \alias{shipp_combine_cats_female}
-\title{Prep women's outputs for spreadsheet tabs, including combining non-regular
-partner group with KPs to make "elevated risk" group}
+\title{Prep women's outputs for spreadsheet tabs}
 \usage{
 shipp_combine_cats_female(age_filter, shipp, naomi_output)
 }
@@ -18,6 +17,5 @@ shipp_combine_cats_female(age_filter, shipp, naomi_output)
 dataframe ready to write to Excel tab
 }
 \description{
-Prep women's outputs for spreadsheet tabs, including combining non-regular
-partner group with KPs to make "elevated risk" group
+Prep women's outputs for spreadsheet tabs
 }

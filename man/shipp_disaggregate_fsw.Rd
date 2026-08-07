@@ -11,7 +11,7 @@ shipp_disaggregate_fsw(outputs, iso, naomi_pop, consensus_est, goals, kp_wb)
 
 \item{iso}{Country iso3.}
 
-\item{naomi_pop}{Naomi population estimates for T2.}
+\item{naomi_pop}{Naomi population estimates for current time point.}
 
 \item{consensus_est}{Source to scale PSE + new infections.}
 

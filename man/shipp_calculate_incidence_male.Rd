@@ -10,7 +10,7 @@ shipp_calculate_incidence_male(
   iso,
   male_srb,
   male_logit_prevalence,
-  survey_year = 2018,
+  survey_year,
   consensus_est,
   goals,
   kp_wb
