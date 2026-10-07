@@ -131,11 +131,137 @@ calc_survey_hiv_indicators <- function(survey_meta,
                                        artcov_definition = c("both", "arv", "artself"),
                                        by_res_type = FALSE) {
 
+  ind <- survey_individuals %>%
+    dplyr::inner_join(survey_biomarker,
+                      by = c("survey_id", "individual_id")) %>%
+    dplyr::filter(survey_id %in% survey_meta$survey_id,
+                  !is.na(hivstatus)) %>%
+    dplyr::select(survey_id, cluster_id, sex, age, hivweight, hivstatus, artself, arv, vls, recent)
+
+  prep <- expand_survey_individuals(ind, survey_meta, survey_regions, survey_clusters, areas,
+                                    sex, age_group_include, area_top_level, area_bottom_level,
+                                    by_res_type)
+
+  calc_hiv_outcomes(prep$ind, artcov_definition, survey_meta, areas, prep$age_groups)
+}
+
+
+#' Calculate age/sex/area stratified survey estimates for sexual risk behaviour
+#'
+#' Survey inputs for the SHIPP sexual behaviour small-area model: the
+#' proportion of people in each sexual risk group, and HIV prevalence within
+#' each risk group. Uses the same calculation as `calc_survey_hiv_indicators()`.
+#'
+#' @inheritParams calc_survey_hiv_indicators
+#' @param survey_sexbehav Individual risk-group indicators: `survey_id`,
+#'   `individual_id` and 0/1 columns, from `create_sexbehav_dhs()`,
+#'   `extract_sexbehav_phia()` or `extract_sexbehav_mics()`.
+#'
+#' @return A list of two data frames:
+#'   * `risk_group_prop`: proportion with each `survey_sexbehav` indicator,
+#'     weighted by `indweight`.
+#'   * `hiv_by_risk_group`: HIV indicators stratified by each of `nosex12m`,
+#'     `sexcohab`, `sexnonreg` and `sexpaid12m` in turn (the others set to
+#'     `"all"`), weighted by `hivweight`. `NULL` if no individual has an HIV
+#'     test result (e.g. DHS surveys without HIV testing).
+#'
+#' @export
+calc_survey_sexbehav_indicators <- function(survey_meta,
+                                            survey_regions,
+                                            survey_clusters,
+                                            survey_individuals,
+                                            survey_biomarker,
+                                            areas,
+                                            survey_sexbehav,
+                                            sex = c("male", "female", "both"),
+                                            age_group_include = NULL,
+                                            area_top_level = min(areas$area_level),
+                                            area_bottom_level = max(areas$area_level),
+                                            artcov_definition = c("both", "arv", "artself"),
+                                            by_res_type = FALSE) {
+
+  sexbehav_vars <- setdiff(names(survey_sexbehav), c("survey_id", "individual_id"))
+  risk_groups <- intersect(c("nosex12m", "sexcohab", "sexnonreg", "sexpaid12m"), sexbehav_vars)
+
+  ## Expand everyone interviewed once; the HIV part reuses the HIV-tested subset
+  ind <- survey_individuals %>%
+    dplyr::inner_join(survey_biomarker, by = c("survey_id", "individual_id")) %>%
+    dplyr::inner_join(survey_sexbehav, by = c("survey_id", "individual_id")) %>%
+    dplyr::filter(survey_id %in% survey_meta$survey_id) %>%
+    dplyr::select(survey_id, cluster_id, sex, age, indweight,
+                  hivweight, hivstatus, artself, arv, vls, recent,
+                  dplyr::all_of(sexbehav_vars))
+  no_weight <- setdiff(unique(ind$survey_id), ind$survey_id[!is.na(ind$indweight) & ind$indweight > 0])
+  if (length(no_weight)) {
+    stop("No individual (interview) weights `indweight` for: ", paste(no_weight, collapse = ", "),
+         ". Risk-group proportions need them, e.g. PHIA `intwt0`.")
+  }
+  prep <- expand_survey_individuals(ind, survey_meta, survey_regions, survey_clusters, areas,
+                                    sex, age_group_include, area_top_level, area_bottom_level,
+                                    by_res_type)
+
+  ## Proportion in each risk group: everyone interviewed, individual weights
+  ind <- prep$ind %>%
+    dplyr::select(-hivweight, -hivstatus, -artself, -arv, -vls, -recent) %>%
+    dplyr::rename(weights = indweight) %>%
+    tidyr::pivot_longer(cols = dplyr::all_of(sexbehav_vars),
+                        names_to = "indicator",
+                        values_to = "estimate") %>%
+    dplyr::filter(!is.na(estimate))
+
+  risk_group_prop <- calc_all_outcomes(
+    ind,
+    group_by_vars = c("indicator", "survey_id", "area_id", "res_type", "sex", "age_group"),
+    survey_meta = survey_meta, areas = areas, age_groups = prep$age_groups
+  )
+
+  ## HIV prevalence within each risk group: HIV-tested only, HIV weights
+  ind <- prep$ind %>%
+    dplyr::filter(!is.na(hivstatus)) %>%
+    dplyr::select(-indweight, -dplyr::all_of(setdiff(sexbehav_vars, risk_groups)))
+
+  hiv_by_risk_group <- NULL
+  if (nrow(ind) > 0) {
+    ## One risk group at a time, others "all", plus all "all" (what the LOR step uses)
+    ind <- dplyr::mutate(ind, dplyr::across(dplyr::all_of(risk_groups), as.character))
+    ind <- dplyr::bind_rows(
+      dplyr::mutate(ind, dplyr::across(dplyr::all_of(risk_groups), ~ "all")),
+      lapply(risk_groups, function(v) {
+        dplyr::mutate(ind, dplyr::across(dplyr::all_of(setdiff(risk_groups, v)), ~ "all"))
+      })
+    )
+    hiv_by_risk_group <- calc_hiv_outcomes(ind, artcov_definition, survey_meta, areas,
+                                           prep$age_groups, extra_vars = risk_groups)
+  }
+
+  list(risk_group_prop = risk_group_prop,
+       hiv_by_risk_group = hiv_by_risk_group)
+}
+
+
+#' Expand individuals to every age/sex group and area they contribute to
+#'
+#' Shared steps 1-4 of the survey indicator calculations.
+#'
+#' @return List of `ind` (one row per individual x sex x age group x area) and
+#'   `age_groups`.
+#' @noRd
+expand_survey_individuals <- function(ind,
+                                      survey_meta,
+                                      survey_regions,
+                                      survey_clusters,
+                                      areas,
+                                      sex,
+                                      age_group_include,
+                                      area_top_level,
+                                      area_bottom_level,
+                                      by_res_type) {
+
   ## 1. Identify age groups to calculate for each survey_id
   age_groups <- naomi::get_age_groups()
 
   if(!is.null(age_group_include))
-    age_groups <- dplyr::filter(age_group, age_group %in% !!age_group_include)
+    age_groups <- dplyr::filter(age_groups, age_group %in% !!age_group_include)
 
   sex_age_group <- tidyr::crossing(sex, age_groups)
 
@@ -172,12 +298,7 @@ calc_survey_hiv_indicators <- function(survey_meta,
   ## 3. Expand individuals dataset to repeat for all individiuals within each
   ##    age/sex group for a given survey
 
-  ind <- survey_individuals %>%
-    dplyr::inner_join(survey_biomarker,
-                      by = c("survey_id", "individual_id")) %>%
-    dplyr::filter(survey_id %in% survey_meta$survey_id,
-                  !is.na(hivstatus)) %>%
-    dplyr::select(survey_id, cluster_id, sex, age, hivweight, hivstatus, artself, arv, vls, recent) %>%
+  ind <- ind %>%
     dplyr::bind_rows({.} %>% dplyr::mutate(sex = "both")) %>%
     dplyr::inner_join(sex_age_group, by = c("survey_id", "sex")) %>%
     dplyr::filter(age >= age_group_start,
@@ -192,6 +313,17 @@ calc_survey_hiv_indicators <- function(survey_meta,
   else
     ind <- dplyr::mutate(ind, res_type = "all")
 
+  list(ind = ind, age_groups = age_groups)
+}
+
+
+#' HIV biomarker outcomes (prevalence, ART coverage, VLS, recent infection)
+#'
+#' @param extra_vars Extra stratifying columns kept in the output (e.g. risk
+#'   groups).
+#' @noRd
+calc_hiv_outcomes <- function(ind, artcov_definition, survey_meta, areas, age_groups,
+                              extra_vars = NULL) {
 
   ## 5. Construct ART coverage indicator as either self-report or ART biomarker
   ##    and gather to long dataset for each biomarker
@@ -218,7 +350,8 @@ calc_survey_hiv_indicators <- function(survey_meta,
     dplyr::rename(prevalence = hivstatus,
                   art_coverage = artcov,
                   viral_suppression_plhiv = vls,
-                  recent_infected = recent)
+                  recent_infected = recent,
+                  weights = hivweight)
 
   ## Pivot to long format
   ind <- ind %>%
@@ -229,22 +362,42 @@ calc_survey_hiv_indicators <- function(survey_meta,
            ) %>%
     dplyr::filter(!is.na(estimate))
 
-  ## 6. Calculate outcomes
+  calc_all_outcomes(
+    ind,
+    group_by_vars = c("indicator", "survey_id", "area_id", "res_type", extra_vars, "sex", "age_group"),
+    extra_vars = extra_vars,
+    survey_meta = survey_meta, areas = areas, age_groups = age_groups
+  )
+}
+
+
+#' Survey-weighted estimates for each group
+#'
+#' 6. Calculate outcomes. `ind` has one row per individual x group with columns
+#' `estimate`, `weights`, `cluster_id`, `survey_region_id` and `group_by_vars`.
+#'
+#' @noRd
+calc_all_outcomes <- function(ind, group_by_vars, extra_vars = NULL,
+                              survey_meta, areas, age_groups) {
+
   ## Note: using survey region as strata right now. Most DHS use region + res_type
 
   dat <- ind %>%
-    dplyr::filter(!is.na(hivweight), hivweight > 0)
+    dplyr::filter(!is.na(weights), weights > 0)
+  if (length(extra_vars))
+    dat <- dplyr::filter(dat, dplyr::if_all(dplyr::all_of(extra_vars), ~ !is.na(.x)))
 
   cnt <- dat %>%
-    dplyr::group_by(indicator, survey_id, area_id, res_type, sex, age_group) %>%
+    dplyr::group_by(dplyr::across(dplyr::all_of(group_by_vars))) %>%
     dplyr::summarise(n_clusters = dplyr::n_distinct(cluster_id),
                      n_observations = dplyr::n(),
-                     n_eff_kish = sum(hivweight)^2 / sum(hivweight^2),
+                     n_eff_kish = sum(weights)^2 / sum(weights^2),
                      .groups = "drop")
 
-  datspl <- dat %>%
-    dplyr::mutate(spl = paste(indicator, survey_id, area_level, res_type, sex, age_group)) %>%
-    split(.$spl)
+  ## One survey design per split; area_level in place of area_id
+  split_vars <- replace(group_by_vars, group_by_vars == "area_id", "area_level")
+  datspl <- split(dat, do.call(paste, dat[split_vars]))
+  by_formula <- stats::reformulate(group_by_vars)
 
   do_svymean <- function(df) {
 
@@ -252,10 +405,10 @@ calc_survey_hiv_indicators <- function(survey_meta,
                              data = df,
                              strata = ~survey_id + survey_region_id,
                              nest = TRUE,
-                             weights = ~hivweight)
+                             weights = ~weights)
 
     val <- survey::svyby(~estimate,
-                         ~ indicator + survey_id + area_id + res_type + sex + age_group,
+                         by_formula,
                          des, survey::svymean)
     names(val)[names(val) == "se"] <- "std_error"
     val
@@ -268,7 +421,7 @@ calc_survey_hiv_indicators <- function(survey_meta,
   val <- cnt %>%
     dplyr::full_join(
              dplyr::bind_rows(est_spl),
-             by = c("indicator", "survey_id", "area_id", "res_type", "sex", "age_group")
+             by = group_by_vars
            ) %>%
     dplyr::left_join(
              survey_meta %>% dplyr::select(survey_id, survey_mid_calendar_quarter),
@@ -301,6 +454,7 @@ calc_survey_hiv_indicators <- function(survey_meta,
              area_id,
              area_name,
              res_type,
+             dplyr::all_of(extra_vars),
              sex,
              age_group,
              n_clusters,
