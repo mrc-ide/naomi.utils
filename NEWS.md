@@ -1,3 +1,22 @@
+# naomi.utils 0.0.20
+
+Sexual risk behaviour survey extraction for the SHIPP small-area model,
+upstreamed from `krisher1/naomi.utils@sexbehav-vars-adam` (Katie Risher,
+Adam Howes):
+
+* Add `create_sexbehav_dhs()`, `extract_sexbehav_phia()`,
+  `extract_sexbehav_mics()` and `check_survey_sexbehav()`: derive individual
+  sexual risk groups (`nosex12m`, `sexcohab`, `sexnonreg`, `sexpaid12m`, ...)
+  from DHS, PHIA and MICS microdata.
+* Add `calc_survey_sexbehav_indicators()`: survey-weighted proportion in each
+  risk group, and HIV indicators within each risk group, by area/sex/age.
+* `calc_survey_hiv_indicators()` signature and output are unchanged; it now
+  shares its estimation code with `calc_survey_sexbehav_indicators()`. Also
+  fixes an error when `age_group_include` is set.
+* `create_individual_hiv_dhs()` gains `hiv_testing = TRUE`: errors if any
+  survey has no HIV test (AR) dataset. Use `hiv_testing = FALSE` for DHS
+  surveys without HIV testing; HIV fields are then `NA`.
+
 # naomi.utils 0.0.19
 
 Updates to SHIPP workbook processing code for 2025 estimates update:
