@@ -8,6 +8,8 @@ create_individual_hiv_dhs(surveys, clear_rdhs_cache = FALSE)
 }
 \arguments{
 \item{surveys}{data.frame of surveys, returned by \code{create_surveys_dhs()}.}
+
+\item{clear_rdhs_cache}{Passed to \code{rdhs::get_datasets(clear_cache = )}.}
 }
 \value{
 data.frame consisting of survey ID, cluster ID and individual

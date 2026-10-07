@@ -4,3 +4,7 @@
 ^README\.Rmd$
 ^cran-comments\.md$
 ^\.github$
+# Copied from the unmerged naomi SHIPP PR (mrc-ide/naomi#413); they need hintr fixtures
+# that do not exist here. To be rewritten as tests/testthat tests (see hivtools-data docs/shipp-sae-migration.md).
+^tests/test-shipp\.R$
+^tests/test-helpers\.R$

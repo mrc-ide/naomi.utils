@@ -113,7 +113,7 @@ plot_area_hierarchy_summary <- function(areas, nrow = 1) {
 #' @return Return value of `file.copy()`, `TRUE` if file successfully written.
 #'
 #' @examples
-#' nc <- read_sf(system.file("shape/nc.shp", package="sf"))
+#' nc <- sf::read_sf(system.file("shape/nc.shp", package="sf"))
 #' write_sf_shp_zip(nc, "nc.zip")
 #'
 #' @export

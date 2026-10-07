@@ -11,9 +11,9 @@ shipp_adjust_sexbehav_msm_pwid(outputs, options, msm_est, pwid_est)
 
 \item{options}{Naomi model options.}
 
-\item{msm_est}{5-year estimates of MSM PSEs generated from \code{shipp__disaggregate_msm()}.}
+\item{msm_est}{5-year estimates of MSM PSEs generated from \code{shipp_disaggregate_msm()}.}
 
-\item{pwid_est}{5-year estimates of MSM PSEs generated from \code{shipp__disaggregate_pwid()}.}
+\item{pwid_est}{5-year estimates of MSM PSEs generated from \code{shipp_disaggregate_pwid()}.}
 }
 \value{
 District level estimates of male sexual risk behaviour groups

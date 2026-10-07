@@ -1,6 +1,6 @@
 Package: naomi.utils
 Title: Utility Functions For Naomi Datasets
-Version: 0.0.17
+Version: 0.0.18
 Authors@R: 
     person(given = "Jeffrey",
            family = "Eaton",
@@ -19,18 +19,29 @@ Imports:
     exactextractr,
     forcats,
     ggplot2,
+    gridExtra,
     haven,
     hintr,
     lubridate,
     magrittr,
+    naomi,
+    naomi.resources,
+    openxlsx2,
     raster,
     rdhs (>= 0.7.1),
+    readr,
     sf,
+    stringr,
     survey,
-    tidyr
+    tibble,
+    tidyr,
+    withr,
+    zip
 Suggests: 
+    mockery,
+    openxlsx,
     testthat
 Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.2.3
+RoxygenNote: 7.3.3

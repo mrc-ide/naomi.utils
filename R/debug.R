@@ -1,45 +1,28 @@
-#' Download debug from server and upload into sharepoint
+#' Download debug from server into a local ticket folder
+#'
+#' Downloads to `<root>/<jobid>/`. Needs membership of the hivtools
+#' `naomi-debug` GitHub team and a PAT in `NAOMI_DOWNLOAD_DEBUG_TOKEN`.
 #'
 #' @param id The model fit or calibrate ID to download debug for
-#' @param jobid The issue ID, the name of the folder to create in sharepoint
-#' @param dest_folder The root destination folder in sharepoint
-#' @param server The folder to download debug from, defaults to production
-#'   server
+#' @param jobid The issue ID, the name of the folder to create under `root`
+#' @param root Local debug root; defaults to `NAOMI_DEBUG_ONEDRIVE`, else the
+#'   working directory
+#' @param server The server to download debug from, defaults to production
 #'
 #' @return Path to local debug
 #' @export
 naomi_debug <- function(id, jobid,
-                        dest_folder = "Shared Documents/2023_debug",
+                        root = Sys.getenv("NAOMI_DEBUG_ONEDRIVE", "."),
                         server = NULL) {
-  debug <- hintr::download_debug(id, server = server)
-  sp <- spud::sharepoint$new("https://imperiallondon.sharepoint.com")
-  folder <- sp$folder("NaomiSupport-WP", path = dest_folder, verify = TRUE)
-  debug_folder <- folder$create(as.character(jobid))
-  debug_folder <- debug_folder$create(id)
-
-  dirs <- list.dirs(debug, recursive = FALSE, full.names = TRUE)
-  files <- setdiff(list.files(debug, full.names = TRUE), dirs)
-  upload_files(debug_folder, files)
-
-  for (dir in dirs) {
-    new_folder <- debug_folder$create(basename(dir))
-    subdirs <- list.dirs(dir, recursive = FALSE, full.names = TRUE)
-    files <- setdiff(list.files(dir, full.names = TRUE), subdirs)
-    upload_files(new_folder, files)
-  }
-  debug
-}
-
-upload_files <- function(sp_folder, files) {
-  for (file in files) {
-    sp_folder$upload(file, progress = TRUE)
-  }
+  dest <- file.path(path.expand(root), as.character(jobid))
+  dir.create(dest, recursive = TRUE, showWarnings = FALSE)
+  hintr::download_debug(id, dest = dest, server = server)
 }
 
 #' Prepare output from hintr debug rds for debugging
 #'
-#' @param jobid The issue ID, the name of the folder in sharepoint
-#' @param root The debug root dir
+#' @param jobid The model fit or calibrate ID (folder created by `hintr::download_debug()`)
+#' @param root The ticket folder, i.e. the path returned by `naomi_debug()`'s `dest`
 #'
 #' @return Path to local debug
 #' @export

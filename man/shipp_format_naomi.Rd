@@ -4,12 +4,16 @@
 \alias{shipp_format_naomi}
 \title{Format naomi outputs for PSE tool}
 \usage{
-shipp_format_naomi(outputs, options)
+shipp_format_naomi(outputs, options, quarter)
 }
 \arguments{
 \item{outputs}{Naomi output}
 
 \item{options}{Naomi model options.}
+
+\item{quarter}{Calendar quarter for most recent Naomi estimates. This is T2
+for all countries with the exception of MWI and ZAF who have additional
+historical survey projections using T3.}
 }
 \value{
 Naomi indicators formatted for the SHIPP workbook.

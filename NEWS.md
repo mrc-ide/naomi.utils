@@ -1,3 +1,21 @@
+# naomi.utils 0.0.18
+
+* Fix `R CMD check` errors and warnings on master
+  * Declare packages used via `::` in `Imports` (`gridExtra`, `naomi`,
+    `naomi.resources`, `openxlsx2`, `readr`, `stringr`, `tibble`, `withr`,
+    `zip`) and test packages in `Suggests` (`mockery`, `openxlsx`)
+  * Replace `:::` with `::` for exported `naomi.resources::load_shipp_exdata()`
+    and drop `naomi.utils:::` on an internal call
+  * Fix `write_sf_shp_zip()` example (`sf::read_sf`)
+  * Regenerate stale documentation and document missing arguments
+* `naomi_debug()` no longer uploads to Imperial SharePoint (`spud` is
+  deprecated): it downloads the debug bundle to `<root>/<jobid>/`, with `root`
+  defaulting to `NAOMI_DEBUG_ONEDRIVE`. The `dest_folder` argument is replaced
+  by `root`.
+* Exclude `tests/test-shipp.R` and `tests/test-helpers.R` from the build: they
+  were copied from the unmerged naomi SHIPP PR and rely on hintr fixtures that
+  don't exist in this package. To be rewritten as `tests/testthat` tests.
+
 # naomi.utils 0.0.17
 
 * Remove `spud` dependency as package is deprecated 
