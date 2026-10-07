@@ -12,6 +12,8 @@ shipp_calculate_incidence_male(
   male_logit_prevalence,
   survey_year,
   consensus_est,
+  scale_msm_new_infections,
+  scale_pwid_new_infections,
   goals,
   kp_wb
 )
@@ -31,6 +33,9 @@ shipp_calculate_incidence_male(
 model of sexual behaviour fitted to all countries has the most data for in roughly 2018.}
 
 \item{consensus_est}{Source to scale PSE + new infections.}
+
+\item{scale_msm_new_infections, scale_pwid_new_infections}{Logical; scale KP
+new infections to the national \code{consensus_est} total.}
 
 \item{goals}{National PSE and new infection estimates from Goals.}
 

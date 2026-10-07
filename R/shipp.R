@@ -1,3 +1,8 @@
+# SHIPP HIV incidence categories, per 100 person-years: Low < 0.2,
+# Moderate 0.2 to < 0.5, High 0.5 to < 2, Very high >= 2. Updated from
+# 0.3 / 1 / 3 for the 2025 SHIPP workbook (naomi.resources 0.0.8).
+shipp_incidence_breaks <- c(0.2, 0.5, 2)
+
 #' Format naomi outputs for PSE tool
 #'
 #' @param outputs Naomi output
@@ -83,11 +88,9 @@ shipp_format_naomi <- function(outputs, options, quarter){
   # Incidence categories
   df4 <- df3 %>%
     dplyr::filter(indicator == "Inci") %>%
-    dplyr::mutate(mean = dplyr::case_when(mean < 0.2 ~ "Low",
-                                          mean >= 0.2 & mean< 0.5 ~ "Moderate",
-                                          mean >= 0.5 & mean < 2 ~ "High",
-                                          mean >= 2 ~ "Very High",
-                                          TRUE ~ NA_character_),
+    dplyr::mutate(mean = as.character(cut(as.numeric(mean), c(0, shipp_incidence_breaks, Inf),
+                                          labels = c("Low", "Moderate", "High", "Very High"),
+                                          include.lowest = TRUE, right = FALSE)),
                   indicator = "Incicategory")
 
   # New infections for all age groups + sexes
@@ -1172,9 +1175,9 @@ shipp_calculate_incidence_female <- function(naomi_output,
     tidyr::pivot_wider(names_from = indicator, values_from = mean) %>%
     dplyr::mutate(
       incidence_cat = cut(incidence,
-                          c(0, 0.3, 1, 3, 10^6),
+                          c(0, shipp_incidence_breaks, Inf),
                           labels = c("Low", "Moderate", "High", "Very High"),
-                          include.lowest = TRUE, right = TRUE))
+                          include.lowest = TRUE, right = FALSE))
 
   risk_group_prevalence <- female_logit_prevalence %>%
     dplyr::select(area_id, age_group, starts_with("prev_"))
@@ -1393,9 +1396,9 @@ shipp_calculate_incidence_female <- function(naomi_output,
   # Calculate incidence
   df4 <- dplyr::bind_rows(df2, df3) %>%
     dplyr::mutate(incidence_cat = cut(incidence,
-                                      c(0, 0.3, 1, 3, 10^6),
+                                      c(0, shipp_incidence_breaks, Inf),
                                       labels = c("Low", "Moderate", "High", "Very High"),
-                                      include.lowest = TRUE, right = TRUE))
+                                      include.lowest = TRUE, right = FALSE))
 
   # Check that sum of disaggregated infections is the same as total infections
   sum_infections <- df4$infections_nosex12m + df4$infections_sexcohab + df4$infections_sexnonreg + df4$infections_sexpaid12m
@@ -1448,6 +1451,8 @@ shipp_calculate_incidence_female <- function(naomi_output,
 #' @param survey_year Survey year to sample from the SAE model. Default is 2018. Survey year should be updated to most current household survey in the country - for countries without recent household surveys, leave at 2018 - the spatiotemporal
 #' model of sexual behaviour fitted to all countries has the most data for in roughly 2018.
 #' @param consensus_est Source to scale PSE + new infections.
+#' @param scale_msm_new_infections,scale_pwid_new_infections Logical; scale KP
+#'   new infections to the national `consensus_est` total.
 #' @param goals National PSE and new infection estimates from Goals.
 #' @param kp_wb National PSE and new infection estimates from KP Workbook read from pjnz.
 #'
@@ -1471,9 +1476,9 @@ shipp_calculate_incidence_male <- function(naomi_output,
     tidyr::pivot_wider(names_from = indicator, values_from = mean) %>%
     dplyr::mutate(
       incidence_cat = cut(incidence,
-                          c(0, 0.3, 1, 3, 10^6),
+                          c(0, shipp_incidence_breaks, Inf),
                           labels = c("Low", "Moderate", "High", "Very High"),
-                          include.lowest = TRUE, right = TRUE))
+                          include.lowest = TRUE, right = FALSE))
 
   risk_group_prevalence <- male_logit_prevalence %>%
     dplyr::select(area_id, age_group, gen_prev, starts_with( "prev_")) %>%
@@ -1725,9 +1730,9 @@ shipp_calculate_incidence_male <- function(naomi_output,
   # Calculate incidence
   df4 <- dplyr::bind_rows(df2, df3) %>%
     dplyr::mutate(incidence_cat = cut(incidence,
-                                      c(0, 0.3, 1, 3, 10^6),
+                                      c(0, shipp_incidence_breaks, Inf),
                                       labels = c("Low", "Moderate", "High", "Very High"),
-                                      include.lowest = TRUE, right = TRUE))
+                                      include.lowest = TRUE, right = FALSE))
 
 
 
@@ -1832,6 +1837,9 @@ shipp_combine_cats_female <- function(age_filter, shipp, naomi_output) {
   # Filter to age category we're outputting
   shipp_pop_risk_cat <- shipp %>% dplyr::filter(age_group %in% age_groups)
 
+  # SHIPP incidence categories as proportions per year
+  inc_breaks <- shipp_incidence_breaks / 100
+
   # Calculate population by risk categories:
   # Calculated by summing 5-year age band risk populations to ensure all combined
   # age categories contain risk populations based on thresholds from 5-year
@@ -1840,29 +1848,29 @@ shipp_combine_cats_female <- function(age_filter, shipp, naomi_output) {
     dplyr::mutate(
       # KP total: population by incidence thresholds (FSW only)-----------------
       # KP: FSW (sexpaid12m)
-      pop_low_inc_kp = ifelse(incidence_sexpaid12m < 0.002, susceptible_sexpaid12m, 0.0),
-      pop_mod_inc_kp = ifelse(incidence_sexpaid12m >= 0.002 & incidence_sexpaid12m < 0.005,
+      pop_low_inc_kp = ifelse(incidence_sexpaid12m < inc_breaks[1], susceptible_sexpaid12m, 0.0),
+      pop_mod_inc_kp = ifelse(incidence_sexpaid12m >= inc_breaks[1] & incidence_sexpaid12m < inc_breaks[2],
                                  susceptible_sexpaid12m, 0.0),
-      pop_high_inc_kp = ifelse(incidence_sexpaid12m >= 0.005 & incidence_sexpaid12m < 0.02,
+      pop_high_inc_kp = ifelse(incidence_sexpaid12m >= inc_breaks[2] & incidence_sexpaid12m < inc_breaks[3],
                                   susceptible_sexpaid12m, 0.0),
-      pop_vhigh_inc_kp = ifelse(incidence_sexpaid12m >= 0.02, susceptible_sexpaid12m, 0.0),
+      pop_vhigh_inc_kp = ifelse(incidence_sexpaid12m >= inc_breaks[3], susceptible_sexpaid12m, 0.0),
 
       # Non-KP total: population by incidence thresholds------------------------
       # One cohabiting partner populations using sexcohab incidence thresholds
-      pop_low_inc_cohab = ifelse(incidence_sexcohab < 0.002, susceptible_sexcohab, 0.0),
-      pop_mod_inc_cohab = ifelse(incidence_sexcohab >= 0.002 & incidence_sexcohab < 0.005,
+      pop_low_inc_cohab = ifelse(incidence_sexcohab < inc_breaks[1], susceptible_sexcohab, 0.0),
+      pop_mod_inc_cohab = ifelse(incidence_sexcohab >= inc_breaks[1] & incidence_sexcohab < inc_breaks[2],
                                  susceptible_sexcohab, 0.0),
-      pop_high_inc_cohab = ifelse(incidence_sexcohab >= 0.005 & incidence_sexcohab < 0.02,
+      pop_high_inc_cohab = ifelse(incidence_sexcohab >= inc_breaks[2] & incidence_sexcohab < inc_breaks[3],
                                   susceptible_sexcohab, 0.0),
-      pop_vhigh_inc_cohab = ifelse(incidence_sexcohab >= 0.02, susceptible_sexcohab, 0.0),
+      pop_vhigh_inc_cohab = ifelse(incidence_sexcohab >= inc_breaks[3], susceptible_sexcohab, 0.0),
 
       # None-regular partner populations using sexnonreg incidence thresholds
-      pop_low_inc_sexnonreg = ifelse(incidence_sexnonreg<0.002, susceptible_sexnonreg, 0.0),
-      pop_mod_inc_sexnonreg = ifelse(incidence_sexnonreg>=0.002 & incidence_sexnonreg<0.005,
+      pop_low_inc_sexnonreg = ifelse(incidence_sexnonreg<inc_breaks[1], susceptible_sexnonreg, 0.0),
+      pop_mod_inc_sexnonreg = ifelse(incidence_sexnonreg>=inc_breaks[1] & incidence_sexnonreg<inc_breaks[2],
                                      susceptible_sexnonreg, 0.0),
-      pop_high_inc_sexnonreg = ifelse(incidence_sexnonreg>=0.005 & incidence_sexnonreg<0.02,
+      pop_high_inc_sexnonreg = ifelse(incidence_sexnonreg>=inc_breaks[2] & incidence_sexnonreg<inc_breaks[3],
                                       susceptible_sexnonreg, 0.0),
-      pop_vhigh_inc_sexnonreg = ifelse(incidence_sexnonreg>=0.02, susceptible_sexnonreg, 0.0),
+      pop_vhigh_inc_sexnonreg = ifelse(incidence_sexnonreg>=inc_breaks[3], susceptible_sexnonreg, 0.0),
 
       # Non-KP total populations = sum of sexcohab and sexnonreg populations
       pop_low_inc_nonkp = pop_low_inc_cohab + pop_low_inc_sexnonreg,
@@ -1988,6 +1996,9 @@ shipp_combine_cats_male <- function(age_filter, shipp, naomi_output) {
   shipp_pop_risk_cat <- shipp |> dplyr::filter(age_group %in% age_groups)
 
 
+  # SHIPP incidence categories as proportions per year
+  inc_breaks <- shipp_incidence_breaks / 100
+
   # Calculate population by risk categories:
   # Calculated by summing 5-year age band risk populations to ensure all combined
   # age categories contain risk populations based on thresholds from 5-year
@@ -1996,20 +2007,20 @@ shipp_combine_cats_male <- function(age_filter, shipp, naomi_output) {
     dplyr::mutate(
       # KP total: population by incidence thresholds----------------------------
       # MSM populations using MSM incidence thresholds
-      pop_low_inc_msm   = ifelse(incidence_msm < 0.002, susceptible_msm, 0.0),
-      pop_mod_inc_msm   = ifelse(incidence_msm >= 0.002 & incidence_msm < 0.005,
+      pop_low_inc_msm   = ifelse(incidence_msm < inc_breaks[1], susceptible_msm, 0.0),
+      pop_mod_inc_msm   = ifelse(incidence_msm >= inc_breaks[1] & incidence_msm < inc_breaks[2],
                                  susceptible_msm, 0.0),
-      pop_high_inc_msm  = ifelse(incidence_msm >= 0.005 & incidence_msm < 0.02,
+      pop_high_inc_msm  = ifelse(incidence_msm >= inc_breaks[2] & incidence_msm < inc_breaks[3],
                                  susceptible_msm, 0.0),
-      pop_vhigh_inc_msm = ifelse(incidence_msm >= 0.02,  susceptible_msm, 0.0),
+      pop_vhigh_inc_msm = ifelse(incidence_msm >= inc_breaks[3],  susceptible_msm, 0.0),
 
       # PWID populations using PWID incidence thresholds
-      pop_low_inc_pwid   = ifelse(incidence_pwid < 0.002, susceptible_pwid, 0.0),
-      pop_mod_inc_pwid   = ifelse(incidence_pwid >= 0.002 & incidence_pwid < 0.005,
+      pop_low_inc_pwid   = ifelse(incidence_pwid < inc_breaks[1], susceptible_pwid, 0.0),
+      pop_mod_inc_pwid   = ifelse(incidence_pwid >= inc_breaks[1] & incidence_pwid < inc_breaks[2],
                                   susceptible_pwid, 0.0),
-      pop_high_inc_pwid  = ifelse(incidence_pwid >= 0.005 & incidence_pwid < 0.02,
+      pop_high_inc_pwid  = ifelse(incidence_pwid >= inc_breaks[2] & incidence_pwid < inc_breaks[3],
                                   susceptible_pwid, 0.0),
-      pop_vhigh_inc_pwid = ifelse(incidence_pwid >= 0.02,  susceptible_pwid, 0.0),
+      pop_vhigh_inc_pwid = ifelse(incidence_pwid >= inc_breaks[3],  susceptible_pwid, 0.0),
 
       # KP total populations = sum of MSM + PWID populations
       pop_low_inc_kp   = pop_low_inc_msm   + pop_low_inc_pwid,
@@ -2019,20 +2030,20 @@ shipp_combine_cats_male <- function(age_filter, shipp, naomi_output) {
 
       # Non-KP total: population by incidence thresholds------------------------
       # One cohabiting partner populations using sexcohab incidence thresholds
-      pop_low_inc_cohab = ifelse(incidence_sexcohab < 0.002, susceptible_sexcohab, 0.0),
-      pop_mod_inc_cohab = ifelse(incidence_sexcohab >= 0.002 & incidence_sexcohab < 0.005,
+      pop_low_inc_cohab = ifelse(incidence_sexcohab < inc_breaks[1], susceptible_sexcohab, 0.0),
+      pop_mod_inc_cohab = ifelse(incidence_sexcohab >= inc_breaks[1] & incidence_sexcohab < inc_breaks[2],
                                  susceptible_sexcohab, 0.0),
-      pop_high_inc_cohab = ifelse(incidence_sexcohab >= 0.005 & incidence_sexcohab < 0.02,
+      pop_high_inc_cohab = ifelse(incidence_sexcohab >= inc_breaks[2] & incidence_sexcohab < inc_breaks[3],
                                   susceptible_sexcohab, 0.0),
-      pop_vhigh_inc_cohab = ifelse(incidence_sexcohab >= 0.02, susceptible_sexcohab, 0.0),
+      pop_vhigh_inc_cohab = ifelse(incidence_sexcohab >= inc_breaks[3], susceptible_sexcohab, 0.0),
 
       # Non-regular partner populations using sexnonreg incidence thresholds
-      pop_low_inc_sexnonreg = ifelse(incidence_sexnonreg<0.002, susceptible_sexnonreg, 0.0),
-      pop_mod_inc_sexnonreg = ifelse(incidence_sexnonreg>=0.002 & incidence_sexnonreg<0.005,
+      pop_low_inc_sexnonreg = ifelse(incidence_sexnonreg<inc_breaks[1], susceptible_sexnonreg, 0.0),
+      pop_mod_inc_sexnonreg = ifelse(incidence_sexnonreg>=inc_breaks[1] & incidence_sexnonreg<inc_breaks[2],
                                      susceptible_sexnonreg, 0.0),
-      pop_high_inc_sexnonreg = ifelse(incidence_sexnonreg>=0.005 & incidence_sexnonreg<0.02,
+      pop_high_inc_sexnonreg = ifelse(incidence_sexnonreg>=inc_breaks[2] & incidence_sexnonreg<inc_breaks[3],
                                       susceptible_sexnonreg, 0.0),
-      pop_vhigh_inc_sexnonreg = ifelse(incidence_sexnonreg>=0.02, susceptible_sexnonreg, 0.0),
+      pop_vhigh_inc_sexnonreg = ifelse(incidence_sexnonreg>=inc_breaks[3], susceptible_sexnonreg, 0.0),
 
       # Non-KP total populations = sum of sexcohab and sexnonreg populations
       pop_low_inc_nonkp = pop_low_inc_cohab + pop_low_inc_sexnonreg,
@@ -2134,8 +2145,10 @@ shipp_combine_cats_male <- function(age_filter, shipp, naomi_output) {
 #' @param naomi_output Path to naomi output (zip file or hintr object).
 #' @param pjnz Path to spectrum file.
 #' @param consensus_est Source of consensus estimate to scale PSE and KP new infections.
-#' @param survey_year Survey year to sample from the SAE model. Default is 2018. Survey year should be updated to most current household survey in the country - for countries without recent household surveys, leave at 2018 - the spatiotemporal
-#' model of sexual behaviour fitted to all countries has the most data for in roughly 2018.
+#' @param scale_fsw_new_infections,scale_msm_new_infections,scale_pwid_new_infections
+#'   Logical; scale KP new infections to the national `consensus_est` total.
+#' @param scale_fsw_pse,scale_msm_pse,scale_pwid_pse Logical; scale KP PSE to
+#'   the national `consensus_est` total.
 #'
 #' @return Output files to update SHIPP excel workbook.
 #' @keywords internal
@@ -2157,7 +2170,7 @@ shipp_generate_risk_populations <- function(naomi_output,
   # Survey year extracted from "Model inputs" tab in SHIPP workbook template.
   # Set to year of most recent survey with SRB data or 2018 in cases where
   # most recent survey is older than 2018
-  survey_year <- naomi.resources:::get_srb_year(iso)
+  survey_year <- naomi.resources::get_srb_year(iso)
 
   if(iso %in% c("ZAF", "MWI")){
     quarter = options$calendar_quarter_t3
@@ -2359,6 +2372,12 @@ write_xlsx_sheets <- function(template, sheets, path) {
 #' @param output Path to naomi outputs
 #' @param path Path to save output file
 #' @param pjnz Path to input PJNZ file
+#' @param consensus_est Source of national KP estimates to scale to: `"goals"` or
+#'   `"kp_wb"` (KP workbook in the PJNZ).
+#' @param scale_fsw_new_infections,scale_msm_new_infections,scale_pwid_new_infections
+#'   Logical; scale KP new infections to the national `consensus_est` total.
+#' @param scale_fsw_pse,scale_msm_pse,scale_pwid_pse Logical; scale KP PSE to
+#'   the national `consensus_est` total.
 #'
 #' @return Path to output file and metadata for file
 #' @export

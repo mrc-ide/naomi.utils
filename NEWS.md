@@ -8,6 +8,12 @@ Updates to SHIPP workbook processing code for 2025 estimates update:
   Year set to year of most recent survey with sexual risk behaviour data and to 2018 for countries where
   most recent sexual risk behaviour survey is older that 2018.
 * Add option to produce SHIPP without scaling to national envelope of KP PSE and new infections from Goals.
+* Define SHIPP incidence category thresholds once (`shipp_incidence_breaks`:
+  0.2 / 0.5 / 2 per 100 person-years) and use them everywhere. Fixes
+  `incidence_cat` in the female/male incidence outputs, which still used the
+  old 0.3 / 1 / 3 thresholds.
+* Fix Naomi `Incicategory` recode in `shipp_format_naomi()` comparing incidence
+  as character strings rather than numbers.
 
 # naomi.utils 0.0.18
 

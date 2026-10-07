@@ -23,8 +23,10 @@ shipp_generate_risk_populations(
 
 \item{consensus_est}{Source of consensus estimate to scale PSE and KP new infections.}
 
-\item{survey_year}{Survey year to sample from the SAE model. Default is 2018. Survey year should be updated to most current household survey in the country - for countries without recent household surveys, leave at 2018 - the spatiotemporal
-model of sexual behaviour fitted to all countries has the most data for in roughly 2018.}
+\item{scale_fsw_new_infections, scale_msm_new_infections, scale_pwid_new_infections}{Logical; scale KP new infections to the national \code{consensus_est} total.}
+
+\item{scale_fsw_pse, scale_msm_pse, scale_pwid_pse}{Logical; scale KP PSE to
+the national \code{consensus_est} total.}
 }
 \value{
 Output files to update SHIPP excel workbook.

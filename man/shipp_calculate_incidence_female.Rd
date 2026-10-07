@@ -12,6 +12,7 @@ shipp_calculate_incidence_female(
   female_logit_prevalence,
   survey_year,
   consensus_est,
+  scale_fsw_new_infections,
   goals,
   kp_wb
 )
