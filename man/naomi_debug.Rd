@@ -2,28 +2,29 @@
 % Please edit documentation in R/debug.R
 \name{naomi_debug}
 \alias{naomi_debug}
-\title{Download debug from server and upload into sharepoint}
+\title{Download debug from server into a local ticket folder}
 \usage{
 naomi_debug(
   id,
   jobid,
-  dest_folder = "Shared Documents/2023_debug",
+  root = Sys.getenv("NAOMI_DEBUG_ONEDRIVE", "."),
   server = NULL
 )
 }
 \arguments{
 \item{id}{The model fit or calibrate ID to download debug for}
 
-\item{jobid}{The issue ID, the name of the folder to create in sharepoint}
+\item{jobid}{The issue ID, the name of the folder to create under \code{root}}
 
-\item{dest_folder}{The root destination folder in sharepoint}
+\item{root}{Local debug root; defaults to \code{NAOMI_DEBUG_ONEDRIVE}, else the
+working directory}
 
-\item{server}{The folder to download debug from, defaults to production
-server}
+\item{server}{The server to download debug from, defaults to production}
 }
 \value{
 Path to local debug
 }
 \description{
-Download debug from server and upload into sharepoint
+Downloads to \verb{<root>/<jobid>/}. Needs membership of the hivtools
+\code{naomi-debug} GitHub team and a PAT in \code{NAOMI_DOWNLOAD_DEBUG_TOKEN}.
 }

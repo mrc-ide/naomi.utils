@@ -22,7 +22,7 @@ file components \code{.shp}, \code{.dbf}, \code{.prj}, \code{.shx}. This wraps
 \code{\link[sf:st_write]{sf::write_sf()}}.
 }
 \examples{
-nc <- read_sf(system.file("shape/nc.shp", package="sf"))
+nc <- sf::read_sf(system.file("shape/nc.shp", package="sf"))
 write_sf_shp_zip(nc, "nc.zip")
 
 }

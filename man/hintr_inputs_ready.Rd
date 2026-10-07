@@ -7,9 +7,9 @@
 hintr_inputs_ready(jobid, root = ".")
 }
 \arguments{
-\item{jobid}{The issue ID, the name of the folder in sharepoint}
+\item{jobid}{The model fit or calibrate ID (folder created by \code{hintr::download_debug()})}
 
-\item{root}{The debug root dir}
+\item{root}{The ticket folder, i.e. the path returned by \code{naomi_debug()}'s \code{dest}}
 }
 \value{
 Path to local debug

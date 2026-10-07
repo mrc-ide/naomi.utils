@@ -7,6 +7,10 @@
 validate_naomi_population(population, areas, area_level)
 }
 \arguments{
+\item{population}{population dataset to validate.}
+
+\item{areas}{Naomi areas dataset.}
+
 \item{area_level}{area level(s) at which population is supplied}
 }
 \value{

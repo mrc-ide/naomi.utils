@@ -376,6 +376,7 @@ create_survey_regions_dhs <- function(survey_region_areas) {
 #' survey_clusters <- create_survey_clusters_dhs(surveys)
 #' }
 #'
+#' @param clear_rdhs_cache Passed to `rdhs::get_datasets(clear_cache = )`.
 #' @export
 create_survey_clusters_dhs <- function(surveys, clear_rdhs_cache = FALSE) {
 
@@ -585,6 +586,7 @@ assign_dhs_cluster_areas <- function(survey_clusters, survey_region_areas) {
 #' individuals <- create_individual_hiv_dhs(surveys)
 #' }
 #'
+#' @param clear_rdhs_cache Passed to `rdhs::get_datasets(clear_cache = )`.
 #' @export
 create_individual_hiv_dhs <- function(surveys, clear_rdhs_cache = FALSE) {
 
@@ -812,6 +814,7 @@ extract_individual_hiv_dhs <- function(SurveyId, prd_path, ird_path, mrd_path, a
 #' circ <- create_circumcision_dhs(surveys)
 #' }
 #'
+#' @param clear_rdhs_cache Passed to `rdhs::get_datasets(clear_cache = )`.
 #' @export
 create_survey_circumcision_dhs <- function(surveys, clear_rdhs_cache = FALSE) {
 
@@ -1052,6 +1055,7 @@ validate_survey_region_areas <- function(survey_region_areas, survey_region_boun
 #'
 #' @param survey_clusters Survey clusteres dataset.
 #' @param survey_region_boundaries Survey region boundaries dataset.
+#' @param survey_region_areas Survey region areas dataset.
 #'
 #' @return A list of grobs, one for each survey.
 #'

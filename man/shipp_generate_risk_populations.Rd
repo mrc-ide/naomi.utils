@@ -7,7 +7,13 @@
 shipp_generate_risk_populations(
   naomi_output,
   pjnz = NULL,
-  consensus_est = "goals"
+  consensus_est,
+  scale_fsw_new_infections,
+  scale_msm_new_infections = TRUE,
+  scale_pwid_new_infections = TRUE,
+  scale_fsw_pse = TRUE,
+  scale_msm_pse = TRUE,
+  scale_pwid_pse = TRUE
 )
 }
 \arguments{

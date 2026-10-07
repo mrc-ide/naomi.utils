@@ -14,6 +14,8 @@ plot_survey_coordinate_check(
 \item{survey_clusters}{Survey clusteres dataset.}
 
 \item{survey_region_boundaries}{Survey region boundaries dataset.}
+
+\item{survey_region_areas}{Survey region areas dataset.}
 }
 \value{
 A list of grobs, one for each survey.

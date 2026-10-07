@@ -1,5 +1,7 @@
 #' Validate naomi population dataset
 #'
+#' @param population population dataset to validate.
+#' @param areas Naomi areas dataset.
 #' @param area_level area level(s) at which population is supplied
 #'
 #' @return Invisibly TRUE or raises error.

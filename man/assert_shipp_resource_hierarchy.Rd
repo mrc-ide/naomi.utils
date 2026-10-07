@@ -7,9 +7,16 @@
 \usage{
 assert_shipp_resource_hierarchy(outputs, options)
 }
-\description{
-@param outputs Naomi outputs.
-@param options Naomi options.
-@return Resource hierarchy
-@keywords internal
+\arguments{
+\item{outputs}{Naomi outputs.}
+
+\item{options}{Naomi options.}
 }
+\value{
+Resource hierarchy
+}
+\description{
+Throw warning when area hierarchy in external SHIPP resources read in from
+\code{naomi.resources} do not match Naomi outputs used to update SHIPP estimates.
+}
+\keyword{internal}

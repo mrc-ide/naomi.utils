@@ -7,7 +7,7 @@
 odds(p)
 }
 \arguments{
-\item{p}{Probability in \link{0, 1}}
+\item{p}{Probability in \verb{[0, 1]}}
 }
 \description{
 Calculate the odds
