@@ -4,12 +4,31 @@
 \alias{generate_shipp_tool}
 \title{Generate SHIPP tool}
 \usage{
-generate_shipp_tool(output, pjnz, path = tempfile(fileext = ".xlsx"))
+generate_shipp_tool(
+  output,
+  pjnz,
+  consensus_est = "goals",
+  scale_fsw_new_infections = TRUE,
+  scale_msm_new_infections = TRUE,
+  scale_pwid_new_infections = TRUE,
+  scale_fsw_pse = TRUE,
+  scale_msm_pse = TRUE,
+  scale_pwid_pse = TRUE,
+  path = tempfile(fileext = ".xlsx")
+)
 }
 \arguments{
 \item{output}{Path to naomi outputs}
 
 \item{pjnz}{Path to input PJNZ file}
+
+\item{consensus_est}{Source of national KP estimates to scale to: \code{"goals"} or
+\code{"kp_wb"} (KP workbook in the PJNZ).}
+
+\item{scale_fsw_new_infections, scale_msm_new_infections, scale_pwid_new_infections}{Logical; scale KP new infections to the national \code{consensus_est} total.}
+
+\item{scale_fsw_pse, scale_msm_pse, scale_pwid_pse}{Logical; scale KP PSE to
+the national \code{consensus_est} total.}
 
 \item{path}{Path to save output file}
 }

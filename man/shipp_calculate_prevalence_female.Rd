@@ -9,7 +9,7 @@ shipp_calculate_prevalence_female(
   options,
   fsw_est,
   female_srb,
-  survey_year_sample = 2018,
+  survey_year_sample,
   quarter
 )
 }

@@ -4,7 +4,15 @@
 \alias{shipp_disaggregate_fsw}
 \title{Dissagreggate admin1 FSW proportions from Oli's KP model to 5-age groups}
 \usage{
-shipp_disaggregate_fsw(outputs, iso, naomi_pop, consensus_est, goals, kp_wb)
+shipp_disaggregate_fsw(
+  outputs,
+  iso,
+  naomi_pop,
+  consensus_est,
+  scale_fsw_pse,
+  goals,
+  kp_wb
+)
 }
 \arguments{
 \item{outputs}{Naomi output.}

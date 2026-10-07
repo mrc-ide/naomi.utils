@@ -55,7 +55,6 @@ iso = "ETH"
 naomi_output = naomi_file_map[naomi_file_map$iso3 == iso, ]$naomi_file
 pjnz = NULL
 consensus_est = "goals"
-survey_year = 2018
 
 outputs <- naomi::read_output_package(naomi_output)
 options <- outputs$fit$model_options

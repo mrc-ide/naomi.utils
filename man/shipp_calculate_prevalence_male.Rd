@@ -10,7 +10,7 @@ shipp_calculate_prevalence_male(
   options,
   msm_est,
   male_srb,
-  survey_year_sample = 2018,
+  survey_year_sample,
   quarter
 )
 }
