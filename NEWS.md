@@ -12,9 +12,10 @@
   deprecated): it downloads the debug bundle to `<root>/<jobid>/`, with `root`
   defaulting to `NAOMI_DEBUG_ONEDRIVE`. The `dest_folder` argument is replaced
   by `root`.
-* Exclude `tests/test-shipp.R` and `tests/test-helpers.R` from the build: they
-  were copied from the unmerged naomi SHIPP PR and rely on hintr fixtures that
-  don't exist in this package. To be rewritten as `tests/testthat` tests.
+* Remove `tests/test-shipp.R` and `tests/test-helpers.R`: they were copied from
+  the superseded naomi SHIPP PR (mrc-ide/naomi#413) and relied on hintr
+  fixtures that don't exist in this package. SHIPP tests to be rewritten in
+  `tests/testthat`.
 
 # naomi.utils 0.0.17
 
