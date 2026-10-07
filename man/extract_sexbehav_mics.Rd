@@ -2,18 +2,21 @@
 % Please edit documentation in R/utils_survey_mics_sexbehav.R
 \name{extract_sexbehav_mics}
 \alias{extract_sexbehav_mics}
-\title{Extract sexual behaviour categorical variables from PHIA surveys.}
+\title{Extract sexual behaviour categorical variables from MICS surveys.}
 \usage{
 extract_sexbehav_mics(ind, survey_id, gender)
 }
 \arguments{
-\item{ind}{Individuals dataset.}
+\item{ind}{Individuals dataset: the MICS women's (\code{wm}) or men's (\code{mn}) file.}
 
 \item{survey_id}{The survey name.}
+
+\item{gender}{\code{"female"} for the women's file; anything else is treated as
+the men's file.}
 }
 \value{
 Sexual behaviour categorical variables
 }
 \description{
-Extract sexual behaviour categorical variables from PHIA surveys.
+Extract sexual behaviour categorical variables from MICS surveys.
 }

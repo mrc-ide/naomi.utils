@@ -37,9 +37,10 @@
 #' 12 months.
 #'
 #' @examples
-#'
+#' \dontrun{
 #' surveys <- create_surveys_dhs("MWI")
 #' sexbehav <- create_sexbehav_dhs(surveys)
+#' }
 #'
 #' @export
 create_sexbehav_dhs <- function(surveys) {
@@ -51,10 +52,10 @@ create_sexbehav_dhs <- function(surveys) {
   mrd <- dplyr::filter(mrd, SurveyId %in% surveys$SurveyId)
 
   # doesn't like this line unless the model_datasets data is loaded
-  ird_paths <- setNames(rdhs::get_datasets(ird), ird$SurveyId)
+  ird_paths <- stats::setNames(rdhs::get_datasets(ird), ird$SurveyId)
 
   if (nrow(mrd) > 0) {
-    mrd_paths <- setNames(rdhs::get_datasets(mrd), mrd$SurveyId)
+    mrd_paths <- stats::setNames(rdhs::get_datasets(mrd), mrd$SurveyId)
   } else {
     mrd_paths <- list(NULL)
   }
@@ -124,7 +125,7 @@ extract_sexbehav_dhs <- function(SurveyId, ird_path, mrd_path){
   )
 
   # Does not report sexual activity in the last 12 months
-  dat$nosex12m = case_when(
+  dat$nosex12m = dplyr::case_when(
     dat$sex12m == TRUE ~ FALSE,
     dat$sex12m == FALSE ~ TRUE,
     is.na(dat$sex12m) ~ NA
@@ -209,14 +210,14 @@ extract_sexbehav_dhs <- function(SurveyId, ird_path, mrd_path){
   }
 
   # Either sexnonreg or sexpaid12m
-  dat$sexnonregplus <- case_when(
+  dat$sexnonregplus <- dplyr::case_when(
     dat$sexnonreg == TRUE ~ TRUE,
     dat$sexpaid12m == TRUE ~ TRUE,
     TRUE ~ FALSE
   )
 
   # Either sexnonregspouse or sexpaid12m
-  dat$sexnonregspouseplus = case_when(
+  dat$sexnonregspouseplus = dplyr::case_when(
     dat$sexnonregspouse == TRUE ~ TRUE,
     dat$sexpaid12m == TRUE ~ TRUE,
     TRUE ~ FALSE

@@ -1,7 +1,9 @@
-#' Extract sexual behaviour categorical variables from PHIA surveys.
+#' Extract sexual behaviour categorical variables from MICS surveys.
 #'
-#' @param ind Individuals dataset.
+#' @param ind Individuals dataset: the MICS women's (`wm`) or men's (`mn`) file.
 #' @param survey_id The survey name.
+#' @param gender `"female"` for the women's file; anything else is treated as
+#'   the men's file.
 #' @return Sexual behaviour categorical variables
 #' @export
 extract_sexbehav_mics <- function(ind, survey_id, gender) {
@@ -40,19 +42,19 @@ extract_sexbehav_mics <- function(ind, survey_id, gender) {
     )
 
     dat <- ind %>%
-      mutate(
+      dplyr::mutate(
         survey_id = survey_id,
         individual_id = paste0(wm1,"_",wm2,"_",wm3)
       ) %>%
-      select(survey_id, individual_id, tidyselect::any_of(sb_vars))
+      dplyr::select(survey_id, individual_id, tidyselect::any_of(sb_vars))
 
     # Fixes issue with e.g. some surveys not having paid sex questions
     dat[setdiff(sb_vars, names(dat))] <- NA
 
     dat %>%
-      mutate(
+      dplyr::mutate(
         # Reports sexual activity in the last 12 months
-        sex12m = case_when(
+        sex12m = dplyr::case_when(
           sb4 %in% 1:6 ~ TRUE,
           sb2u==1 ~ TRUE, # Assuming that if you gave answer of days/weeks/months but
           sb2u==2 ~ TRUE, # didn't know the number (i.e. SB2N==99) that you had sex in
@@ -60,13 +62,13 @@ extract_sexbehav_mics <- function(ind, survey_id, gender) {
           TRUE ~ FALSE
         ),
         # Does not report sexual activity in the last 12 months
-        nosex12m = case_when(
+        nosex12m = dplyr::case_when(
           sex12m == TRUE ~ FALSE,
           sex12m == FALSE ~ TRUE,
           is.na(sex12m) ~ NA
         ),
         # Reports sexual activity with exactly one cohabiting partner in the past 12 months
-        sexcohab = case_when(
+        sexcohab = dplyr::case_when(
           sex12m == FALSE ~ FALSE,
           sb7==2 & (sb4==1 | sb4==2) ~ TRUE,
           sb7==9 & is.na(sb9) & (sb4==1 | sb4==2) ~ TRUE, # assuming that if you were missing
@@ -78,7 +80,7 @@ extract_sexbehav_mics <- function(ind, survey_id, gender) {
         # Reports sexual activity with exactly one cohabiting partner or exactly one married partner who is living away
         # Either the spouse lives in, in which case they are cohabiting, or they live away, in which case they are also
         # covered here. So there is no need to check with the partlivew variable where the spouse is living.
-        sexcohabspouse = case_when(
+        sexcohabspouse = dplyr::case_when(
           sex12m == FALSE ~ FALSE,
           sb7==2 & (sb4==1 | sb4==2) ~ TRUE,
           sb7==9 & is.na(sb9) & (sb4==1 | sb4==2) ~ TRUE, # assuming that if you were missing
@@ -87,7 +89,7 @@ extract_sexbehav_mics <- function(ind, survey_id, gender) {
           TRUE ~ FALSE
         ),
         # Reports sexual activity with greater than one partner or any non-cohabiting partner
-        sexnonreg = case_when(
+        sexnonreg = dplyr::case_when(
           nosex12m == TRUE ~ FALSE,
           sexcohab == TRUE ~ FALSE,
           !sb4 %in% c(1,2) ~ TRUE,
@@ -96,7 +98,7 @@ extract_sexbehav_mics <- function(ind, survey_id, gender) {
         ),
         # NO DIFFERENTIATION HERE - MICS DOESN'T DISTINGUISH MARITAL NON-COHABITING PARTNERS
         # Reports sexual activity with greater than one partner or any non-marital non-cohabiting partner
-        sexnonregspouse = case_when(
+        sexnonregspouse = dplyr::case_when(
           nosex12m == TRUE ~ FALSE,
           sexcohab == TRUE ~ FALSE,
           !sb4 %in% c(1,2) ~ TRUE,
@@ -104,7 +106,7 @@ extract_sexbehav_mics <- function(ind, survey_id, gender) {
           TRUE ~ FALSE
         ),
         # Reports having exchanged gifts, cash, or anything else for sex in the past 12 months
-        sexpaid12m = case_when(
+        sexpaid12m = dplyr::case_when(
           nosex12m == TRUE ~ FALSE,
           (sb4 == 5) | (sb9 == 5) ~ TRUE,
           TRUE ~ FALSE
@@ -112,13 +114,13 @@ extract_sexbehav_mics <- function(ind, survey_id, gender) {
         # Indicator for including any non-missing observations for selling sex (i.e. whether it was in the questionnaire)
         giftsvar = FALSE,
         # Either sexnonreg or sexpaid12m
-        sexnonregplus = case_when(
+        sexnonregplus = dplyr::case_when(
           sexnonreg == TRUE ~ TRUE,
           sexpaid12m == TRUE ~ TRUE,
           TRUE ~ FALSE
         ),
         # Either sexnonregspouse or sexpaid12m
-        sexnonregspouseplus = case_when(
+        sexnonregspouseplus = dplyr::case_when(
           sexnonregspouse == TRUE ~ TRUE,
           sexpaid12m == TRUE ~ TRUE,
           TRUE ~ FALSE
@@ -130,9 +132,9 @@ extract_sexbehav_mics <- function(ind, survey_id, gender) {
         sexnonreg = ifelse(sexpaid12m, FALSE, sexnonreg),
         sexnonregspouse = ifelse(sexpaid12m, FALSE, sexnonregspouse),
         # Turn everything from TRUE / FALSE coding to 1 / 0
-        across(sex12m:sexnonregspouseplus, ~ as.numeric(.x))
+        dplyr::across(sex12m:sexnonregspouseplus, ~ as.numeric(.x))
       ) %>%
-      select(-all_of(sb_vars))
+      dplyr::select(-tidyselect::all_of(sb_vars))
   } else {
     sb_vars <- c(
       "msb1", # Age at first sexual intercourse - if 0, no sexual debut
@@ -168,19 +170,19 @@ extract_sexbehav_mics <- function(ind, survey_id, gender) {
     )
 
     dat <- ind %>%
-      mutate(
+      dplyr::mutate(
         survey_id = survey_id,
         individual_id = paste0(mwm1,"_",mwm2,"_",mwm3)
       ) %>%
-      select(survey_id, individual_id, tidyselect::any_of(sb_vars))
+      dplyr::select(survey_id, individual_id, tidyselect::any_of(sb_vars))
 
     # Fixes issue with e.g. some surveys not having paid sex questions
     dat[setdiff(sb_vars, names(dat))] <- NA
 
     dat %>%
-      mutate(
+      dplyr::mutate(
         # Reports sexual activity in the last 12 months
-        sex12m = case_when(
+        sex12m = dplyr::case_when(
           msb4 %in% 1:6 ~ TRUE,
           msb2u==1 ~ TRUE, # Assuming that if you gave answer of days/weeks/months but
           msb2u==2 ~ TRUE, # didn't know the number (i.e. SB2N==99) that you had sex in
@@ -188,13 +190,13 @@ extract_sexbehav_mics <- function(ind, survey_id, gender) {
           TRUE ~ FALSE
         ),
         # Does not report sexual activity in the last 12 months
-        nosex12m = case_when(
+        nosex12m = dplyr::case_when(
           sex12m == TRUE ~ FALSE,
           sex12m == FALSE ~ TRUE,
           is.na(sex12m) ~ NA
         ),
         # Reports sexual activity with exactly one cohabiting partner in the past 12 months
-        sexcohab = case_when(
+        sexcohab = dplyr::case_when(
           sex12m == FALSE ~ FALSE,
           msb7==2 & (msb4==1 | msb4==2) ~ TRUE,
           msb7==9 & is.na(msb9) & (msb4==1 | msb4==2) ~ TRUE, # assuming that if you were missing
@@ -206,7 +208,7 @@ extract_sexbehav_mics <- function(ind, survey_id, gender) {
         # Reports sexual activity with exactly one cohabiting partner or exactly one married partner who is living away
         # Either the spouse lives in, in which case they are cohabiting, or they live away, in which case they are also
         # covered here. So there is no need to check with the partlivew variable where the spouse is living.
-        sexcohabspouse = case_when(
+        sexcohabspouse = dplyr::case_when(
           sex12m == FALSE ~ FALSE,
           msb7==2 & (msb4==1 | msb4==2) ~ TRUE,
           msb7==9 & is.na(msb9) & (msb4==1 | msb4==2) ~ TRUE, # assuming that if you were missing
@@ -215,7 +217,7 @@ extract_sexbehav_mics <- function(ind, survey_id, gender) {
           TRUE ~ FALSE
         ),
         # Reports sexual activity with greater than one partner or any non-cohabiting partner
-        sexnonreg = case_when(
+        sexnonreg = dplyr::case_when(
           nosex12m == TRUE ~ FALSE,
           sexcohab == TRUE ~ FALSE,
           !msb4 %in% c(1,2) ~ TRUE,
@@ -224,7 +226,7 @@ extract_sexbehav_mics <- function(ind, survey_id, gender) {
         ),
         # NO DIFFERENTIATION HERE - MICS DOESN'T DISTINGUISH MARITAL NON-COHABITING PARTNERS
         # Reports sexual activity with greater than one partner or any non-marital non-cohabiting partner
-        sexnonregspouse = case_when(
+        sexnonregspouse = dplyr::case_when(
           nosex12m == TRUE ~ FALSE,
           sexcohab == TRUE ~ FALSE,
           !msb4 %in% c(1,2) ~ TRUE,
@@ -232,7 +234,7 @@ extract_sexbehav_mics <- function(ind, survey_id, gender) {
           TRUE ~ FALSE
         ),
         # Reports having exchanged gifts, cash, or anything else for sex in the past 12 months
-        sexpaid12m = case_when(
+        sexpaid12m = dplyr::case_when(
           nosex12m == TRUE ~ FALSE,
           (msb4 == 5) | (msb9 == 5) ~ TRUE,
           TRUE ~ FALSE
@@ -240,13 +242,13 @@ extract_sexbehav_mics <- function(ind, survey_id, gender) {
         # Indicator for including any non-missing observations for selling sex (i.e. whether it was in the questionnaire)
         giftsvar = FALSE,
         # Either sexnonreg or sexpaid12m
-        sexnonregplus = case_when(
+        sexnonregplus = dplyr::case_when(
           sexnonreg == TRUE ~ TRUE,
           sexpaid12m == TRUE ~ TRUE,
           TRUE ~ FALSE
         ),
         # Either sexnonregspouse or sexpaid12m
-        sexnonregspouseplus = case_when(
+        sexnonregspouseplus = dplyr::case_when(
           sexnonregspouse == TRUE ~ TRUE,
           sexpaid12m == TRUE ~ TRUE,
           TRUE ~ FALSE
@@ -258,44 +260,9 @@ extract_sexbehav_mics <- function(ind, survey_id, gender) {
         sexnonreg = ifelse(sexpaid12m, FALSE, sexnonreg),
         sexnonregspouse = ifelse(sexpaid12m, FALSE, sexnonregspouse),
         # Turn everything from TRUE / FALSE coding to 1 / 0
-        across(sex12m:sexnonregspouseplus, ~ as.numeric(.x))
+        dplyr::across(sex12m:sexnonregspouseplus, ~ as.numeric(.x))
       ) %>%
-      select(-all_of(sb_vars))
+      dplyr::select(-tidyselect::all_of(sb_vars))
   }
 
 }
-
-#' Check that each individual is assigned to one and only one risk category.
-#'
-#' @param survey_sexbehav Output of e.g. `extract_sexbehav_phia`.
-#' @return Rows of `survey_sexbehav` not in exactly one category.
-#' @export
-# check_survey_sexbehav <- function(survey_sexbehav) {
-#   df <- survey_sexbehav %>%
-#     mutate(
-#       r_tot = nosex12m + sexcohab + sexnonreg + sexpaid12m,
-#       r_tot_spouse = nosex12m + sexcohabspouse + sexnonregspouse + sexpaid12m
-#     )
-#
-#   cat(
-#     paste0(
-#       "Without spouse adjustment:\n",
-#       "The proportion of rows allocatated to one and only one category is ",
-#       round(sum(df$r_tot == 1) / nrow(df), 3) * 100, "%.\n",
-#       "The following rows are incorrectly allocated to multiple, or no, categories:\n"
-#     )
-#   )
-#
-#   print(df %>% filter(r_tot != 1))
-#
-#   cat(
-#     paste0(
-#       "Under the spouse adjustment:\n",
-#       "The proportion of rows allocatated to one and only one category is ",
-#       round(sum(df$r_tot_spouse == 1) / nrow(df), 3) * 100, "%.\n",
-#       "The following rows are incorrectly allocated to multiple, or no, categories:\n"
-#     )
-#   )
-#
-#   df %>% filter(r_tot_spouse != 1)
-# }

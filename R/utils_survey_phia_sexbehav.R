@@ -37,24 +37,24 @@ extract_sexbehav_phia <- function(ind, survey_id) {
   # * paste0("partlastsxtimed", 1:3): How long since last sex with partner i
 
   # Fix issues with particular surveys having different variable names
-  if(survey_id %in% c("ZWE2016PHIA")) { ind <- rename(ind, "part12modkr" = "part12monumdk") }
-  if(survey_id %in% c("ZMB2016PHIA")) { ind <- rename(ind, "part12monum" = "part12mo") }
-  if(survey_id %in% c("MWI2016PHIA")) { ind <- rename(ind, "part12modkr" = "part12monumdk") }
+  if(survey_id %in% c("ZWE2016PHIA")) { ind <- dplyr::rename(ind, "part12modkr" = "part12monumdk") }
+  if(survey_id %in% c("ZMB2016PHIA")) { ind <- dplyr::rename(ind, "part12monum" = "part12mo") }
+  if(survey_id %in% c("MWI2016PHIA")) { ind <- dplyr::rename(ind, "part12modkr" = "part12monumdk") }
 
   dat <- ind %>%
-    mutate(
+    dplyr::mutate(
       survey_id = survey_id,
       individual_id = personid
     ) %>%
-    select(survey_id, individual_id, tidyselect::any_of(sb_vars))
+    dplyr::select(survey_id, individual_id, tidyselect::any_of(sb_vars))
 
   # Fixes issue with e.g. some surveys not having paid sex questions
   dat[setdiff(sb_vars, names(dat))] <- NA
 
   dat %>%
-    mutate(
+    dplyr::mutate(
       # Reports sexual activity in the last 12 months
-      sex12m = case_when(
+      sex12m = dplyr::case_when(
         is.na(firstsxage) & is.na(firstsxagedk) ~ FALSE,
         is.na(firstsxage) & firstsxagedk == 96 ~ FALSE, # 96 is code for no sex
         part12monum > 0 ~ TRUE,
@@ -62,13 +62,13 @@ extract_sexbehav_phia <- function(ind, survey_id) {
         TRUE ~ FALSE
       ),
       # Does not report sexual activity in the last 12 months
-      nosex12m = case_when(
+      nosex12m = dplyr::case_when(
         sex12m == TRUE ~ FALSE,
         sex12m == FALSE ~ TRUE,
         is.na(sex12m) ~ NA
       ),
       # Reports sexual activity with exactly one cohabiting partner in the past 12 months
-      sexcohab = case_when(
+      sexcohab = dplyr::case_when(
         sex12m == FALSE ~ FALSE,
         (part12monum == 1) & ((partrelation1 == 2) | (partrelation2 == 2) | (partrelation3 == 2)) ~ TRUE,
         (part12monum == 1) & ((partrelation1 == 1) & (partlivew1 == 1)) ~ TRUE,
@@ -79,7 +79,7 @@ extract_sexbehav_phia <- function(ind, survey_id) {
       # Reports sexual activity with exactly one cohabiting partner or exactly one married partner who is living away
       # Either the spouse lives in, in which case they are cohabiting, or they live away, in which case they are also
       # covered here. So there is no need to check with the partlivew variable where the spouse is living.
-      sexcohabspouse = case_when(
+      sexcohabspouse = dplyr::case_when(
         sex12m == FALSE ~ FALSE,
         (part12monum == 1) & (partrelation1 %in% c(1, 2)) ~ TRUE,
         (part12monum == 1) & (partrelation2 %in% c(1, 2)) ~ TRUE,
@@ -87,7 +87,7 @@ extract_sexbehav_phia <- function(ind, survey_id) {
         TRUE ~ FALSE
       ),
       # Reports sexual activity with greater than one partner or any non-cohabiting partner
-      sexnonreg = case_when(
+      sexnonreg = dplyr::case_when(
         nosex12m == TRUE ~ FALSE,
         sexcohab == TRUE ~ FALSE,
         (part12monum == 1) & !(partrelation1 == 2) ~ TRUE, # Any relation but live-in partner
@@ -97,7 +97,7 @@ extract_sexbehav_phia <- function(ind, survey_id) {
         TRUE ~ FALSE
       ),
       # Reports sexual activity with greater than one partner or any non-marital non-cohabiting partner
-      sexnonregspouse = case_when(
+      sexnonregspouse = dplyr::case_when(
         nosex12m == TRUE ~ FALSE,
         sexcohabspouse == TRUE ~ FALSE,
         (part12monum == 1) & !(partrelation1 %in% c(1, 2)) ~ TRUE, # Any relation but live-in partner or spouse
@@ -107,25 +107,25 @@ extract_sexbehav_phia <- function(ind, survey_id) {
         TRUE ~ FALSE
       ),
       # Reports having exchanged gifts, cash, or anything else for sex in the past 12 months
-      sexpaid12m = case_when(
+      sexpaid12m = dplyr::case_when(
         nosex12m == TRUE ~ FALSE,
         (sellsx12mo == 1) | (buysx12mo == 1) ~ TRUE,
         (partrelation1 %in% c(6, 7) | partrelation2 %in% c(6, 7) | partrelation3 %in% c(6, 7)) ~ TRUE,
         TRUE ~ FALSE
       ),
       # Indicator for including any non-missing observations for selling sex (i.e. whether it was in the questionnaire)
-      giftsvar = case_when(
+      giftsvar = dplyr::case_when(
         sum(!is.na(sellsx12mo)) > 0 ~ TRUE,
         TRUE ~ FALSE
       ),
       # Either sexnonreg or sexpaid12m
-      sexnonregplus = case_when(
+      sexnonregplus = dplyr::case_when(
         sexnonreg == TRUE ~ TRUE,
         sexpaid12m == TRUE ~ TRUE,
         TRUE ~ FALSE
       ),
       # Either sexnonregspouse or sexpaid12m
-      sexnonregspouseplus = case_when(
+      sexnonregspouseplus = dplyr::case_when(
         sexnonregspouse == TRUE ~ TRUE,
         sexpaid12m == TRUE ~ TRUE,
         TRUE ~ FALSE
@@ -137,9 +137,9 @@ extract_sexbehav_phia <- function(ind, survey_id) {
       sexnonreg = ifelse(sexpaid12m, FALSE, sexnonreg),
       sexnonregspouse = ifelse(sexpaid12m, FALSE, sexnonregspouse),
       # Turn everything from TRUE / FALSE coding to 1 / 0
-      across(sex12m:sexnonregspouseplus, ~ as.numeric(.x))
+      dplyr::across(sex12m:sexnonregspouseplus, ~ as.numeric(.x))
     ) %>%
-    select(-all_of(sb_vars))
+    dplyr::select(-tidyselect::all_of(sb_vars))
 }
 
 #' Check that each individual is assigned to one and only one risk category.
@@ -149,7 +149,7 @@ extract_sexbehav_phia <- function(ind, survey_id) {
 #' @export
 check_survey_sexbehav <- function(survey_sexbehav) {
   df <- survey_sexbehav %>%
-    mutate(
+    dplyr::mutate(
       r_tot = nosex12m + sexcohab + sexnonreg + sexpaid12m,
       r_tot_spouse = nosex12m + sexcohabspouse + sexnonregspouse + sexpaid12m
     )
@@ -163,7 +163,7 @@ check_survey_sexbehav <- function(survey_sexbehav) {
     )
   )
 
-  print(df %>% filter(r_tot != 1))
+  print(df %>% dplyr::filter(r_tot != 1))
 
   cat(
     paste0(
@@ -174,5 +174,5 @@ check_survey_sexbehav <- function(survey_sexbehav) {
     )
   )
 
-  df %>% filter(r_tot_spouse != 1)
+  df %>% dplyr::filter(r_tot_spouse != 1)
 }

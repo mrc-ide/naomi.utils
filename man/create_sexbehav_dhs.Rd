@@ -46,8 +46,9 @@ reports having any STD, genital sore/ulcer, or genital discharge in the last
 12 months.
 }
 \examples{
-
+\dontrun{
 surveys <- create_surveys_dhs("MWI")
 sexbehav <- create_sexbehav_dhs(surveys)
+}
 
 }

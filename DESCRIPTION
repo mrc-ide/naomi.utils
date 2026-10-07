@@ -35,6 +35,7 @@ Imports:
     survey,
     tibble,
     tidyr,
+    tidyselect,
     withr,
     zip
 Suggests: 

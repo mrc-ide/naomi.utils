@@ -587,8 +587,12 @@ assign_dhs_cluster_areas <- function(survey_clusters, survey_region_areas) {
 #' }
 #'
 #' @param clear_rdhs_cache Passed to `rdhs::get_datasets(clear_cache = )`.
+#' @param hiv_testing If `TRUE` (default), every survey must have an HIV test
+#'   (AR) dataset and the function errors otherwise. Set `FALSE` for surveys
+#'   without HIV testing: AR is not downloaded and HIV fields are `NA`.
 #' @export
-create_individual_hiv_dhs <- function(surveys, clear_rdhs_cache = FALSE) {
+create_individual_hiv_dhs <- function(surveys, clear_rdhs_cache = FALSE,
+                                      hiv_testing = TRUE) {
 
   prd <- rdhs::dhs_datasets(fileType = "PR", fileFormat = "flat")
   ird <- rdhs::dhs_datasets(fileType = "IR", fileFormat = "flat")
@@ -609,7 +613,12 @@ create_individual_hiv_dhs <- function(surveys, clear_rdhs_cache = FALSE) {
   } else {
     mrd_paths <- list(NULL)
   }
-  if (nrow(ard) > 0) {
+  if (hiv_testing) {
+    no_ar <- setdiff(surveys$SurveyId, ard$SurveyId)
+    if (length(no_ar)) {
+      stop("No HIV test (AR) dataset for: ", paste(no_ar, collapse = ", "),
+           ". Use `hiv_testing = FALSE` for surveys without HIV testing.")
+    }
     ard_paths <- setNames(rdhs::get_datasets(ard, clear_cache = clear_rdhs_cache), ard$SurveyId)
   } else {
     ard_paths <- list(NULL)
@@ -782,6 +791,10 @@ extract_individual_hiv_dhs <- function(SurveyId, prd_path, ird_path, mrd_path, a
                            cd4,
                            recent)
     dat <- dplyr::left_join(dat, ar, by = c("cluster_id", "household", "line"))
+  } else {
+    # hiv_testing = FALSE: keep biomarker columns so downstream
+    # create_survey_biomarker_dhs() and calc_survey_indicators() still work
+    dat[c("hivweight", "hivstatus", "arv", "vls", "cd4", "recent")] <- NA_real_
   }
 
   dat$SurveyId <- SurveyId

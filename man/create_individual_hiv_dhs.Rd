@@ -4,12 +4,20 @@
 \alias{create_individual_hiv_dhs}
 \title{Create individual HIV outcomes dataset from DHS}
 \usage{
-create_individual_hiv_dhs(surveys, clear_rdhs_cache = FALSE)
+create_individual_hiv_dhs(
+  surveys,
+  clear_rdhs_cache = FALSE,
+  hiv_testing = TRUE
+)
 }
 \arguments{
 \item{surveys}{data.frame of surveys, returned by \code{create_surveys_dhs()}.}
 
 \item{clear_rdhs_cache}{Passed to \code{rdhs::get_datasets(clear_cache = )}.}
+
+\item{hiv_testing}{If \code{TRUE} (default), every survey must have an HIV test
+(AR) dataset and the function errors otherwise. Set \code{FALSE} for surveys
+without HIV testing: AR is not downloaded and HIV fields are \code{NA}.}
 }
 \value{
 data.frame consisting of survey ID, cluster ID and individual
