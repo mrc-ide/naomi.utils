@@ -87,7 +87,9 @@ extract_sexbehav_dhs <- function(SurveyId, ird_path, mrd_path){
   )
 
   ## Individual recode
-  ir <- readRDS(ird_path)
+  # Drop value labels: IR and MR label the same variable differently, which
+  # bind_rows() can't combine unless haven happens to be loaded
+  ir <- haven::zap_labels(readRDS(ird_path))
   dat <- dplyr::select(ir, individual_id = caseid, tidyselect::any_of(sb_vars))
   dat[setdiff(sb_vars, names(dat))] <- NA
 
@@ -96,7 +98,7 @@ extract_sexbehav_dhs <- function(SurveyId, ird_path, mrd_path){
     spec_fvars <- which(sb_vars %in% c("v791a"))
     sb_mvars <- paste0("m", sb_vars[-spec_fvars])
     sb_mvars <- c(sb_mvars, "mv793")
-    mr <- readRDS(mrd_path)
+    mr <- haven::zap_labels(readRDS(mrd_path))
     mdat <- dplyr::select(mr, individual_id = mcaseid, tidyselect::any_of(sb_mvars))
     mdat[setdiff(sb_mvars, names(mdat))] <- NA
     names(mdat) <- sub("^mv", "v", names(mdat))
