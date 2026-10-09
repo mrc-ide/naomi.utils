@@ -1,5 +1,8 @@
 ## File contains test helpers which we want to use both here and in hintr
 
+## sf registers its dplyr methods on load; the helpers below filter sf objects
+loadNamespace("sf")
+
 #' Build JSON from template and a set of params
 #'
 #' @param naomi_output Calibrated naomi output
