@@ -5,6 +5,8 @@
 #' @return Sexual behaviour categorical variables
 #' @export
 extract_sexbehav_phia <- function(ind, survey_id) {
+  # Drop value labels so comparisons and bind_rows() don't depend on haven
+  ind <- haven::zap_labels(ind)
   sb_vars <- c(
     "firstsxage", # Age at first vaginal sex
     "firstsxagedk", # Age at first vaginal sex (don't know)

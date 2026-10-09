@@ -17,7 +17,9 @@ calc_survey_sexbehav_indicators(
   area_top_level = min(areas$area_level),
   area_bottom_level = max(areas$area_level),
   artcov_definition = c("both", "arv", "artself"),
-  by_res_type = FALSE
+  by_res_type = FALSE,
+  hiv_area_top_level = 0,
+  hiv_area_bottom_level = 0
 )
 }
 \arguments{
@@ -48,6 +50,10 @@ calc_survey_sexbehav_indicators(
 \item{artcov_definition}{Definition to use for calculate ART coverage.}
 
 \item{by_res_type}{Whether to stratify estimates by urban/rural res_type; logical.}
+
+\item{hiv_area_top_level, hiv_area_bottom_level}{Area levels for
+\code{hiv_by_risk_group}; default national only, as used by the prevalence
+log odds ratio (LOR) step.}
 }
 \value{
 A list of two data frames:

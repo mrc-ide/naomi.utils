@@ -11,23 +11,92 @@ assert_iso3 <- function(iso3) {
 #' country code from the ISO3, selects relevant surveys, then constructs the
 #' `survey_id` and `survey_mid_calendar_quarter`.
 #'
+#' With `sexbehav = TRUE`, also adds surveys with sexual behaviour data (for the
+#' SHIPP sexual behaviour model), so survey inputs can be built once for both
+#' uses. Logical columns `hiv_testing` (survey matched `survey_characteristics`)
+#' and `sexbehav` (survey selected for sexual behaviour) say which list each
+#' survey belongs to.
+#'
 #' @param iso3 Three letter ISO3 country code.
 #' @param survey_type DHS survey types to access. See `?rdhs::dhs_surveys`.
 #' @param survey_characteristics DHS survey characteristic IDs to filter on See `?rdhs::dhs_survey_characteristics`.
+#' @param sexbehav Also include surveys selected for sexual behaviour; logical.
+#' @param sexbehav_characteristics Survey characteristic IDs for the sexual
+#'   behaviour surveys (default 24, sexual behaviour; `NULL` for all surveys).
+#' @param sexbehav_after_year Keep sexual behaviour surveys after this year.
+#' @param sexbehav_drop DHS `SurveyId`s to leave out of the sexual behaviour surveys.
+#' @param sexbehav_ids If given, only these DHS `SurveyId`s are sexual behaviour surveys.
 #'
 #' @return A data frame containing the response from the _dhs_surveys_ API endpoint
-#'   and the `survey_id` and `survey_mid_calendar_quarter`.
+#'   and the `survey_id` and `survey_mid_calendar_quarter`. With `sexbehav = TRUE`,
+#'   also logical `hiv_testing` and `sexbehav` columns; a country with no HIV
+#'   testing surveys gives only sexual behaviour surveys.
 #'
 #' @examples
 #' \dontrun{
 #' create_surveys_dhs("MWI")
+#' create_surveys_dhs("LSO", sexbehav = TRUE)
 #' }
 #'
 #' @export
 #'
 create_surveys_dhs <- function(iso3,
                                survey_type = c("DHS", "AIS", "MIS"),
-                               survey_characteristics = 23) {
+                               survey_characteristics = 23,
+                               sexbehav = FALSE,
+                               sexbehav_characteristics = 24,
+                               sexbehav_after_year = 1998,
+                               sexbehav_drop = NULL,
+                               sexbehav_ids = NULL) {
+
+  if (!sexbehav) {
+    return(dhs_survey_list(iso3, survey_type, survey_characteristics))
+  }
+
+  ## Either list can be empty (e.g. NGA has no DHS HIV testing); rdhs errors on
+  ## an empty result, so return NULL for that error only
+  survey_list_or_null <- function(characteristics) {
+    tryCatch(
+      dhs_survey_list(iso3, survey_type, characteristics),
+      error = function(e) {
+        if (!grepl("Records returned equal to 0", conditionMessage(e))) stop(e)
+        NULL
+      })
+  }
+  surveys <- survey_list_or_null(survey_characteristics)
+  sb <- survey_list_or_null(sexbehav_characteristics)
+  if (is.null(surveys) && is.null(sb)) {
+    stop("No HIV testing or sexual behaviour DHS surveys for ", iso3)
+  }
+  if (is.null(surveys)) {
+    surveys <- sb[0, ]
+  }
+  if (is.null(sb)) {
+    sb <- surveys[0, ]
+  }
+  sb <- sb[as.numeric(sb$SurveyYear) > sexbehav_after_year & !sb$SurveyId %in% sexbehav_drop, ]
+  if (!is.null(sexbehav_ids)) {
+    sb <- sb[sb$SurveyId %in% sexbehav_ids, ]
+  }
+
+  sb_only <- sb[!sb$SurveyId %in% surveys$SurveyId, ]
+  ## The API can type the same column differently between calls
+  ## (e.g. NumberOfSamplePoints integer vs character); align before stacking
+  for (col in intersect(names(surveys), names(sb_only))) {
+    if (!identical(class(surveys[[col]]), class(sb_only[[col]]))) {
+      surveys[[col]] <- as.character(surveys[[col]])
+      sb_only[[col]] <- as.character(sb_only[[col]])
+    }
+  }
+
+  hiv_ids <- surveys$SurveyId
+  surveys <- dplyr::bind_rows(surveys, sb_only)
+  surveys$hiv_testing <- surveys$SurveyId %in% hiv_ids
+  surveys$sexbehav <- surveys$SurveyId %in% sb$SurveyId
+  surveys
+}
+
+dhs_survey_list <- function(iso3, survey_type, survey_characteristics) {
 
   assert_iso3(iso3)
 
@@ -587,12 +656,24 @@ assign_dhs_cluster_areas <- function(survey_clusters, survey_region_areas) {
 #' }
 #'
 #' @param clear_rdhs_cache Passed to `rdhs::get_datasets(clear_cache = )`.
-#' @param hiv_testing If `TRUE` (default), every survey must have an HIV test
-#'   (AR) dataset and the function errors otherwise. Set `FALSE` for surveys
-#'   without HIV testing: AR is not downloaded and HIV fields are `NA`.
+#' @param hiv_testing Logical, one per survey (or one for all). `TRUE`: the
+#'   survey must have an HIV test (AR) dataset, otherwise an error. `FALSE`: AR
+#'   is not read and HIV fields are `NA`. Defaults to the `hiv_testing` column
+#'   of `surveys` (from `create_surveys_dhs(sexbehav = TRUE)`) if present, else
+#'   `TRUE`.
 #' @export
 create_individual_hiv_dhs <- function(surveys, clear_rdhs_cache = FALSE,
-                                      hiv_testing = TRUE) {
+                                      hiv_testing = surveys[["hiv_testing"]]) {
+
+  if (is.null(hiv_testing)) {
+    hiv_testing <- TRUE
+  }
+
+  if (!is.logical(hiv_testing) || anyNA(hiv_testing) ||
+      !length(hiv_testing) %in% c(1, nrow(surveys))) {
+    stop("`hiv_testing` must be TRUE/FALSE, one value or one per survey.")
+  }
+  hiv_testing <- rep_len(hiv_testing, nrow(surveys))
 
   prd <- rdhs::dhs_datasets(fileType = "PR", fileFormat = "flat")
   ird <- rdhs::dhs_datasets(fileType = "IR", fileFormat = "flat")
@@ -613,15 +694,17 @@ create_individual_hiv_dhs <- function(surveys, clear_rdhs_cache = FALSE,
   } else {
     mrd_paths <- list(NULL)
   }
-  if (hiv_testing) {
-    no_ar <- setdiff(surveys$SurveyId, ard$SurveyId)
-    if (length(no_ar)) {
-      stop("No HIV test (AR) dataset for: ", paste(no_ar, collapse = ", "),
-           ". Use `hiv_testing = FALSE` for surveys without HIV testing.")
-    }
-    ard_paths <- setNames(rdhs::get_datasets(ard, clear_cache = clear_rdhs_cache), ard$SurveyId)
+  no_ar <- setdiff(surveys$SurveyId[hiv_testing], ard$SurveyId)
+  if (length(no_ar)) {
+    stop("No HIV test (AR) dataset for: ", paste(no_ar, collapse = ", "),
+         ". Set `hiv_testing` to FALSE for surveys without HIV testing.")
+  }
+  ## Surveys with hiv_testing FALSE get NULL below, so NA HIV fields
+  ard <- dplyr::filter(ard, SurveyId %in% surveys$SurveyId[hiv_testing])
+  ard_paths <- if (nrow(ard) > 0) {
+    setNames(rdhs::get_datasets(ard, clear_cache = clear_rdhs_cache), ard$SurveyId)
   } else {
-    ard_paths <- list(NULL)
+    list(NULL)
   }
 
   individual <- Map(extract_individual_hiv_dhs,
@@ -792,7 +875,7 @@ extract_individual_hiv_dhs <- function(SurveyId, prd_path, ird_path, mrd_path, a
                            recent)
     dat <- dplyr::left_join(dat, ar, by = c("cluster_id", "household", "line"))
   } else {
-    # hiv_testing = FALSE: keep biomarker columns so downstream
+    # No AR dataset (hiv_testing = FALSE): keep biomarker columns so downstream
     # create_survey_biomarker_dhs() and calc_survey_indicators() still work
     dat[c("hivweight", "hivstatus", "arv", "vls", "cd4", "recent")] <- NA_real_
   }

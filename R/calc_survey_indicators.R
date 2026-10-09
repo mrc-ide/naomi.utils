@@ -156,6 +156,9 @@ calc_survey_hiv_indicators <- function(survey_meta,
 #' @param survey_sexbehav Individual risk-group indicators: `survey_id`,
 #'   `individual_id` and 0/1 columns, from `create_sexbehav_dhs()`,
 #'   `extract_sexbehav_phia()` or `extract_sexbehav_mics()`.
+#' @param hiv_area_top_level,hiv_area_bottom_level Area levels for
+#'   `hiv_by_risk_group`; default national only, as used by the prevalence
+#'   log odds ratio (LOR) step.
 #'
 #' @return A list of two data frames:
 #'   * `risk_group_prop`: proportion with each `survey_sexbehav` indicator,
@@ -178,12 +181,15 @@ calc_survey_sexbehav_indicators <- function(survey_meta,
                                             area_top_level = min(areas$area_level),
                                             area_bottom_level = max(areas$area_level),
                                             artcov_definition = c("both", "arv", "artself"),
-                                            by_res_type = FALSE) {
+                                            by_res_type = FALSE,
+                                            hiv_area_top_level = 0,
+                                            hiv_area_bottom_level = 0) {
 
   sexbehav_vars <- setdiff(names(survey_sexbehav), c("survey_id", "individual_id"))
   risk_groups <- intersect(c("nosex12m", "sexcohab", "sexnonreg", "sexpaid12m"), sexbehav_vars)
 
-  ## Expand everyone interviewed once; the HIV part reuses the HIV-tested subset
+  ## Expand once: everyone with a survey_biomarker row (callers decide whether
+  ## that includes untested respondents); the HIV part reuses the HIV-tested subset
   ind <- survey_individuals %>%
     dplyr::inner_join(survey_biomarker, by = c("survey_id", "individual_id")) %>%
     dplyr::inner_join(survey_sexbehav, by = c("survey_id", "individual_id")) %>%
@@ -196,12 +202,16 @@ calc_survey_sexbehav_indicators <- function(survey_meta,
     stop("No individual (interview) weights `indweight` for: ", paste(no_weight, collapse = ", "),
          ". Risk-group proportions need them, e.g. PHIA `intwt0`.")
   }
+  ## Expand once over both area-level ranges; each output keeps its own levels
   prep <- expand_survey_individuals(ind, survey_meta, survey_regions, survey_clusters, areas,
-                                    sex, age_group_include, area_top_level, area_bottom_level,
+                                    sex, age_group_include,
+                                    min(area_top_level, hiv_area_top_level),
+                                    max(area_bottom_level, hiv_area_bottom_level),
                                     by_res_type)
 
-  ## Proportion in each risk group: everyone interviewed, individual weights
+  ## Proportion in each risk group: individual (interview) weights
   ind <- prep$ind %>%
+    dplyr::filter(dplyr::between(area_level, area_top_level, area_bottom_level)) %>%
     dplyr::select(-hivweight, -hivstatus, -artself, -arv, -vls, -recent) %>%
     dplyr::rename(weights = indweight) %>%
     tidyr::pivot_longer(cols = dplyr::all_of(sexbehav_vars),
@@ -217,7 +227,8 @@ calc_survey_sexbehav_indicators <- function(survey_meta,
 
   ## HIV prevalence within each risk group: HIV-tested only, HIV weights
   ind <- prep$ind %>%
-    dplyr::filter(!is.na(hivstatus)) %>%
+    dplyr::filter(!is.na(hivstatus),
+                  dplyr::between(area_level, hiv_area_top_level, hiv_area_bottom_level)) %>%
     dplyr::select(-indweight, -dplyr::all_of(setdiff(sexbehav_vars, risk_groups)))
 
   hiv_by_risk_group <- NULL

@@ -7,7 +7,7 @@
 create_individual_hiv_dhs(
   surveys,
   clear_rdhs_cache = FALSE,
-  hiv_testing = TRUE
+  hiv_testing = surveys[["hiv_testing"]]
 )
 }
 \arguments{
@@ -15,9 +15,11 @@ create_individual_hiv_dhs(
 
 \item{clear_rdhs_cache}{Passed to \code{rdhs::get_datasets(clear_cache = )}.}
 
-\item{hiv_testing}{If \code{TRUE} (default), every survey must have an HIV test
-(AR) dataset and the function errors otherwise. Set \code{FALSE} for surveys
-without HIV testing: AR is not downloaded and HIV fields are \code{NA}.}
+\item{hiv_testing}{Logical, one per survey (or one for all). \code{TRUE}: the
+survey must have an HIV test (AR) dataset, otherwise an error. \code{FALSE}: AR
+is not read and HIV fields are \code{NA}. Defaults to the \code{hiv_testing} column
+of \code{surveys} (from \code{create_surveys_dhs(sexbehav = TRUE)}) if present, else
+\code{TRUE}.}
 }
 \value{
 data.frame consisting of survey ID, cluster ID and individual

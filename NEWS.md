@@ -13,9 +13,21 @@ Adam Howes):
 * `calc_survey_hiv_indicators()` signature and output are unchanged; it now
   shares its estimation code with `calc_survey_sexbehav_indicators()`. Also
   fixes an error when `age_group_include` is set.
-* `create_individual_hiv_dhs()` gains `hiv_testing = TRUE`: errors if any
-  survey has no HIV test (AR) dataset. Use `hiv_testing = FALSE` for DHS
-  surveys without HIV testing; HIV fields are then `NA`.
+* **Breaking:** `create_individual_hiv_dhs()` now errors if a survey has no HIV
+  test (AR) dataset. Previously such surveys silently got no HIV data. New
+  argument `hiv_testing` (logical, one per survey or one for all): `TRUE`
+  requires the AR dataset, `FALSE` skips it and gives `NA` HIV fields. It
+  defaults to the `hiv_testing` column of `surveys` if present, else `TRUE`.
+  Callers with surveys that have no AR dataset (e.g. ML2001DHS, ZM2002DHS)
+  must set their `hiv_testing` to `FALSE`.
+* `create_surveys_dhs()` gains `sexbehav = FALSE` (and `sexbehav_*` selection
+  arguments): when `TRUE`, also returns the sexual behaviour surveys, with
+  logical `hiv_testing` and `sexbehav` columns, so one task can build survey
+  inputs for both. Either list may be empty in this mode (e.g. NGA has no DHS
+  HIV testing). The default output is unchanged.
+* Tests now run in `R CMD check` (`tests/testthat.R` was misplaced); adds tests
+  for the survey indicator functions and fixes two SHIPP workbook tests that
+  passed the wrong input.
 
 # naomi.utils 0.0.19
 
