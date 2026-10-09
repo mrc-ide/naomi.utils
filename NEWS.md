@@ -8,6 +8,7 @@ Adam Howes):
   `extract_sexbehav_mics()` and `check_survey_sexbehav()`: derive individual
   sexual risk groups (`nosex12m`, `sexcohab`, `sexnonreg`, `sexpaid12m`, ...)
   from DHS, PHIA and MICS microdata.
+  They strip haven labels first, so they work without haven attached.
 * Add `calc_survey_sexbehav_indicators()`: survey-weighted proportion in each
   risk group, and HIV indicators within each risk group, by area/sex/age.
 * `calc_survey_hiv_indicators()` signature and output are unchanged; it now

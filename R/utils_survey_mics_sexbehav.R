@@ -7,6 +7,8 @@
 #' @return Sexual behaviour categorical variables
 #' @export
 extract_sexbehav_mics <- function(ind, survey_id, gender) {
+  ## haven-labelled columns can't be compared with numbers unless haven is loaded
+  ind <- haven::zap_labels(ind)
   if(gender == "female") {
     sb_vars <- c(
       "sb1", # Age at first sexual intercourse - if 0, no sexual debut
