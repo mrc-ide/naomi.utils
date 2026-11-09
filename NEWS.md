@@ -1,3 +1,35 @@
+# naomi.utils 0.0.20
+
+Sexual risk behaviour survey extraction for the SHIPP small-area model,
+upstreamed from `krisher1/naomi.utils@sexbehav-vars-adam` (Katie Risher,
+Adam Howes):
+
+* Add `create_sexbehav_dhs()`, `extract_sexbehav_phia()`,
+  `extract_sexbehav_mics()` and `check_survey_sexbehav()`: derive individual
+  sexual risk groups (`nosex12m`, `sexcohab`, `sexnonreg`, `sexpaid12m`, ...)
+  from DHS, PHIA and MICS microdata.
+  They strip haven labels first, so they work without haven attached.
+* Add `calc_survey_sexbehav_indicators()`: survey-weighted proportion in each
+  risk group, and HIV indicators within each risk group, by area/sex/age.
+* `calc_survey_hiv_indicators()` signature and output are unchanged; it now
+  shares its estimation code with `calc_survey_sexbehav_indicators()`. Also
+  fixes an error when `age_group_include` is set.
+* **Breaking:** `create_individual_hiv_dhs()` now errors if a survey has no HIV
+  test (AR) dataset. Previously such surveys silently got no HIV data. New
+  argument `hiv_testing` (logical, one per survey or one for all): `TRUE`
+  requires the AR dataset, `FALSE` skips it and gives `NA` HIV fields. It
+  defaults to the `hiv_testing` column of `surveys` if present, else `TRUE`.
+  Callers with surveys that have no AR dataset (e.g. ML2001DHS, ZM2002DHS)
+  must set their `hiv_testing` to `FALSE`.
+* `create_surveys_dhs()` gains `sexbehav = FALSE` (and `sexbehav_*` selection
+  arguments): when `TRUE`, also returns the sexual behaviour surveys, with
+  logical `hiv_testing` and `sexbehav` columns, so one task can build survey
+  inputs for both. Either list may be empty in this mode (e.g. NGA has no DHS
+  HIV testing). The default output is unchanged.
+* Tests now run in `R CMD check` (`tests/testthat.R` was misplaced); adds tests
+  for the survey indicator functions and fixes two SHIPP workbook tests that
+  passed the wrong input.
+
 # naomi.utils 0.0.19
 
 Updates to SHIPP workbook processing code for 2025 estimates update:

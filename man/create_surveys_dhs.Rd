@@ -7,7 +7,12 @@
 create_surveys_dhs(
   iso3,
   survey_type = c("DHS", "AIS", "MIS"),
-  survey_characteristics = 23
+  survey_characteristics = 23,
+  sexbehav = FALSE,
+  sexbehav_characteristics = 24,
+  sexbehav_after_year = 1998,
+  sexbehav_drop = NULL,
+  sexbehav_ids = NULL
 )
 }
 \arguments{
@@ -16,19 +21,40 @@ create_surveys_dhs(
 \item{survey_type}{DHS survey types to access. See \code{?rdhs::dhs_surveys}.}
 
 \item{survey_characteristics}{DHS survey characteristic IDs to filter on See \code{?rdhs::dhs_survey_characteristics}.}
+
+\item{sexbehav}{Also include surveys selected for sexual behaviour; logical.}
+
+\item{sexbehav_characteristics}{Survey characteristic IDs for the sexual
+behaviour surveys (default 24, sexual behaviour; \code{NULL} for all surveys).}
+
+\item{sexbehav_after_year}{Keep sexual behaviour surveys after this year.}
+
+\item{sexbehav_drop}{DHS \code{SurveyId}s to leave out of the sexual behaviour surveys.}
+
+\item{sexbehav_ids}{If given, only these DHS \code{SurveyId}s are sexual behaviour surveys.}
 }
 \value{
 A data frame containing the response from the \emph{dhs_surveys} API endpoint
-and the \code{survey_id} and \code{survey_mid_calendar_quarter}.
+and the \code{survey_id} and \code{survey_mid_calendar_quarter}. With \code{sexbehav = TRUE},
+also logical \code{hiv_testing} and \code{sexbehav} columns; a country with no HIV
+testing surveys gives only sexual behaviour surveys.
 }
 \description{
 Construct a surveys dataset from DHS API. Usess \code{rdhs} to identify the DHS
 country code from the ISO3, selects relevant surveys, then constructs the
 \code{survey_id} and \code{survey_mid_calendar_quarter}.
 }
+\details{
+With \code{sexbehav = TRUE}, also adds surveys with sexual behaviour data (for the
+SHIPP sexual behaviour model), so survey inputs can be built once for both
+uses. Logical columns \code{hiv_testing} (survey matched \code{survey_characteristics})
+and \code{sexbehav} (survey selected for sexual behaviour) say which list each
+survey belongs to.
+}
 \examples{
 \dontrun{
 create_surveys_dhs("MWI")
+create_surveys_dhs("LSO", sexbehav = TRUE)
 }
 
 }

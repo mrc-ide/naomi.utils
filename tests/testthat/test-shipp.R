@@ -135,15 +135,13 @@ test_that("scale_fsw_new_infections = TRUE and FALSE produce different FSW incid
   shipp_output_demo <- make_shipp_testfiles(a_hintr_output_calibrated)
 
   risk_scaled <- shipp_generate_risk_populations(
-    shipp_output_demo,
-    a_hintr_data$pjnz,
+    testthat::test_path("testdata/naomi_output.zip"), pjnz = NULL,
     consensus_est = "goals",
     scale_fsw_new_infections = TRUE
   )
 
   risk_unscaled <- shipp_generate_risk_populations(
-    shipp_output_demo$model_output_path,
-    a_hintr_data$pjnz,
+    testthat::test_path("testdata/naomi_output.zip"), pjnz = NULL,
     consensus_est = "goals",
     scale_fsw_new_infections = FALSE
   )
@@ -191,8 +189,7 @@ test_that("scale_fsw_new_infections = TRUE scales FSW new infections to Goals co
   shipp_output_demo <- make_shipp_testfiles(a_hintr_output_calibrated)
 
   risk_scaled <- shipp_generate_risk_populations(
-    shipp_output_demo$model_output_path,
-    a_hintr_data$pjnz,
+    testthat::test_path("testdata/naomi_output.zip"), pjnz = NULL,
     consensus_est = "goals",
     scale_fsw_new_infections = TRUE
   )
