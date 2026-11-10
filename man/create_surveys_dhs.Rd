@@ -29,9 +29,11 @@ behaviour surveys (default 24, sexual behaviour; \code{NULL} for all surveys).}
 
 \item{sexbehav_after_year}{Keep sexual behaviour surveys after this year.}
 
-\item{sexbehav_drop}{DHS \code{SurveyId}s to leave out of the sexual behaviour surveys.}
+\item{sexbehav_drop}{Surveys to leave out of the sexual behaviour surveys, as
+naomi \code{survey_id}s (e.g. "MLI2012DHS") or DHS \code{SurveyId}s.}
 
-\item{sexbehav_ids}{If given, only these DHS \code{SurveyId}s are sexual behaviour surveys.}
+\item{sexbehav_ids}{If given, only these surveys (naomi \code{survey_id}s or DHS
+\code{SurveyId}s) are sexual behaviour surveys.}
 }
 \value{
 A data frame containing the response from the \emph{dhs_surveys} API endpoint

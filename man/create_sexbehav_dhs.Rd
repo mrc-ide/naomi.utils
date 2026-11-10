@@ -17,33 +17,28 @@ sexual behaviour outcomes. See details.
 Create dataset of individual sexual behaviour variables.
 }
 \details{
-The following fields are extracted:
-\itemize{
-\item survey_id
-\item individual_id
-\item eversex
-\item sex12m
-\item sexcohab
-\item sexnonreg
-\item sexpaid12mo
-\item giftsvar
-\item sti12mo
-}
+Each respondent is placed in one risk group for the past 12 months, the
+highest that applies: paid sex (\code{sexpaid12m}), non-regular or multiple
+partners (\code{sexnonreg}), one cohabiting partner (\code{sexcohab}), or no sex
+(\code{nosex12m}). The \verb{*spouse} variants count a spouse living elsewhere as
+cohabiting rather than non-regular. \code{sexnonregplus} is non-regular or paid.
+\code{giftsvar} flags whether the survey asked about exchanging sex for gifts
+(v791a).
 
-Variable \code{eversex} is the outcome ever reporting sexual activity.
-Variable \code{sex12m} is whether an individual reports having been sexually
-active in the past 12 months. Variable \code{sexcohab} is whether an individual
-reports being sexually active in the past 12 months with only one cohabiting
-partner. Variable \code{sexnonreg} is whether the individual reports having
-non-regular sexual partner(s) or multiple partners in the past year. Variable
-\code{sexpaid12m} for females is whether respondent reports having had sex in return
-for cash, gifts, or anything else in the past 12 months (only asked of 15-24
-y/o women in DHS7) and for males is whether respondent reports having paid
-for sex in the past 12 months. Variable \code{giftsvar} is an indicator of whether
-the survey includes the question among AGYW in DHS7 on cash/gifts/etc in
-exchange for sex. Variable \code{sti12m} is whether a respondent
-reports having any STD, genital sore/ulcer, or genital discharge in the last
-12 months.
+Respondents whose group can't be determined are NA in every group, so they
+drop out of all numerators and denominators. Missing-value rules:
+\itemize{
+\item 1 partner, partner type missing: cohabiting if marital status shows
+they live with the partner (v501 = 2, or v501 = 1 and v504 = 1);
+otherwise excluded.
+\item Number of partners missing, partner is a spouse or live-in partner:
+cohabiting, or non-regular if a 2nd or 3rd partner is reported.
+\item Number of partners and partner type missing, partner lives elsewhere:
+non-regular if they had sex in the past 12 months (v527); otherwise
+excluded. This also excludes respondents never asked the sexual
+behaviour module (e.g. the KDHS 2022 short questionnaire).
+\item Number of partners "don't know" (98): non-regular, as before.
+}
 }
 \examples{
 \dontrun{

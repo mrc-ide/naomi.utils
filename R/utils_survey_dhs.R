@@ -24,8 +24,10 @@ assert_iso3 <- function(iso3) {
 #' @param sexbehav_characteristics Survey characteristic IDs for the sexual
 #'   behaviour surveys (default 24, sexual behaviour; `NULL` for all surveys).
 #' @param sexbehav_after_year Keep sexual behaviour surveys after this year.
-#' @param sexbehav_drop DHS `SurveyId`s to leave out of the sexual behaviour surveys.
-#' @param sexbehav_ids If given, only these DHS `SurveyId`s are sexual behaviour surveys.
+#' @param sexbehav_drop Surveys to leave out of the sexual behaviour surveys, as
+#'   naomi `survey_id`s (e.g. "MLI2012DHS") or DHS `SurveyId`s.
+#' @param sexbehav_ids If given, only these surveys (naomi `survey_id`s or DHS
+#'   `SurveyId`s) are sexual behaviour surveys.
 #'
 #' @return A data frame containing the response from the _dhs_surveys_ API endpoint
 #'   and the `survey_id` and `survey_mid_calendar_quarter`. With `sexbehav = TRUE`,
@@ -74,9 +76,10 @@ create_surveys_dhs <- function(iso3,
   if (is.null(sb)) {
     sb <- surveys[0, ]
   }
-  sb <- sb[as.numeric(sb$SurveyYear) > sexbehav_after_year & !sb$SurveyId %in% sexbehav_drop, ]
+  in_ids <- function(ids) sb$SurveyId %in% ids | sb$survey_id %in% ids
+  sb <- sb[as.numeric(sb$SurveyYear) > sexbehav_after_year & !in_ids(sexbehav_drop), ]
   if (!is.null(sexbehav_ids)) {
-    sb <- sb[sb$SurveyId %in% sexbehav_ids, ]
+    sb <- sb[in_ids(sexbehav_ids), ]
   }
 
   sb_only <- sb[!sb$SurveyId %in% surveys$SurveyId, ]
@@ -694,10 +697,13 @@ create_individual_hiv_dhs <- function(surveys, clear_rdhs_cache = FALSE,
   } else {
     mrd_paths <- list(NULL)
   }
+  ## Some surveys are flagged as HIV testing on the DHS API but have no AR
+  ## file available to download; their HIV fields are NA, as before 0.0.20
   no_ar <- setdiff(surveys$SurveyId[hiv_testing], ard$SurveyId)
   if (length(no_ar)) {
-    stop("No HIV test (AR) dataset for: ", paste(no_ar, collapse = ", "),
-         ". Set `hiv_testing` to FALSE for surveys without HIV testing.")
+    warning("No HIV test (AR) dataset for: ", paste(no_ar, collapse = ", "),
+            ". HIV fields are NA for these surveys.", call. = FALSE)
+    hiv_testing[surveys$SurveyId %in% no_ar] <- FALSE
   }
   ## Surveys with hiv_testing FALSE get NULL below, so NA HIV fields
   ard <- dplyr::filter(ard, SurveyId %in% surveys$SurveyId[hiv_testing])

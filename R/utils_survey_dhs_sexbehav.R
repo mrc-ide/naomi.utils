@@ -9,32 +9,27 @@
 #'
 #' @details
 #'
-#' The following fields are extracted:
+#' Each respondent is placed in one risk group for the past 12 months, the
+#' highest that applies: paid sex (`sexpaid12m`), non-regular or multiple
+#' partners (`sexnonreg`), one cohabiting partner (`sexcohab`), or no sex
+#' (`nosex12m`). The `*spouse` variants count a spouse living elsewhere as
+#' cohabiting rather than non-regular. `sexnonregplus` is non-regular or paid.
+#' `giftsvar` flags whether the survey asked about exchanging sex for gifts
+#' (v791a).
 #'
-#'   * survey_id
-#'   * individual_id
-#'   * eversex
-#'   * sex12m
-#'   * sexcohab
-#'   * sexnonreg
-#'   * sexpaid12mo
-#'   * giftsvar
-#'   * sti12mo
+#' Respondents whose group can't be determined are NA in every group, so they
+#' drop out of all numerators and denominators. Missing-value rules:
 #'
-#' Variable `eversex` is the outcome ever reporting sexual activity.
-#' Variable `sex12m` is whether an individual reports having been sexually
-#' active in the past 12 months. Variable `sexcohab` is whether an individual
-#' reports being sexually active in the past 12 months with only one cohabiting
-#' partner. Variable `sexnonreg` is whether the individual reports having
-#' non-regular sexual partner(s) or multiple partners in the past year. Variable
-#' `sexpaid12m` for females is whether respondent reports having had sex in return
-#' for cash, gifts, or anything else in the past 12 months (only asked of 15-24
-#' y/o women in DHS7) and for males is whether respondent reports having paid
-#' for sex in the past 12 months. Variable `giftsvar` is an indicator of whether
-#' the survey includes the question among AGYW in DHS7 on cash/gifts/etc in
-#' exchange for sex. Variable `sti12m` is whether a respondent
-#' reports having any STD, genital sore/ulcer, or genital discharge in the last
-#' 12 months.
+#'   * 1 partner, partner type missing: cohabiting if marital status shows
+#'     they live with the partner (v501 = 2, or v501 = 1 and v504 = 1);
+#'     otherwise excluded.
+#'   * Number of partners missing, partner is a spouse or live-in partner:
+#'     cohabiting, or non-regular if a 2nd or 3rd partner is reported.
+#'   * Number of partners and partner type missing, partner lives elsewhere:
+#'     non-regular if they had sex in the past 12 months (v527); otherwise
+#'     excluded. This also excludes respondents never asked the sexual
+#'     behaviour module (e.g. the KDHS 2022 short questionnaire).
+#'   * Number of partners "don't know" (98): non-regular, as before.
 #'
 #' @examples
 #' \dontrun{
@@ -83,7 +78,7 @@ extract_sexbehav_dhs <- function(SurveyId, ird_path, mrd_path){
     "v504", "v529", "v531",
     "v766b", "v767a", "v767b",
     "v767c", "v791a", "v763a",
-    "v763b", "v763c", "v501"
+    "v763b", "v763c", "v501", "v527"
   )
 
   ## Individual recode
@@ -105,159 +100,127 @@ extract_sexbehav_dhs <- function(SurveyId, ird_path, mrd_path){
 
     dat <- dplyr::bind_rows(dat, mdat)
   }
-
-  ## # Code sexual behaviour outcomes
-
-  # # eversex = whether participant has ever had sex
-  # # Recode v531 - age of sexual debut - anyone coded 0 hasn't had sex,
-  # # 97 = inconsistent, 98 = Don't Know, 99 = Missing
-  # # Assume if you don't know the age of sexual debut that you have had sex
-  # # Should inconsistents be TRUE instead of missing?
-  # dat$eversex <- dplyr::case_when(dat$v531 %in% c(97,99) ~ NA,
-  #                                 dat$v531 == 98 ~ TRUE,
-  #                                 TRUE ~ dat$v531 > 0)
-
-  # sex12m = whether reports sexual activity in past 12 mo
-  # Recode v766b - number of partners in the past 12 mo
-  # use v527/v529 instead?
-  dat$sex12m <- dplyr::case_when(
-    dat$v766b == 0 ~ FALSE,
-    dat$v766b == 99 ~ NA,
-    TRUE ~ dat$v766b > 0
-  )
-
-  # Does not report sexual activity in the last 12 months
-  dat$nosex12m = dplyr::case_when(
-    dat$sex12m == TRUE ~ FALSE,
-    dat$sex12m == FALSE ~ TRUE,
-    is.na(dat$sex12m) ~ NA
-  )
-
-  # sexcohab = whether reports sex with only one cohabiting partner in the past
-  # 12 mo.  Recode v766b (# partners in past 12 mo) and v767a-c (relationship
-  # w/partners)
-  # Currently if your partner type is missing or inconsistent and
-  # you had only one partner in the past year you are classified as a "yes"
-  # for having sex with only one cohabiting partner
-
-  # v767a-c coding does not match DHS questionnaire and isn't labelled - correct is:
-  # 1 = spouse, 2 = boyfriend not living with respondent, 3 = other friend
-  # 4 = casual acquaintance, 5 = relative, 6 = commercial sex worker,
-  # 7 = live-in partner, 96 = other
-
-  # v504 = whether the partner lives in the household or is now living elsewhere (for currently
-  # married or in union women):
-  # 1 = living with women
-  # 2 = living elsewhere
-  # 9 = missing
-  # NA = missing
-
-  dat$sexcohab <- dplyr::case_when(
-    dat$sex12m == FALSE ~ FALSE,
-    dat$v766b == 1 & ((dat$v767a == 7) | (dat$v767b == 7) | (dat$v767c == 7)) ~ TRUE,
-    dat$v766b == 1 & ((dat$v767a == 1) | (dat$v767b == 1) | (dat$v767c == 1)) & dat$v504 %in% c(1, 9, NA) ~ TRUE,
-    TRUE ~ FALSE
-  )
-
-  dat$sexcohabspouse <- dplyr::case_when(
-    dat$sex12m == FALSE ~ FALSE,
-    dat$v766b == 1 & ((dat$v767a %in% c(1, 7)) | (dat$v767b %in% c(1, 7)) | (dat$v767c %in% c(1, 7))) ~ TRUE,
-    dat$v504 == 2 & dat$v501 == 1 ~ TRUE, # Partner lives away and legally married
-    TRUE ~ FALSE
-  )
-
-  cas_cats <- c(2, 3, 4, 5, 6, 96)
-
-  # sexnonreg = whether the person reports having non-regular sexual partner(s)
-  # or multiple partners in the past year. Recode v766b (# partners in past 12 mo)
-  # and v767a-c (relationship w/partners)
-  dat$sexnonreg <- dplyr::case_when(
-    dat$sex12m == FALSE ~ FALSE,
-    dat$v504 == 2 ~ TRUE,
-    (dat$v767a %in% cas_cats) | (dat$v767b %in% cas_cats) | (dat$v767c %in% cas_cats) ~ TRUE,
-    dat$v766b > 1 & dat$v766b != 99 ~ TRUE,
-    dat$v766b == 99 ~ NA,
-    TRUE ~ FALSE
-  )
-
-  dat$sexnonregspouse <- dplyr::case_when(
-    dat$sex12m == FALSE ~ FALSE,
-    dat$v766b == 1 & ((dat$v767a == 1) | (dat$v767b == 1) | (dat$v767c == 1)) & dat$v504 == 2 ~ FALSE,
-    (dat$v767a %in% cas_cats) | (dat$v767b %in% cas_cats) | (dat$v767c %in% cas_cats) ~ TRUE,
-    dat$v766b > 1 & dat$v766b != 99 ~ TRUE,
-    dat$v766b == 99 ~ NA,
-    TRUE ~ FALSE
-  )
-
-  # sexpaid12m = whether the person reports having received gifts/cash/anything
-  # in exchange for sex (women aged 15-24, recode v791a or v767a-c), or paid for sex in the
-  # past 12 months (men, recode v793 and v767a-c)
-  # v791a is only collected if 15-24 yo woman has never been in a union - should probably
-  # make this var NA if woman is over 25 or if v501 (marital status) is missing
-  if(!is.null(mrd_path)) {
-    dat$sexpaid12m <- dplyr::case_when(
-      dat$sex12m == FALSE ~ FALSE,
-      dat$v791a == 1 | (dat$v767a == 6 | dat$v767b == 6 | dat$v767c == 6) | dat$v793 == 1 ~ TRUE,
-      (is.na(dat$v791a) & is.na(dat$v767a) & is.na(dat$v767b) & is.na(dat$v767c)) | (is.na(dat$v793) &
-      is.na(dat$v767a) & is.na(dat$v767b) & is.na(dat$v767c)) ~ NA,
-      TRUE ~ FALSE
-    )
-  } else {
-    dat$sexpaid12m <- dplyr::case_when(
-      dat$sex12m == FALSE ~ FALSE,
-      dat$v791a == 1 | (dat$v767a == 6 | dat$v767b == 6 | dat$v767c == 6) ~ TRUE,
-      (is.na(dat$v791a) & is.na(dat$v767a) & is.na(dat$v767b) & is.na(dat$v767c)) ~ NA,
-      TRUE ~ FALSE
-    )
-  }
-
-  # Either sexnonreg or sexpaid12m
-  dat$sexnonregplus <- dplyr::case_when(
-    dat$sexnonreg == TRUE ~ TRUE,
-    dat$sexpaid12m == TRUE ~ TRUE,
-    TRUE ~ FALSE
-  )
-
-  # Either sexnonregspouse or sexpaid12m
-  dat$sexnonregspouseplus = dplyr::case_when(
-    dat$sexnonregspouse == TRUE ~ TRUE,
-    dat$sexpaid12m == TRUE ~ TRUE,
-    TRUE ~ FALSE
-  )
-
-  # giftsvar = indicator for whether the survey includes any non-missing observations
-  # on question v791a (i.e. whether it was in the questionnaire)
-  dat <- dplyr::mutate(dat, giftsvar = ifelse(sum(!is.na(v791a)) > 0, 1, 0))
-
-  # # sti12m = whether the person reports having had an STI, genital sore/ulcer, or
-  # # genital discharge in the past 12 months (recode v763a-c)
-  # # Only set as NA if were a don't know/missing for all three of the questions
-  # dat$sti12m <- dplyr::case_when(dat$v763a == 1 | dat$v763b == 1 |
-  #                                   dat$v763c == 1 ~ TRUE,
-  #                                 dat$v763a %in% c(8,9) & dat$v763b %in% c(8,9) &
-  #                                   dat$v763c %in% c(8,9) ~ NA,
-  #                                 is.na(dat$v763a) & is.na(dat$v763b) &
-  #                                   is.na(dat$v763c) ~ NA,
-  #                                 TRUE ~ FALSE)
+  if (!"v793" %in% names(dat)) dat$v793 <- NA
 
   dat$SurveyId <- SurveyId
 
-  # Alterations to make the outcomes closer to being categorical
-  # As well as adding in a new variable, sexnonregplus, which is sexnonreg with all
-  # the individuals in sexpaid12m added on as well
-  dat %>%
-    dplyr::select(
-      SurveyId, individual_id, sex12m, nosex12m, sexcohab, sexcohabspouse, sexnonreg,
-      sexnonregspouse, sexpaid12m, giftsvar, sexnonregplus, sexnonregspouseplus
-    ) %>%
-    dplyr::mutate(
-      # Just want the highest risk category that an individual belongs to
-      nosex12m = ifelse(sexcohab | sexnonreg | sexpaid12m, FALSE, nosex12m),
-      sexcohab = ifelse(sexnonreg | sexpaid12m, FALSE, sexcohab),
-      sexcohabspouse = ifelse(sexnonregspouse | sexpaid12m, FALSE, sexcohabspouse),
-      sexnonreg = ifelse(sexpaid12m, FALSE, sexnonreg),
-      sexnonregspouse = ifelse(sexpaid12m, FALSE, sexnonregspouse),
-      # Turn everything from TRUE / FALSE coding to 1 / 0
-      dplyr::across(sex12m:sexnonregspouseplus, ~ as.numeric(.x))
-    )
+  dat <- code_sexbehav_dhs(dat)
+
+  # giftsvar = whether the survey asked v791a (any non-missing observation)
+  dat$giftsvar <- as.numeric(sum(!is.na(dat$v791a)) > 0)
+
+  dplyr::select(
+    dat,
+    SurveyId, individual_id, sex12m, nosex12m, sexcohab, sexcohabspouse, sexnonreg,
+    sexnonregspouse, sexpaid12m, giftsvar, sexnonregplus, sexnonregspouseplus
+  )
+}
+
+
+## Assign each respondent one risk group from the DHS sexual behaviour recode
+## variables. See create_sexbehav_dhs() for the rules.
+##
+## v766b: number of partners in the past 12 months (98 don't know, 99 missing)
+## v767a-c: relationship with the 3 most recent partners. The labels in the
+##   data don't match the questionnaire; correct coding is 1 spouse,
+##   2 boyfriend not living with respondent, 3 other friend, 4 casual
+##   acquaintance, 5 relative, 6 commercial sex worker, 7 live-in partner,
+##   96 other, 99 missing.
+## v504: partner lives with her (1) or elsewhere (2), married/in union only
+## v501: marital status (1 married, 2 living with partner)
+## v527: time since last sex (1xx days, 2xx weeks, 3xx months, 4xx years,
+##   995 within last 4 weeks)
+## v791a: sex for gifts/cash (women 15-24); v793: paid for sex (men)
+code_sexbehav_dhs <- function(dat) {
+  cas_cats <- c(2, 3, 4, 5, 6, 96)
+  type_in <- function(codes) {
+    (dat$v767a %in% codes) | (dat$v767b %in% codes) | (dat$v767c %in% codes)
+  }
+  known <- function(x) !is.na(x) & x != 99
+
+  n_known <- dat$v766b %in% 0:95
+  n_dk <- dat$v766b %in% 98
+  n_missing <- !n_known & !n_dk
+  type_known <- known(dat$v767a)
+  later_partner <- known(dat$v767b) | known(dat$v767c)
+  spouse_or_livein <- dat$v767a %in% c(1, 7)
+
+  ## Sex in the past 12 months from time since last sex
+  sex_last_year <- dplyr::case_when(
+    dat$v527 %in% c(100:199, 200:299, 300:311, 995) ~ TRUE,
+    dat$v527 %in% c(312:399, 400:499, 996) ~ FALSE,
+    TRUE ~ NA
+  )
+
+  sex12m <- dplyr::case_when(
+    dat$v766b %in% 0 ~ FALSE,
+    n_known | n_dk ~ TRUE,
+    type_known ~ TRUE,
+    TRUE ~ sex_last_year
+  )
+
+  paid <- dat$v791a %in% 1 | type_in(6) | dat$v793 %in% 1
+
+  ## Non-regular, shared by both definitions: several partners, a casual
+  ## partner type, or partner count missing with a 2nd/3rd partner reported
+  nonreg_common <- (n_known & dat$v766b > 1) | n_dk | type_in(cas_cats) |
+    (n_missing & type_known & later_partner)
+
+  ## Partner count missing and type missing, partner lives elsewhere
+  away_unknown <- n_missing & !type_known & dat$v504 %in% 2
+
+  ## One partner type missing: cohabiting if marital status shows they live
+  ## with the partner
+  one_untyped <- dat$v766b %in% 1 & !type_known
+  lives_with <- dat$v501 %in% 2 | (dat$v501 %in% 1 & dat$v504 %in% 1)
+
+  ## Partner count missing, only partner is a spouse or live-in partner
+  missing_n_spouse <- n_missing & spouse_or_livein & !later_partner
+
+  group <- dplyr::case_when(
+    sex12m %in% FALSE ~ "nosex",
+    is.na(sex12m) ~ NA_character_,
+    paid ~ "paid",
+    nonreg_common | dat$v504 %in% 2 ~ "nonreg",
+    dat$v766b %in% 1 & type_in(7) ~ "cohab",
+    dat$v766b %in% 1 & type_in(1) & dat$v504 %in% c(1, 9, NA) ~ "cohab",
+    one_untyped & lives_with ~ "cohab",
+    missing_n_spouse & (dat$v767a %in% 7 | dat$v504 %in% c(1, 9, NA)) ~ "cohab",
+    TRUE ~ NA_character_
+  )
+
+  ## Spouse definition: a spouse living elsewhere counts as cohabiting
+  group_spouse <- dplyr::case_when(
+    sex12m %in% FALSE ~ "nosex",
+    is.na(sex12m) ~ NA_character_,
+    paid ~ "paid",
+    nonreg_common ~ "nonreg",
+    dat$v766b %in% 1 & spouse_or_livein ~ "cohab",
+    dat$v504 %in% 2 & dat$v501 %in% 1 ~ "cohab",
+    one_untyped & dat$v501 %in% c(1, 2) ~ "cohab",
+    missing_n_spouse ~ "cohab",
+    away_unknown ~ "nonreg",
+    dat$v766b %in% 1 & dat$v504 %in% 2 ~ "nonreg",
+    TRUE ~ NA_character_
+  )
+
+  set_groups(dat, sex12m, group, group_spouse)
+}
+
+
+## Turn risk-group assignments into the 0/1 indicator columns. A respondent
+## with no group is NA in every group column; sex12m is kept as reported.
+set_groups <- function(dat, sex12m, group, group_spouse) {
+  is_group <- function(g, value) as.numeric(ifelse(is.na(g), NA, g == value))
+  dat$sex12m <- as.numeric(sex12m)
+  dat$nosex12m <- is_group(group, "nosex")
+  dat$sexcohab <- is_group(group, "cohab")
+  dat$sexnonreg <- is_group(group, "nonreg")
+  dat$sexpaid12m <- is_group(group, "paid")
+  dat$sexnonregplus <- as.numeric(ifelse(is.na(group), NA, group %in% c("nonreg", "paid")))
+  dat$sexcohabspouse <- is_group(group_spouse, "cohab")
+  dat$sexnonregspouse <- is_group(group_spouse, "nonreg")
+  dat$sexnonregspouseplus <- as.numeric(ifelse(is.na(group_spouse), NA,
+                                               group_spouse %in% c("nonreg", "paid")))
+  dat
 }
