@@ -1,3 +1,32 @@
+# naomi.utils 0.0.21
+
+Missing-value rules for sexual risk groups. Respondents whose group can't be determined are now NA in every
+group, so they drop out of all numerators and denominators. Previously many
+were coded 0 in every group, which pulled each proportion down so groups
+added up to less than 100%.
+
+* `create_sexbehav_dhs()`:
+  * 1 partner, partner type missing: cohabiting if marital status shows they
+    live with the partner, otherwise excluded.
+  * Number of partners missing: cohabiting if the partner is a spouse or
+    live-in partner, non-regular if a 2nd/3rd partner is reported.
+  * Number of partners and type missing, partner lives elsewhere: non-regular
+    if they had sex in the past year (`v527`), otherwise excluded. This also
+    excludes women never asked the module (KEN2022DHS short questionnaire).
+* `extract_sexbehav_phia()`:
+  * Sex in the past 12 months from the PHIA derived flags `sexever` and
+    `sex12months`; missing flag excluded unless 0 partners, never had sex or
+    "don't know" number of partners.
+  * Had sex with number of partners blank, don't know or out of range:
+    non-regular in every PHIA round (PHIA2 had counted them as no sex).
+    Refused: excluded.
+  * Age at first sex unknown and partners blank: excluded.
+  * 1 partner with type don't know/refused: excluded (was non-regular).
+  * Partner relationship code 9 (boyfriend/girlfriend, PHIA2) recognised.
+* Respondents with complete data keep the same group (checked on KEN2022DHS,
+  MWI2015DHS, ZMB2018DHS, MOZ2011DHS, BEN2006DHS, UGA2016DHS, NGA2018DHS and
+  all 19 PHIAs).
+
 # naomi.utils 0.0.20
 
 Sexual risk behaviour survey extraction for the SHIPP small-area model,

@@ -15,5 +15,21 @@ extract_sexbehav_phia(ind, survey_id)
 Sexual behaviour categorical variables
 }
 \description{
-Extract sexual behaviour categorical variables from PHIA surveys.
+Same risk groups as \code{\link[=create_sexbehav_dhs]{create_sexbehav_dhs()}}. Sex in the past 12 months comes
+from the PHIA derived flags \code{sexever} and \code{sex12months}, present in every
+PHIA. Missing-value rules:
+}
+\details{
+\itemize{
+\item Never had sex, or no sex in the past 12 months: no sex.
+\item \code{sex12months} missing: excluded, unless 0 partners (no sex) or number
+of partners "don't know" (non-regular, consistent with DHS).
+\item Age at first sex refused/don't know and number of partners blank:
+excluded.
+\item Had sex, number of partners blank, "don't know" or out of range (-7):
+non-regular, in every PHIA round. Refused: excluded.
+\item One partner, partner type "don't know", "refused" or blank: excluded.
+}
+
+Respondents whose group can't be determined are NA in every group column.
 }
