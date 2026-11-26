@@ -7,11 +7,10 @@ RUN apt-get update && apt-get -y install --no-install-recommends \
         && rm -rf /var/lib/apt/lists/*
 
 RUN install_packages --repo "https://mrc-ide.r-universe.dev" \
-        ckanr \
         docopt \
         httr \
         jsonlite
 
-COPY copy_adr_data.R /usr/local/bin/
+COPY copy_adr_data.R adr_users.R /usr/local/bin/
 
 ENTRYPOINT ["copy_adr_data.R"]

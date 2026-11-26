@@ -44,6 +44,13 @@ Run on prod
 docker run --rm mrcide/adr-copy:latest --site=prod --key=<key>
 ```
 
+The script writes a summary CSV with one row per dataset (status, link, admin,
+any file issues). To keep it when running in docker, mount a directory and
+point `--summary` at it
+```
+docker run --rm -v $(pwd):/out mrcide/adr-copy:latest --key=<key> --summary=/out/summary.csv
+```
+
 ## Remove ADR datasets
 
 ### Build image
