@@ -43,6 +43,27 @@ test_that("calc_survey_hiv_indicators() gives plain proportions with unit weight
   expect_equal(prev$estimate[prev$area_id == "X_1"], mean(f$hivstatus[f$cluster_id %in% 1:2]))
 })
 
+test_that("calc_survey_hiv_indicators() intersects male and female min age for sex = 'both'", {
+  x <- make_survey()
+  x$survey_meta$female_age_min <- 15
+  x$survey_meta$female_age_max <- 49
+  x$survey_meta$male_age_min <- 20
+  x$survey_meta$male_age_max <- 59
+  f <- x$survey_individuals$sex == "female"
+  x$survey_individuals$age[f] <- rep(c(17, 22), sum(f) / 2)
+  x$survey_individuals$age[!f] <- rep(c(22, 45), sum(!f) / 2)
+
+  out <- calc_survey_hiv_indicators(x$survey_meta, x$survey_regions, x$survey_clusters,
+                                    x$survey_individuals, x$survey_biomarker, x$areas,
+                                    sex = c("female", "male", "both"),
+                                    age_group_include = c("Y015_019", "Y020_024", "Y015_049"),
+                                    area_top_level = 0, area_bottom_level = 0)
+  both_ages <- unique(out$age_group[out$sex == "both"])
+  female_ages <- unique(out$age_group[out$sex == "female"])
+  expect_equal(both_ages, "Y020_024")
+  expect_setequal(female_ages, c("Y015_019", "Y020_024", "Y015_049"))
+})
+
 test_that("calc_survey_sexbehav_indicators() proportions and HIV baseline", {
   x <- make_survey()
   out <- calc_survey_sexbehav_indicators(x$survey_meta, x$survey_regions, x$survey_clusters,

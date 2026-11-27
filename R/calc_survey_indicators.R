@@ -286,7 +286,7 @@ expand_survey_individuals <- function(ind,
     tidyr::crossing(sex_age_group) %>%
     dplyr::filter(age_group_start >= dplyr::case_when(sex == "male" ~ male_age_min,
                                                       sex == "female" ~ female_age_min,
-                                                      sex == "both" ~ pmin(male_age_min,
+                                                      sex == "both" ~ pmax(male_age_min,
                                                                            female_age_min)),
                   age_group_start + age_group_span <= dplyr::case_when(sex == "male" ~ male_age_max,
                                                                        sex == "female" ~ female_age_max,
